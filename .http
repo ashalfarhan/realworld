@@ -1,0 +1,51 @@
+@BASE_URL = http://localhost:4000/api
+@USERS_PREFIX = {{BASE_URL}}/users
+@USER_PREFIX = {{BASE_URL}}/user
+@PROFILE_PREFIX = {{BASE_URL}}/profiles
+
+### Register User
+POST {{USERS_PREFIX}}/register
+Content-Type: application/json
+
+{
+    "username": "ashalfarhan",
+    "email": "ashalfarhan@gmail.com",
+    "password": "ashal123"
+}
+
+### Login User
+POST {{USERS_PREFIX}}/login
+Content-Type: application/json
+
+{
+    "username": "ashalfarhan",
+    "password": "ashal123"
+}
+
+### Get User info
+GET {{USER_PREFIX}}
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI5NGIxNTlmYy1hZjc4LTRhYmUtOTQzNi03Yjg4ZDQ4ZjExYjMiLCJ1c2VybmFtZSI6InVzZXIxIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MTE3OX0.11B9rKjikLFaQ4WRPLt2CgJcMbWQjvu7Q3juK0gjQhI2LyOvlQbogtgYAxCJFSdhMQGdQr0zBAXATxWfrIEGTg
+
+### Update User
+PUT {{USER_PREFIX}}
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI5NGIxNTlmYy1hZjc4LTRhYmUtOTQzNi03Yjg4ZDQ4ZjExYjMiLCJ1c2VybmFtZSI6InVzZXIxIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MTE3OX0.11B9rKjikLFaQ4WRPLt2CgJcMbWQjvu7Q3juK0gjQhI2LyOvlQbogtgYAxCJFSdhMQGdQr0zBAXATxWfrIEGTg
+Content-Type: application/json
+
+{
+    "email": "user1@gmail.com",
+    "username": "user1",
+    "password": "test1234",
+    "bio": "My name is user 1"
+}
+
+### Follow a user
+POST {{PROFILE_PREFIX}}/user1/follow
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MzEzOX0.Uo1lsXiJPFVxI-cTVGHQbg8tVFG61iZhwgiRsiPhm0BanKYPwam3ZCkh5UzYC6bHgswAec6sx2v_a6lnX3icng
+
+### Unfollow a user
+DELETE {{PROFILE_PREFIX}}/user1/follow
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MzEzOX0.Uo1lsXiJPFVxI-cTVGHQbg8tVFG61iZhwgiRsiPhm0BanKYPwam3ZCkh5UzYC6bHgswAec6sx2v_a6lnX3icng
+
+### Get Profile
+GET {{PROFILE_PREFIX}}/user1
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MzEzOX0.Uo1lsXiJPFVxI-cTVGHQbg8tVFG61iZhwgiRsiPhm0BanKYPwam3ZCkh5UzYC6bHgswAec6sx2v_a6lnX3icng
