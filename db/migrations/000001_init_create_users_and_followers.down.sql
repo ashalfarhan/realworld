@@ -1,0 +1,2 @@
+DROP TABLE IF EXIST followings;
+DROP TABLE IF EXIST users;
