@@ -12,14 +12,14 @@ func WithUser(authService *service.AuthService, next http.HandlerFunc) http.Hand
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
-			response.Error(w, http.StatusUnauthorized, "No jwt provided")
+			response.UnauthorizeError(w)
 			return
 		}
 
 		jwt := authHeader[1]
 		claim, err := authService.ParseJWT(jwt)
 		if err != nil {
-			response.Error(w, http.StatusUnauthorized, err.Error())
+			response.UnauthorizeError(w)
 			return
 		}
 

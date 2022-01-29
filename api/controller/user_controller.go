@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
@@ -26,23 +27,23 @@ func NewUserController(svc *service.Service) *UserController {
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var d *dto.RegisterUserDto
 	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.ClientError(w, err)
 		return
 	}
 
 	v := validator.New()
 	if err := dto.ValidateDto(d, v); err != nil {
-		response.Error(w, http.StatusUnprocessableEntity, err)
+		response.EntityError(w, err)
 		return
 	}
 
 	u, err := c.userService.CreateOne(d)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	response.Success(w, http.StatusCreated, map[string]interface{}{
+	response.Created(w, map[string]interface{}{
 		"user": u,
 	})
 }
@@ -50,30 +51,30 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var d *dto.LoginUserDto
 	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.ClientError(w, err)
 		return
 	}
 
 	v := validator.New()
 	if err := dto.ValidateDto(d, v); err != nil {
-		response.Error(w, http.StatusUnprocessableEntity, err)
+		response.EntityError(w, err)
 		return
 	}
 
 	u, err := c.userService.GetOne(d)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid identity or password")
+		response.ClientError(w, errors.New("invalid identity or password"))
 		return
 	}
 
 	if valid := u.ValidatePassword(d.Password); !valid {
-		response.Error(w, http.StatusBadRequest, "Invalid identity or password")
+		response.ClientError(w, errors.New("invalid identity or password"))
 		return
 	}
 
-	token, err := c.authService.GenerateJWT(u)
-	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+	token, serr := c.authService.GenerateJWT(u)
+	if serr != nil {
+		response.InternalError(w)
 		return
 	}
 
@@ -84,19 +85,20 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Bio:      u.Bio,
 		Image:    u.Image,
 	}
-	response.Success(w, http.StatusOK, res)
+
+	response.Ok(w, res)
 }
 
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	iu := c.authService.GetUserFromCtx(r)
-	u, err := c.userService.GetOneById(iu.UserID)
 
+	u, err := c.userService.GetOneById(iu.UserID)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	response.Success(w, http.StatusOK, map[string]interface{}{
+	response.Ok(w, map[string]interface{}{
 		"user": u,
 	})
 }
@@ -104,19 +106,19 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 	var d *dto.UpdateUserDto
 	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.ClientError(w, err)
 		return
 	}
 
 	v := validator.New()
 	if err := dto.ValidateDto(d, v); err != nil {
-		response.Error(w, http.StatusUnprocessableEntity, err)
+		response.EntityError(w, err)
 		return
 	}
 
 	iu := c.authService.GetUserFromCtx(r)
 	if err := c.userService.Update(d, iu.UserID); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(w, http.StatusBadRequest, err)
 		return
 	}
 

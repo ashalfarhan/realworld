@@ -28,7 +28,7 @@ func (p *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 	iu := p.authService.GetUserFromCtx(r)
 
 	if err := p.userService.FollowUser(iu.UserID, uname); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 
@@ -41,7 +41,7 @@ func (p *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 	iu := p.authService.GetUserFromCtx(r)
 
 	if err := p.userService.UnfollowUser(iu.UserID, uname); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (p *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
 	uname := mux.Vars(r)["username"]
 	u, err := p.userService.GetOne(&dto.LoginUserDto{Username: uname})
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 

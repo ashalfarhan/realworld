@@ -1,7 +1,12 @@
 package conduit
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
-	ErrInternal = errors.New("internal server error")
+	ErrInternal     = errors.New("internal server error")
+	ErrUnauthorized = errors.New("unauthorized error")
+	ErrForbidden    = errors.New("forbidden error")
+	ErrNotFound     = errors.New("resource not found")
 )

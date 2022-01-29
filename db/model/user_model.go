@@ -13,8 +13,8 @@ type User struct {
 	Username  string     `json:"username"`
 	Bio       NullString `json:"bio"`
 	Image     NullString `json:"image"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 func (u *User) HashPassword(p string) error {

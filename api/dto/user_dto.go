@@ -9,8 +9,8 @@ type RegisterUserDto struct {
 }
 
 type LoginUserDto struct {
-	Email    string `json:"email,omitempty" validate:"excluded_with=username,omitempty,email"`
-	Username string `json:"username,omitempty" validate:"excluded_with=email,omitempty,alphanum"`
+	Email    string `json:"email,omitempty" validate:"required_without=Username,omitempty,email"`
+	Username string `json:"username,omitempty" validate:"required_without=Email,omitempty,alphanum"`
 	Password string `json:"password" validate:"required"`
 }
 

@@ -7,5 +7,5 @@ import (
 )
 
 func Hello(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, "Hello")
+	response.Ok(w, "Hello")
 }
