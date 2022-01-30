@@ -2,6 +2,7 @@
 @USERS_PREFIX = {{BASE_URL}}/users
 @USER_PREFIX = {{BASE_URL}}/user
 @PROFILE_PREFIX = {{BASE_URL}}/profiles
+@ARTICLE_PREFIX = {{BASE_URL}}/articles
 
 ### Register User
 POST {{USERS_PREFIX}}/register
@@ -49,3 +50,26 @@ Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiO
 ### Get Profile
 GET {{PROFILE_PREFIX}}/user1
 Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ3NTg3Nn0.7gAWmoKTRpkEZLmW7zPfy1v5Dyd4DKBad9MnmZ5geiA48nVBffx1obEnLeGCCgqJuqPTNm2S_zLabZ1qraIkGg
+
+### Create an Article
+POST {{ARTICLE_PREFIX}}
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzUzNTk0M30.nWbUcp-zcqVHgciuUrKvb-jC0yHZFehXXo1uz2TMPEUhTTN81L_Jxh8fXR6bVLQXdKk_vnZVqNIwTMqJ0VzABg
+Content-Type: application/json
+
+{
+    "title": "How to train your dragon",
+    "description": "Ever wonder how?",
+    "body": "You have to believe",
+    "tagList": ["reactjs", "angularjs", "dragons"]
+}
+
+### Get Article by Slug
+GET {{ARTICLE_PREFIX}}/how-to-train-your-dragon-1ZvqJV6u
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ3NTg3Nn0.7gAWmoKTRpkEZLmW7zPfy1v5Dyd4DKBad9MnmZ5geiA48nVBffx1obEnLeGCCgqJuqPTNm2S_zLabZ1qraIkGg
+
+### Delete an Article
+DELETE {{ARTICLE_PREFIX}}/how-to-train-your-dragon-1ZvqJV6u
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzUzNTk0M30.nWbUcp-zcqVHgciuUrKvb-jC0yHZFehXXo1uz2TMPEUhTTN81L_Jxh8fXR6bVLQXdKk_vnZVqNIwTMqJ0VzABg
+
+### Get all tags
+GET {{BASE_URL}}/tags
