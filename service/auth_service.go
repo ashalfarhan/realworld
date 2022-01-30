@@ -24,20 +24,23 @@ func NewAuthService() *AuthService {
 	}
 }
 
-var secret = []byte("super-secret")
+const (
+	jwtSecret = "super-secret"
+	jwtExp    = 10 * time.Minute
+)
 
 func (AuthService) GenerateJWT(u *model.User) (string, error) {
 	c := &conduit.ConduitClaims{
 		UserID:   u.ID,
 		Username: u.Username,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
+			ExpiresAt: time.Now().Add(jwtExp).Unix(),
 			Audience:  "client.com",
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
-	str, err := token.SignedString(secret)
+	str, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", fmt.Errorf("cannot sign jwt: %w", err)
 	}
@@ -72,5 +75,5 @@ func getKey(t *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 	}
 
-	return secret, nil
+	return []byte(jwtSecret), nil
 }

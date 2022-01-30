@@ -12,14 +12,16 @@ import (
 )
 
 type ArticleService struct {
-	articleRepo *repository.ArticleRepository
-	userRepo    *repository.UserRepository
+	articleRepo     *repository.ArticleRepository
+	userRepo        *repository.UserRepository
+	articleTagsRepo *repository.ArticleTagsRepository
 }
 
 func NewArticleService(repo *repository.Repository) *ArticleService {
 	return &ArticleService{
-		articleRepo: repo.ArticleRepo,
-		userRepo:    repo.UserRepo,
+		articleRepo:     repo.ArticleRepo,
+		userRepo:        repo.UserRepo,
+		articleTagsRepo: repo.ArticleTagsRepo,
 	}
 }
 
@@ -39,6 +41,16 @@ func (s *ArticleService) Create(d *dto.CreateArticleDto, authorID string) (*mode
 		return nil, CreateServiceError(http.StatusBadRequest, err)
 	}
 
+	if len(d.TagList) > 0 {
+		for _, tag := range d.TagList {
+			if err := s.articleTagsRepo.InsertOne(a.ID, tag); err != nil {
+				return nil, CreateServiceError(http.StatusBadRequest, err)
+			}
+
+			a.TagList = append(a.TagList, tag)
+		}
+	}
+
 	if err := s.userRepo.FindOneById(a.Author.ID, a.Author); err != nil {
 		return nil, CreateServiceError(http.StatusBadRequest, err)
 	}
@@ -48,7 +60,8 @@ func (s *ArticleService) Create(d *dto.CreateArticleDto, authorID string) (*mode
 
 func (s *ArticleService) GetOneBySlug(slug string) (*model.Article, *ServiceError) {
 	a := &model.Article{
-		Slug: slug,
+		Slug:   slug,
+		Author: &model.User{},
 	}
 
 	if err := s.articleRepo.FindOneBySlug(a); err != nil {
@@ -56,6 +69,17 @@ func (s *ArticleService) GetOneBySlug(slug string) (*model.Article, *ServiceErro
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no article found"))
 		}
 
+		return nil, CreateServiceError(http.StatusBadRequest, err)
+	}
+
+	tags, err := s.articleTagsRepo.GetArticleTagsById(a.ID)
+	if err != nil {
+		return nil, CreateServiceError(http.StatusBadRequest, err)
+	}
+
+	a.TagList = tags
+
+	if err := s.userRepo.FindOneById(a.Author.ID, a.Author); err != nil {
 		return nil, CreateServiceError(http.StatusBadRequest, err)
 	}
 
@@ -77,4 +101,13 @@ func (s *ArticleService) DeleteArticle(slug string, userID string) *ServiceError
 	}
 
 	return nil
+}
+
+func (s *ArticleService) GetAllTags() ([]string, *ServiceError) {
+	tags, err := s.articleTagsRepo.GetAllTags()
+	if err != nil {
+		return nil, CreateServiceError(http.StatusBadRequest, err)
+	}
+
+	return tags, nil
 }
