@@ -18,20 +18,22 @@ func (r *ArticleRepository) InsertOne(a *model.Article) error {
 	VALUES
 		($1, $2, $3, $4, $5)
 	RETURNING
+		articles.id,
 		articles.created_at,
 		articles.updated_at
-	`).Scan(&a.CreatedAt, &a.UpdatedAt)
+	`, a.Slug, a.Title, a.Description, a.Body, a.Author.ID).
+		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
 }
 
 func (r *ArticleRepository) FindOneBySlug(a *model.Article) error {
 	return r.db.QueryRow(`
 	SELECT 
-		title, description, body, author_id
+		id, title, description, body, author_id, created_at, updated_at
 	FROM 
 		articles
 	WHERE 
 		articles.slug = $1
-	`, a.Slug).Scan(&a.Title, &a.Description, &a.Body, &a.Author.ID)
+	`, a.Slug).Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt)
 }
 
 func (r *ArticleRepository) DeleteBySlug(slug string) error {
