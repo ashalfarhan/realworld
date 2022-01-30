@@ -1,5 +1,5 @@
-CREATE TABLE users (
-    id           UUID DEFAULT uuid_generate_v4 () PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS users (
+    id           UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id     SERIAL NOT NULL,
     email       VARCHAR(255) UNIQUE NOT NULL,
 	username    VARCHAR(255) UNIQUE NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE users (
 	image       VARCHAR(255)
 );
 
-CREATE TABLE followings (
+CREATE TABLE IF NOT EXISTS followings (
     following_id UUID NOT NULL,
     follower_id UUID NOT NULL,
     PRIMARY KEY(following_id, follower_id),
