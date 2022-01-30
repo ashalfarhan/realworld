@@ -17,7 +17,10 @@ type UserService struct {
 }
 
 func NewUserService(repo *repository.Repository) *UserService {
-	return &UserService{repo.UR, repo.FR}
+	return &UserService{
+		userRepo:   repo.UserRepo,
+		followRepo: repo.FollowRepo,
+	}
 }
 
 func (s *UserService) GetOneById(id string) (*model.User, *ServiceError) {
@@ -111,7 +114,7 @@ func (s *UserService) FollowUser(followerID, username string) *ServiceError {
 	return nil
 }
 
-func (s *UserService) UnfollowUser(followerID, username string) (*ServiceError) {
+func (s *UserService) UnfollowUser(followerID, username string) *ServiceError {
 	following, err := s.GetOne(&dto.LoginUserDto{Username: username})
 	if err != nil {
 		return err

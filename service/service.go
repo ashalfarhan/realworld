@@ -7,15 +7,17 @@ import (
 )
 
 type Service struct {
-	US *UserService
-	AS *AuthService
+	*UserService
+	*AuthService
+	*ArticleService
 }
 
 func InitService(d *sql.DB) *Service {
 	repo := repository.InitRepository(d)
 
 	return &Service{
-		US: NewUserService(repo),
-		AS: NewAuthService(),
+		NewUserService(repo),
+		NewAuthService(),
+		NewArticleService(repo),
 	}
 }
