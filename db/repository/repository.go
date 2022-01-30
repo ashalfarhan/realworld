@@ -3,13 +3,19 @@ package repository
 import "database/sql"
 
 type Repository struct {
-	UR *UserRepository
-	FR *FollowingRepository
+	UserRepo        *UserRepository
+	FollowRepo      *FollowingRepository
+	ArticleRepo     *ArticleRepository
+	TagRepo         *TagRepository
+	ArticleTagsRepo *ArticleTagsRepository
 }
 
 func InitRepository(d *sql.DB) *Repository {
 	return &Repository{
-		UR: &UserRepository{d},
-		FR: &FollowingRepository{d},
+		UserRepo:        &UserRepository{d},
+		FollowRepo:      &FollowingRepository{d},
+		ArticleRepo:     &ArticleRepository{d},
+		TagRepo:         &TagRepository{d},
+		ArticleTagsRepo: &ArticleTagsRepository{d},
 	}
 }

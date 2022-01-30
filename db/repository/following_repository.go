@@ -3,11 +3,11 @@ package repository
 import "database/sql"
 
 type FollowingRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
-func (f *FollowingRepository) Follow(follower, following string) error {
-	_, err := f.DB.Exec(`
+func (r *FollowingRepository) Follow(follower, following string) error {
+	_, err := r.db.Exec(`
 	INSERT INTO 
 		followings
 		(follower_id, following_id)
@@ -16,8 +16,8 @@ func (f *FollowingRepository) Follow(follower, following string) error {
 	return err
 }
 
-func (f *FollowingRepository) Unfollow(follower, following string) error {
-	_, err := f.DB.Exec(`
+func (r *FollowingRepository) Unfollow(follower, following string) error {
+	_, err := r.db.Exec(`
 	DELETE FROM
 		followings
 	WHERE
@@ -28,8 +28,8 @@ func (f *FollowingRepository) Unfollow(follower, following string) error {
 	return err
 }
 
-func (f *FollowingRepository) IsFollowing(follower, following string) bool {
-	return f.DB.QueryRow(`
+func (r *FollowingRepository) IsFollowing(follower, following string) bool {
+	return r.db.QueryRow(`
 	SELECT 
 		COUNT(*)
 	FROM 

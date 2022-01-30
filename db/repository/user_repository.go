@@ -7,11 +7,11 @@ import (
 )
 
 type UserRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
-func (d *UserRepository) InsertOne(u *model.User) error {
-	return d.DB.
+func (r *UserRepository) InsertOne(u *model.User) error {
+	return r.db.
 		QueryRow(`
 	INSERT INTO 
 		users
@@ -28,8 +28,8 @@ func (d *UserRepository) InsertOne(u *model.User) error {
 		).Scan(&u.ID, &u.Bio, &u.Image)
 }
 
-func (d *UserRepository) FindOneById(id string, u *model.User) error {
-	return d.DB.
+func (r *UserRepository) FindOneById(id string, u *model.User) error {
+	return r.db.
 		QueryRow(`
 	SELECT 
 		id, email, username, bio, image
@@ -40,8 +40,8 @@ func (d *UserRepository) FindOneById(id string, u *model.User) error {
 		Scan(&u.ID, &u.Email, &u.Username, &u.Bio, &u.Image)
 }
 
-func (d *UserRepository) FindOne(cand *model.User) error {
-	return d.DB.
+func (r *UserRepository) FindOne(cand *model.User) error {
+	return r.db.
 		QueryRow(`
 	SELECT 
 		id, email, username, password, bio, image 
@@ -58,7 +58,7 @@ func (d *UserRepository) FindOne(cand *model.User) error {
 }
 
 func (d *UserRepository) UpdateOne(u *model.User) error {
-	_, err := d.DB.
+	_, err := d.db.
 		Exec(`
 	UPDATE 
 		users
