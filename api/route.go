@@ -10,27 +10,40 @@ import (
 )
 
 func InitRoutes(s *service.Service) *mux.Router {
-	r := mux.NewRouter().StrictSlash(true)
+	r := mux.NewRouter()
 
 	r.HandleFunc("/", controller.Hello).Methods(http.MethodGet)
 	apiRoute := r.PathPrefix("/api").Subrouter()
+	m := middleware.NewMiddleware(s)
 
-	// User
+	// Users
 	uc := controller.NewUserController(s)
 	usersRoute := apiRoute.PathPrefix("/users").Subrouter()
+
 	usersRoute.HandleFunc("/register", uc.RegisterUser).Methods(http.MethodPost)
 	usersRoute.HandleFunc("/login", uc.LoginUser).Methods(http.MethodPost)
 
+	// User
 	userRoute := apiRoute.PathPrefix("/user").Subrouter()
-	userRoute.HandleFunc("", middleware.WithUser(s.AS, uc.GetCurrentUser)).Methods(http.MethodGet)
-	userRoute.HandleFunc("", middleware.WithUser(s.AS, uc.UpdateCurrentUser)).Methods(http.MethodPut)
+
+	userRoute.HandleFunc("", m.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
+	userRoute.HandleFunc("", m.WithUser(uc.UpdateCurrentUser)).Methods(http.MethodPut)
 
 	// Profile
 	pc := controller.NewProfileController(s)
 	profileRoute := apiRoute.PathPrefix("/profiles").Subrouter()
-	profileRoute.HandleFunc("/{username}", middleware.WithUser(s.AS, pc.GetProfile)).Methods(http.MethodGet)
-	profileRoute.HandleFunc("/{username}/follow", middleware.WithUser(s.AS, pc.FollowUser)).Methods(http.MethodPost)
-	profileRoute.HandleFunc("/{username}/follow", middleware.WithUser(s.AS, pc.UnfollowUser)).Methods(http.MethodDelete)
+
+	profileRoute.HandleFunc("/{username}", m.WithUser(pc.GetProfile)).Methods(http.MethodGet)
+	profileRoute.HandleFunc("/{username}/follow", m.WithUser(pc.FollowUser)).Methods(http.MethodPost)
+	profileRoute.HandleFunc("/{username}/follow", m.WithUser(pc.UnfollowUser)).Methods(http.MethodDelete)
+
+	// Article
+	ac := controller.NewArticleController(s)
+	articleRoute := apiRoute.PathPrefix("/articles").Subrouter()
+
+	articleRoute.HandleFunc("", m.WithUser(ac.CreateArticle)).Methods(http.MethodPost)
+	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)
+	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.DeleteArticle)).Methods(http.MethodDelete)
 
 	return r
 }

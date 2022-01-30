@@ -17,10 +17,10 @@ type UserController struct {
 	authService *service.AuthService
 }
 
-func NewUserController(svc *service.Service) *UserController {
+func NewUserController(s *service.Service) *UserController {
 	return &UserController{
-		userService: svc.US,
-		authService: svc.AS,
+		userService: s.UserService,
+		authService: s.AuthService,
 	}
 }
 
