@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	"github.com/ashalfarhan/realworld/api/response"
-	"github.com/ashalfarhan/realworld/service"
 )
 
-func WithUser(authService *service.AuthService, next http.HandlerFunc) http.HandlerFunc {
+func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
@@ -17,13 +16,13 @@ func WithUser(authService *service.AuthService, next http.HandlerFunc) http.Hand
 		}
 
 		jwt := authHeader[1]
-		claim, err := authService.ParseJWT(jwt)
+		claim, err := m.authService.ParseJWT(jwt)
 		if err != nil {
 			response.UnauthorizeError(w)
 			return
 		}
 
-		ctx := authService.CreateUserCtx(r.Context(), claim)
+		ctx := m.authService.CreateUserCtx(r.Context(), claim)
 		next(w, r.WithContext(ctx))
 	})
 }
