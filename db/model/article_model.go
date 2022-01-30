@@ -1,6 +1,7 @@
 package model
 
 type Article struct {
+	ID          string `json:"-"`
 	Slug        string `json:"slug"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -9,5 +10,6 @@ type Article struct {
 	UpdatedAt   string `json:"updatedAt"`
 	// Favorited      bool     `json:"favorited"`
 	// FavoritesCount int  `json:"favoritesCount"`
-	Author *User `json:"author"`
+	TagList []string `json:"tagList"`
+	Author  *User    `json:"author"`
 }
