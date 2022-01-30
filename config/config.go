@@ -13,6 +13,7 @@ type Config struct {
 	Env string
 }
 
+// Trigger workflow
 func LoadConfig() *Config {
 	var ok bool
 	co := &Config{}
