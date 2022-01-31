@@ -77,19 +77,23 @@ func (r *UserRepository) UpdateOne(u *conduit.UpdateUserArgs) error {
 		valArgs = append(valArgs, *u.Username)
 	}
 
+	if  u.Bio.Set {
+		argIdx++
+		updateArgs = append(updateArgs, fmt.Sprintf("bio = $%d", argIdx))
+		valArgs = append(valArgs, u.Bio)
+	}
+
+	if  u.Image.Set {
+		argIdx++
+		updateArgs = append(updateArgs, fmt.Sprintf("image = $%d", argIdx))
+		valArgs = append(valArgs, u.Image)
+	}
+
 	if v := u.Password; v != nil {
 		argIdx++
 		updateArgs = append(updateArgs, fmt.Sprintf("password = $%d", argIdx))
 		valArgs = append(valArgs, *u.Password)
 	}
-
-	argIdx++
-	updateArgs = append(updateArgs, fmt.Sprintf("bio = $%d", argIdx))
-	valArgs = append(valArgs, u.Bio)
-
-	argIdx++
-	updateArgs = append(updateArgs, fmt.Sprintf("image = $%d", argIdx))
-	valArgs = append(valArgs, u.Image)
 
 	updateArgs = append(updateArgs, "updated_at = NOW()")
 

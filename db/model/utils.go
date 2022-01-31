@@ -6,6 +6,7 @@ import (
 )
 
 type NullString struct {
+	Set bool
 	sql.NullString
 }
 
@@ -15,9 +16,12 @@ func (ns *NullString) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(ns.String)
+
 }
 
 func (ns *NullString) UnmarshalJSON(b []byte) error {
+	ns.Set = true
+
 	err := json.Unmarshal(b, &ns.String)
 	ns.Valid = err == nil
 
