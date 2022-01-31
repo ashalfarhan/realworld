@@ -86,8 +86,8 @@ func (s *UserService) CreateOne(d *dto.RegisterUserDto) (*model.User, *ServiceEr
 func (s *UserService) Update(d *dto.UpdateUserDto, uid string) *ServiceError {
 	u := &conduit.UpdateUserArgs{
 		ID: uid,
-		// Bio:   *d.Bio,
-		// Image: *d.Image,
+		Bio:   d.Bio,
+		Image: d.Image,
 	}
 
 	if len(d.Email) != 0 {
@@ -103,17 +103,17 @@ func (s *UserService) Update(d *dto.UpdateUserDto, uid string) *ServiceError {
 		u.Password = &hashed
 	}
 
-	// if err := s.userRepo.UpdateOne(u); err != nil {
-	// 	switch err.Error() {
-	// 	case ErrDuplicateEmail:
-	// 		return CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
-	// 	case ErrDuplicateUsername:
-	// 		return CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
-	// 	default:
-	// 		// TODO: Change to InternalServerError
-	// 		return CreateServiceError(http.StatusBadRequest, err)
-	// 	}
-	// }
+	if err := s.userRepo.UpdateOne(u); err != nil {
+		switch err.Error() {
+		case ErrDuplicateEmail:
+			return CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
+		case ErrDuplicateUsername:
+			return CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
+		default:
+			s.logger.Printf("Cannot UpdateOne payload:%#v args:%#v, Reason: %v", d, u, err)
+			return CreateServiceError(http.StatusBadRequest, err)
+		}
+	}
 
 	return nil
 }

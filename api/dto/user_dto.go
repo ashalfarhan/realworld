@@ -18,6 +18,6 @@ type UpdateUserDto struct {
 	Email    string           `json:"email,omitempty" validate:"omitempty,email"`
 	Username string           `json:"username,omitempty" validate:"omitempty,alphanum,max=40"`
 	Password string           `json:"password,omitempty" validate:"omitempty,min=8,max=255"`
-	Image    model.NullString `json:"image,omitempty" validate:"omitempty,max=255,url"`
+	Image    model.NullString `json:"image,omitempty" validate:"omitempty,url"`
 	Bio      model.NullString `json:"bio,omitempty" validate:"omitempty,max=255"`
 }

@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -29,7 +28,6 @@ func LoadConfig() *Config {
 	co.Env, ok = os.LookupEnv("APP_ENV")
 	if !ok {
 		co.Env = "dev"
-		log.Println("APP_ENV is not set, using default \"dev\"")
 	}
 
 	return co
