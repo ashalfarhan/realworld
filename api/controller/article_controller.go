@@ -31,7 +31,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 	}
 
 	v := validator.New()
-	if err := dto.ValidateDto(d, v); err != nil {
+	if err := v.Struct(d); err != nil {
 		response.EntityError(w, err)
 		return
 	}

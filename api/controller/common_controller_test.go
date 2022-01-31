@@ -18,6 +18,7 @@ func TestHelloController(t *testing.T) {
 		"result": "Hello",
 		"status": 200,
 	}
+
 	var result string
 	json.NewDecoder(res.Body).Decode(&result)
 

@@ -32,7 +32,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v := validator.New()
-	if err := dto.ValidateDto(d, v); err != nil {
+	if err := v.Struct(d); err != nil {
 		response.EntityError(w, err)
 		return
 	}
@@ -56,7 +56,7 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v := validator.New()
-	if err := dto.ValidateDto(d, v); err != nil {
+	if err := v.Struct(d); err != nil {
 		response.EntityError(w, err)
 		return
 	}
@@ -111,7 +111,7 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	v := validator.New()
-	if err := dto.ValidateDto(d, v); err != nil {
+	if err := v.Struct(d); err != nil {
 		response.EntityError(w, err)
 		return
 	}

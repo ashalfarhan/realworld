@@ -9,15 +9,15 @@ type RegisterUserDto struct {
 }
 
 type LoginUserDto struct {
-	Email    string `json:"email,omitempty" validate:"required_without=Username,omitempty,email"`
-	Username string `json:"username,omitempty" validate:"required_without=Email,omitempty,alphanum"`
+	Email    string `json:"email" validate:"required_without=Username,omitempty,email"`
+	Username string `json:"username" validate:"required_without=Email,omitempty,alphanum"`
 	Password string `json:"password" validate:"required"`
 }
 
 type UpdateUserDto struct {
-	Email    string           `json:"email,omitempty" validate:"omitempty,email"`
-	Username string           `json:"username,omitempty" validate:"omitempty,alphanum,max=40"`
-	Password string           `json:"password,omitempty" validate:"omitempty,min=8,max=255"`
-	Image    model.NullString `json:"image,omitempty" validate:"omitempty,url"`
-	Bio      model.NullString `json:"bio,omitempty" validate:"omitempty,max=255"`
+	Email    string           `json:"email" validate:"omitempty,email"`
+	Username string           `json:"username" validate:"omitempty,alphanum,max=40"`
+	Password string           `json:"password" validate:"omitempty,min=8,max=255"`
+	Image    model.NullString `json:"image" validate:"url"`
+	Bio      model.NullString `json:"bio" validate:"max=255"`
 }
