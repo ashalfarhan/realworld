@@ -7,7 +7,7 @@ import (
 )
 
 func Error(w http.ResponseWriter, statusCode int, err error) {
-	JSON(w, statusCode, map[string]string{
+	JSON(w, statusCode, M{
 		"error": err.Error(),
 	})
 }
@@ -21,7 +21,7 @@ func InternalError(w http.ResponseWriter) {
 }
 
 func EntityError(w http.ResponseWriter, err interface{}) {
-	JSON(w, http.StatusUnprocessableEntity, map[string]interface{}{
+	JSON(w, http.StatusUnprocessableEntity, M{
 		"errors": err,
 	})
 }

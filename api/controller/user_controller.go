@@ -8,7 +8,6 @@ import (
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
 )
@@ -44,7 +43,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Created(w, map[string]*model.User{
+	response.Created(w, response.M{
 		"user": u,
 	})
 }
@@ -99,7 +98,7 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response.Ok(w, map[string]*model.User{
+	response.Ok(w, response.M{
 		"user": u,
 	})
 }
@@ -119,7 +118,7 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 
 	iu := c.authService.GetUserFromCtx(r)
 	if err := c.userService.Update(d, iu.UserID); err != nil {
-		response.Error(w, http.StatusBadRequest, err)
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 

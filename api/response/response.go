@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+type M map[string]interface{}
+
 func JSON(w http.ResponseWriter, statusCode int, resp interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)

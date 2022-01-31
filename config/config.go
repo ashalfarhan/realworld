@@ -21,7 +21,6 @@ func LoadConfig() *Config {
 	if !ok {
 		co.Port = "4000"
 	}
-	log.Println("Using port:", co.Port)
 
 	host := os.Getenv("HOST")
 

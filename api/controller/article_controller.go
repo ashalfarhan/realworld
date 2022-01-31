@@ -6,7 +6,6 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
-	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -44,7 +43,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response.Created(w, map[string]*model.Article{
+	response.Created(w, response.M{
 		"article": a,
 	})
 }
@@ -58,7 +57,7 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response.Ok(w, map[string]*model.Article{
+	response.Ok(w, response.M{
 		"article": a,
 	})
 }
@@ -82,7 +81,7 @@ func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Ok(w, map[string][]string{
+	response.Ok(w, response.M{
 		"tags": tags,
 	})
 }

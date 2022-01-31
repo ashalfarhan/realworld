@@ -10,6 +10,7 @@ import (
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/golang-jwt/jwt"
+	
 )
 
 type userContextKey string
@@ -26,7 +27,7 @@ func NewAuthService() *AuthService {
 
 const (
 	jwtSecret = "super-secret"
-	jwtExp    = 10 * time.Minute
+	jwtExp    = 20 * time.Minute
 )
 
 func (AuthService) GenerateJWT(u *model.User) (string, error) {

@@ -25,18 +25,16 @@ Content-Type: application/json
 
 ### Get User info
 GET {{USER_PREFIX}}
-Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ3NDgwMH0.JzEjZneefMCVm2cu7bXw5GEwHx7IEppG2U22uyeMhgRe9Hzmt_vDxKnnZoTRMqqC483LZ_nDEoMeofYMZKOM_g
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzU3NDgzNn0.ZJ9CU8Jb4iaSYYyqZkpNnBEel_tMHKQTQvhTo0cswxo24lR44SRQr8qIld_FsgyQroo0NYY0rH7Xmb5aKV0NMA
 
 ### Update User
 PUT {{USER_PREFIX}}
-Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI5NGIxNTlmYy1hZjc4LTRhYmUtOTQzNi03Yjg4ZDQ4ZjExYjMiLCJ1c2VybmFtZSI6InVzZXIxIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzQ1MTE3OX0.11B9rKjikLFaQ4WRPLt2CgJcMbWQjvu7Q3juK0gjQhI2LyOvlQbogtgYAxCJFSdhMQGdQr0zBAXATxWfrIEGTg
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIwNTdjOTJiOS0yMDA3LTQzOTItYjFkYy0wNWNiZmFjZWFjNzEiLCJ1c2VybmFtZSI6ImFzaGFsZmFyaGFuIiwiYXVkIjoiY2xpZW50LmNvbSIsImV4cCI6MTY0MzU3NDgzNn0.ZJ9CU8Jb4iaSYYyqZkpNnBEel_tMHKQTQvhTo0cswxo24lR44SRQr8qIld_FsgyQroo0NYY0rH7Xmb5aKV0NMA
 Content-Type: application/json
 
 {
-    "email": "user1@gmail.com",
-    "username": "user1",
-    "password": "test1234",
-    "bio": "My name is user 1"
+    "email": "ashalfarhan@gmail.com",
+    "bio": null
 }
 
 ### Follow a user

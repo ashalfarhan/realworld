@@ -2,7 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
+	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 )
 
@@ -13,12 +16,12 @@ type UserRepository struct {
 func (r *UserRepository) InsertOne(u *model.User) error {
 	return r.db.
 		QueryRow(`
-	INSERT INTO 
+	INSERT INTO
 		users
 		(email, username, password, bio, image)
-	VALUES 
+	VALUES
 		($1, $2, $3, $4, $5)
-	RETURNING 
+	RETURNING
 		users.id, users.bio, users.image`,
 			u.Email,
 			u.Username,
@@ -31,23 +34,23 @@ func (r *UserRepository) InsertOne(u *model.User) error {
 func (r *UserRepository) FindOneById(id string, u *model.User) error {
 	return r.db.
 		QueryRow(`
-	SELECT 
-		id, email, username, bio, image
-	FROM 
+	SELECT
+		id, email, username, bio, image, created_at, updated_at
+	FROM
 		users
-	WHERE 
+	WHERE
 		users.id = $1`, id).
-		Scan(&u.ID, &u.Email, &u.Username, &u.Bio, &u.Image)
+		Scan(&u.ID, &u.Email, &u.Username, &u.Bio, &u.Image, &u.CreatedAt, &u.UpdatedAt)
 }
 
 func (r *UserRepository) FindOne(cand *model.User) error {
 	return r.db.
 		QueryRow(`
-	SELECT 
+	SELECT
 		id, email, username, password, bio, image 
-	FROM 
+	FROM
 		users 
-	WHERE 
+	WHERE
 		users.email = $1 
 	OR
 		users.username = $2`,
@@ -57,25 +60,52 @@ func (r *UserRepository) FindOne(cand *model.User) error {
 		Scan(&cand.ID, &cand.Email, &cand.Username, &cand.Password, &cand.Bio, &cand.Image)
 }
 
-func (d *UserRepository) UpdateOne(u *model.User) error {
-	_, err := d.db.
-		Exec(`
-	UPDATE 
-		users
-	SET 
-		email = $2,
-		username = $3,
-		password = $4,
-		bio = $5,
-		image = $6,
-		updated_at = NOW()
-	WHERE users.id = $1`,
-			u.ID,
-			u.Email,
-			u.Username,
-			u.Password,
-			u.Bio,
-			u.Image,
-		)
-	return err
+func (r *UserRepository) UpdateOne(u *conduit.UpdateUserArgs) error {
+	var updateArgs []string
+	var valArgs []interface{}
+	argIdx := 0
+
+	if v := u.Email; v != nil {
+		argIdx++
+		updateArgs = append(updateArgs, fmt.Sprintf("email = $%d", argIdx))
+		valArgs = append(valArgs, *u.Email)
+	}
+
+	if v := u.Username; v != nil {
+		argIdx++
+		updateArgs = append(updateArgs, fmt.Sprintf("username = $%d", argIdx))
+		valArgs = append(valArgs, *u.Username)
+	}
+
+	if v := u.Password; v != nil {
+		argIdx++
+		updateArgs = append(updateArgs, fmt.Sprintf("password = $%d", argIdx))
+		valArgs = append(valArgs, *u.Password)
+	}
+
+	argIdx++
+	updateArgs = append(updateArgs, fmt.Sprintf("bio = $%d", argIdx))
+	valArgs = append(valArgs, u.Bio)
+
+	argIdx++
+	updateArgs = append(updateArgs, fmt.Sprintf("image = $%d", argIdx))
+	valArgs = append(valArgs, u.Image)
+
+	updateArgs = append(updateArgs, "updated_at = NOW()")
+
+	argIdx++
+	valArgs = append(valArgs, u.ID)
+	query := fmt.Sprintf("UPDATE users SET %s WHERE users.id = $%d", strings.Join(updateArgs, ", "), argIdx)
+
+	stmt, err := r.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	if _, err := stmt.Exec(valArgs...); err != nil {
+		return err
+	}
+
+	return nil
 }

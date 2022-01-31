@@ -58,6 +58,7 @@ func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	iu := c.authService.GetUserFromCtx(r)
 	following := c.userService.IsFollowing(iu.UserID, u.ID)
+
 	res := &conduit.ProfileResponse{
 		Username:  u.Username,
 		Bio:       u.Bio,

@@ -3,23 +3,27 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/db/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
 	userRepo   *repository.UserRepository
 	followRepo *repository.FollowingRepository
+	logger     *log.Logger
 }
 
 func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{
 		userRepo:   repo.UserRepo,
 		followRepo: repo.FollowRepo,
+		logger:     conduit.NewLogger("user-service"),
 	}
 }
 
@@ -29,6 +33,8 @@ func (s *UserService) GetOneById(id string) (*model.User, *ServiceError) {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
 		}
+
+		s.logger.Printf("Cannot FindOneById for %s, Reason: %v", id, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -45,7 +51,9 @@ func (s *UserService) GetOne(d *dto.LoginUserDto) (*model.User, *ServiceError) {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
 		}
-		return nil, CreateServiceError(http.StatusInternalServerError, err)
+
+		s.logger.Printf("Cannot FindOne for %#v, Reason: %v", d, err)
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	return u, nil
@@ -57,9 +65,7 @@ func (s *UserService) CreateOne(d *dto.RegisterUserDto) (*model.User, *ServiceEr
 		Username: d.Username,
 	}
 
-	if err := u.HashPassword(d.Password); err != nil {
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
+	u.Password = s.HashPassword(d.Password)
 
 	if err := s.userRepo.InsertOne(u); err != nil {
 		switch err.Error() {
@@ -68,7 +74,8 @@ func (s *UserService) CreateOne(d *dto.RegisterUserDto) (*model.User, *ServiceEr
 		case ErrDuplicateUsername:
 			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
 		default:
-			return nil, CreateServiceError(http.StatusInternalServerError, err)
+			s.logger.Printf("Cannot InsertOne for %#v, Reason: %v", d, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 
 	}
@@ -76,20 +83,39 @@ func (s *UserService) CreateOne(d *dto.RegisterUserDto) (*model.User, *ServiceEr
 	return u, nil
 }
 
-func (s *UserService) Update(d *dto.UpdateUserDto, uid string) error {
-	u := &model.User{
-		ID:       uid,
-		Email:    d.Email,
-		Username: d.Username,
-		Bio:      d.Bio,
-		Image:    d.Image,
+func (s *UserService) Update(d *dto.UpdateUserDto, uid string) *ServiceError {
+	u := &conduit.UpdateUserArgs{
+		ID: uid,
+		// Bio:   *d.Bio,
+		// Image: *d.Image,
 	}
 
-	if err := u.HashPassword(d.Password); err != nil {
-		return conduit.ErrInternal
+	if len(d.Email) != 0 {
+		u.Email = &d.Email
 	}
 
-	return s.userRepo.UpdateOne(u)
+	if len(d.Username) != 0 {
+		u.Username = &d.Username
+	}
+
+	if len(d.Password) != 0 {
+		hashed := s.HashPassword(d.Password)
+		u.Password = &hashed
+	}
+
+	// if err := s.userRepo.UpdateOne(u); err != nil {
+	// 	switch err.Error() {
+	// 	case ErrDuplicateEmail:
+	// 		return CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
+	// 	case ErrDuplicateUsername:
+	// 		return CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
+	// 	default:
+	// 		// TODO: Change to InternalServerError
+	// 		return CreateServiceError(http.StatusBadRequest, err)
+	// 	}
+	// }
+
+	return nil
 }
 
 func (s *UserService) FollowUser(followerID, username string) *ServiceError {
@@ -107,7 +133,8 @@ func (s *UserService) FollowUser(followerID, username string) *ServiceError {
 		case ErrDuplicateFollowing:
 			return CreateServiceError(http.StatusBadRequest, errors.New("you are already follow this user"))
 		default:
-			return CreateServiceError(http.StatusInternalServerError, err)
+			s.logger.Printf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
+			return CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
 
@@ -125,6 +152,7 @@ func (s *UserService) UnfollowUser(followerID, username string) *ServiceError {
 	}
 
 	if err := s.followRepo.Unfollow(followerID, following.ID); err != nil {
+		s.logger.Printf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
 		return CreateServiceError(http.StatusInternalServerError, err)
 	}
 
@@ -133,4 +161,13 @@ func (s *UserService) UnfollowUser(followerID, username string) *ServiceError {
 
 func (s *UserService) IsFollowing(followerID, followingID string) bool {
 	return s.followRepo.IsFollowing(followerID, followingID)
+}
+
+func (s *UserService) HashPassword(p string) string {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Printf("Cannot HashPassword, Reason: %v", err)
+	}
+
+	return string(hashed)
 }

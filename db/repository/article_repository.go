@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 )
 
@@ -12,7 +13,7 @@ type ArticleRepository struct {
 
 func (r *ArticleRepository) InsertOne(a *model.Article) error {
 	return r.db.QueryRow(`
-	INSERT INTO 
+	INSERT INTO
 		articles
 		(slug, title, description, body, author_id)
 	VALUES
@@ -27,11 +28,11 @@ func (r *ArticleRepository) InsertOne(a *model.Article) error {
 
 func (r *ArticleRepository) FindOneBySlug(a *model.Article) error {
 	return r.db.QueryRow(`
-	SELECT 
+	SELECT
 		id, title, description, body, author_id, created_at, updated_at
-	FROM 
+	FROM
 		articles
-	WHERE 
+	WHERE
 		articles.slug = $1
 	`, a.Slug).Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt)
 }
@@ -40,9 +41,40 @@ func (r *ArticleRepository) DeleteBySlug(slug string) error {
 	_, err := r.db.Exec(`
 	DELETE FROM
 		articles
-	WHERE 
+	WHERE
 		articles.slug = $1
 	`, slug)
 
 	return err
+}
+
+func (r *ArticleRepository) GetFiltered(p *conduit.ArticleParams) ([]model.Article, error) {
+	row, err := r.db.Query(`
+	SELECT
+		id, title, description, body, author_id, created_at, updated_at
+	FROM
+		articles
+	LIMIT $1
+	OFFSET $2
+	ORDER BY created_at DESC
+	`, p.Limit, p.Offset)
+	if err != nil {
+		return nil, err
+	}
+
+	var articles []model.Article
+	defer row.Close()
+
+	for row.Next() {
+		a := model.Article{
+			Author: &model.User{},
+		}
+		err = row.Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		articles = append(articles, a)
+	}
+
+	return articles, nil
 }

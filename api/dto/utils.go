@@ -14,6 +14,13 @@ func ValidateDto(s interface{}, v *validator.Validate) interface{} {
 
 		errs := map[string][]string{}
 		for _, field := range e {
+			// fmt.Println("field.ActualTag(): ", field.ActualTag())
+			// fmt.Println("field.Error(): ", field.Error())
+			// fmt.Println("field.Field(): ", field.Field())
+			// fmt.Println("field.Kind(): ", field.Kind())
+			// fmt.Println("field.Param(): ", field.Param())
+			// fmt.Println("field.Value(): ", field.Value())
+			// fmt.Println("field.Kind().String(): ", field.Kind().String())
 			errs[field.Field()] = append(errs[field.Field()], field.Error())
 		}
 

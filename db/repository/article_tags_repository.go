@@ -34,6 +34,7 @@ func (r *ArticleTagsRepository) GetArticleTagsById(articleID string) ([]string, 
 
 	defer row.Close()
 	var tags []string
+
 	for row.Next() {
 		var tag string
 		if err := row.Scan(&tag); err != nil {
@@ -59,6 +60,7 @@ func (r *ArticleTagsRepository) GetAllTags() ([]string, error) {
 
 	defer row.Close()
 	var tags []string
+
 	for row.Next() {
 		var tag string
 		if err := row.Scan(&tag); err != nil {
