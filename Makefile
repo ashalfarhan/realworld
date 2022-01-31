@@ -1,10 +1,6 @@
 POSTGRES_URL="postgres://postgres:password@localhost:5432/postgres?sslmode=disable"
 MIGRATION_PATH="./db/migrations"
 
-start:
-	docker-compose up -d
-	air
-
 migrate-up:
 	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} up
 

@@ -19,3 +19,10 @@ type UpdateUserArgs struct {
 	Image    model.NullString
 	Bio      model.NullString
 }
+
+type UpdateArticleArgs struct {
+	Title       *string
+	Slug        *string
+	Body        *string
+	Description *string
+}

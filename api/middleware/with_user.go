@@ -8,7 +8,7 @@ import (
 )
 
 func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
 			response.UnauthorizeError(w)
@@ -24,5 +24,5 @@ func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := m.authService.CreateUserCtx(r.Context(), claim)
 		next(w, r.WithContext(ctx))
-	})
+	}
 }

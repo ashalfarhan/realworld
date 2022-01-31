@@ -138,3 +138,37 @@ func (s *ArticleService) CreateSlug(title string) string {
 
 	return fmt.Sprintf("%s-%s", slug, id)
 }
+
+func (s *ArticleService) UpdateOneBySlug(userID, slug string, d *dto.UpdateArticleDto) *ServiceError {
+	a := (&conduit.UpdateArticleArgs{})
+
+	if len(d.Body) != 0 {
+		a.Body = &d.Body
+	}
+
+	if len(d.Description) != 0 {
+		a.Description = &d.Description
+	}
+
+	if len(d.Title) != 0 {
+		a.Title = &d.Title
+		newSlug := s.CreateSlug(d.Title)
+		a.Slug = &newSlug
+	}
+
+	ar, err := s.GetOneBySlug(slug)
+	if err != nil {
+		return err
+	}
+
+	if ar.Author.ID != userID {
+		return CreateServiceError(http.StatusForbidden, errors.New("you cannot edit others article"))
+	}
+
+	if err := s.articleRepo.Update(slug, a); err != nil {
+		s.logger.Printf("Cannot update article, slug:%s, payload:%#v, Reason:%v", slug, d, err)
+		return CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	return nil
+}
