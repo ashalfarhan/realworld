@@ -10,7 +10,6 @@ import (
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/golang-jwt/jwt"
-	
 )
 
 type userContextKey string
@@ -63,8 +62,9 @@ func (AuthService) ParseJWT(str string) (*conduit.ConduitClaims, error) {
 	return claim, nil
 }
 
-func (a AuthService) GetUserFromCtx(r *http.Request) *conduit.ConduitClaims {
-	return r.Context().Value(a.userCtxKey).(*conduit.ConduitClaims)
+func (a AuthService) GetUserFromCtx(r *http.Request) (*conduit.ConduitClaims, bool) {
+	u, ok := r.Context().Value(a.userCtxKey).(*conduit.ConduitClaims)
+	return u, ok
 }
 
 func (a AuthService) CreateUserCtx(parentCtx context.Context, claim *conduit.ConduitClaims) context.Context {

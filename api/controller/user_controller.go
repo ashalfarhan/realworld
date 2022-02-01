@@ -78,7 +78,7 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := &conduit.UserAuthResponse{
+	res := &conduit.UserResponse{
 		Email:    u.Email,
 		Username: u.Username,
 		Token:    token,
@@ -90,7 +90,7 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
 	u, err := c.userService.GetOneById(r.Context(), iu.UserID)
 	if err != nil {
@@ -116,11 +116,14 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	iu := c.authService.GetUserFromCtx(r)
-	if err := c.userService.Update(r.Context(), d, iu.UserID); err != nil {
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
+	u, err := c.userService.Update(r.Context(), d, iu.UserID)
+	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	response.Accepted(w, nil)
+	response.Accepted(w, response.M{
+		"user": u,
+	})
 }

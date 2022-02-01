@@ -9,7 +9,7 @@ type FollowingRepository struct {
 	db *sql.DB
 }
 
-func (r *FollowingRepository) Follow(ctx context.Context, follower, following string) error {
+func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (r *FollowingRepository) Follow(ctx context.Context, follower, following st
 	return tx.Commit()
 }
 
-func (r *FollowingRepository) Unfollow(ctx context.Context, follower, following string) error {
+func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, following string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -55,16 +55,14 @@ func (r *FollowingRepository) Unfollow(ctx context.Context, follower, following 
 	return tx.Commit()
 }
 
-func (r *FollowingRepository) IsFollowing(ctx context.Context, follower, following string) bool {
+func (r *FollowingRepository) GetOneByIDs(ctx context.Context, follower, following string) error {
 	return r.db.QueryRowContext(ctx, `
-	SELECT 
-		COUNT(*)
-	FROM 
+	SELECT *
+	FROM
 		followings
 	WHERE
 		followings.follower_id = $1
 	AND
 		followings.following_id = $2
-	`, follower, following).Err() == nil
-
+	`, follower, following).Err()
 }

@@ -38,7 +38,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 	a, err := c.articleService.Create(r.Context(), d, iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
@@ -59,14 +59,30 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	iu, ok := c.authService.GetUserFromCtx(r)
+	res := &conduit.ArticleResponse{
+		Slug:        a.Slug,
+		Title:       a.Title,
+		Description: a.Description,
+		Body:        a.Body,
+		CreatedAt:   a.CreatedAt,
+		UpdatedAt:   a.UpdatedAt,
+		TagList:     a.TagList,
+		Author:      a.Author,
+	}
+
+	if ok {
+		res.Favorited = c.articleService.IsArticleFavorited(r.Context(), iu.UserID, a.ID)
+	}
+
 	response.Ok(w, response.M{
-		"article": a,
+		"article": res,
 	})
 }
 
 func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request) {
 	slug := mux.Vars(r)["slug"]
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
 	if err := c.articleService.DeleteArticle(r.Context(), slug, iu.UserID); err != nil {
 		response.Error(w, err.Code, err.Error)
@@ -102,7 +118,7 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 	}
 
 	slug := mux.Vars(r)["slug"]
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
 	ar, err := c.articleService.UpdateOneBySlug(r.Context(), iu.UserID, slug, d)
 	if err != nil {
@@ -124,15 +140,18 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	if l == "" {
 		limit = 5
 	} else {
-		if limit, err = strconv.Atoi(l); err != nil {
+		limit, err = strconv.Atoi(l)
+		if err != nil {
 			response.ClientError(w, err)
 			return
 		}
 	}
+
 	if o == "" {
 		offset = 0
 	} else {
-		if offset, err = strconv.Atoi(o); err != nil {
+		offset, err = strconv.Atoi(o)
+		if err != nil {
 			response.ClientError(w, err)
 			return
 		}
@@ -150,12 +169,40 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	}
 
 	articles, serr := c.articleService.GetArticles(r.Context(), args)
-	if err != nil {
+	if serr != nil {
 		response.Error(w, serr.Code, serr.Error)
 		return
 	}
 
 	response.Ok(w, response.M{
 		"articles": articles,
+	})
+}
+
+func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Request) {
+	slug := mux.Vars(r)["slug"]
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
+	a, err := c.articleService.FavoriteArticleBySlug(r.Context(), iu.UserID, slug)
+	if err != nil {
+		response.Error(w, err.Code, err.Error)
+		return
+	}
+
+	response.Accepted(w, response.M{
+		"article": a,
+	})
+}
+
+func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Request) {
+	slug := mux.Vars(r)["slug"]
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
+	a, err := c.articleService.UnfavoriteArticleBySlug(r.Context(), iu.UserID, slug)
+	if err != nil {
+		response.Error(w, err.Code, err.Error)
+		return
+	}
+
+	response.Accepted(w, response.M{
+		"article": a,
 	})
 }

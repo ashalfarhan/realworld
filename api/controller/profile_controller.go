@@ -25,7 +25,7 @@ func NewProfileController(s *service.Service) *ProfileController {
 func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 	uname := mux.Vars(r)["username"]
 
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
 	profile, err := c.userService.FollowUser(r.Context(), iu.UserID, uname)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request) {
 	uname := mux.Vars(r)["username"]
 
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 	profile, err := c.userService.UnfollowUser(r.Context(), iu.UserID, uname)
 
 	if err != nil {
@@ -72,7 +72,7 @@ func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iu := c.authService.GetUserFromCtx(r)
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 	following := c.userService.IsFollowing(r.Context(), iu.UserID, u.ID)
 
 	res := &conduit.ProfileResponse{

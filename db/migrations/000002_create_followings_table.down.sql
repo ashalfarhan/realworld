@@ -1,2 +1,1 @@
 DROP TABLE IF EXISTS followings;
-DROP TABLE IF EXISTS users;

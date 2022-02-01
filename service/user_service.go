@@ -22,15 +22,15 @@ type UserService struct {
 
 func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{
-		userRepo:   repo.UserRepo,
-		followRepo: repo.FollowRepo,
-		logger:     conduit.NewLogger("user-service"),
+		repo.UserRepo,
+		repo.FollowRepo,
+		conduit.NewLogger("user-service"),
 	}
 }
 
 func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *ServiceError) {
 	u := &model.User{}
-	if err := s.userRepo.FindOneById(ctx, id, u); err != nil {
+	if err := s.userRepo.FindOneByID(ctx, id, u); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
 		}
@@ -84,45 +84,55 @@ func (s *UserService) CreateOne(ctx context.Context, d *dto.RegisterUserDto) (*m
 	return u, nil
 }
 
-func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid string) *ServiceError {
-	u := &conduit.UpdateUserArgs{
+func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid string) (*model.User, *ServiceError) {
+	u, err := s.GetOneById(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	args := &conduit.UpdateUserArgs{
 		ID:    uid,
 		Bio:   d.Bio,
 		Image: d.Image,
 	}
 
 	if len(d.Email) != 0 {
-		u.Email = &d.Email
+		args.Email = &d.Email
+		u.Email = d.Email
 	}
 	if len(d.Username) != 0 {
-		u.Username = &d.Username
+		args.Username = &d.Username
+		u.Username = d.Username
 	}
 	if len(d.Password) != 0 {
 		hashed := s.HashPassword(d.Password)
-		u.Password = &hashed
+		args.Password = &hashed
+		u.Password = hashed
 	}
 
 	if d.Bio.Set {
+		args.Bio = d.Bio
 		u.Bio = d.Bio
 	}
 
 	if d.Image.Set {
+		args.Image = d.Image
 		u.Image = d.Image
 	}
 
-	if err := s.userRepo.UpdateOne(ctx, u); err != nil {
+	if err := s.userRepo.UpdateOne(ctx, args); err != nil {
 		switch err.Error() {
 		case ErrDuplicateEmail:
-			return CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
 		case ErrDuplicateUsername:
-			return CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
 		default:
-			s.logger.Printf("Cannot UpdateOne payload:%#v args:%#v, Reason: %v", d, u, err)
-			return CreateServiceError(http.StatusInternalServerError, nil)
+			s.logger.Printf("Cannot UpdateOne payload:%#v args:%#v, Reason: %v", d, args, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
 
-	return nil
+	return u, nil
 }
 
 func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
@@ -135,7 +145,7 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 		return nil, CreateServiceError(http.StatusBadRequest, errors.New("you cannot follow your self"))
 	}
 
-	if err := s.followRepo.Follow(ctx, followerID, following.ID); err != nil {
+	if err := s.followRepo.InsertOne(ctx, followerID, following.ID); err != nil {
 		switch err.Error() {
 		case ErrDuplicateFollowing:
 			return nil, CreateServiceError(http.StatusBadRequest, errors.New("you are already follow this user"))
@@ -158,7 +168,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 		return nil, CreateServiceError(http.StatusBadRequest, errors.New("you cannot unfollow your self"))
 	}
 
-	if err := s.followRepo.Unfollow(ctx, followerID, following.ID); err != nil {
+	if err := s.followRepo.DeleteOneIDs(ctx, followerID, following.ID); err != nil {
 		s.logger.Printf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, err)
 	}
@@ -167,7 +177,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 }
 
 func (s *UserService) IsFollowing(ctx context.Context, followerID, followingID string) bool {
-	return s.followRepo.IsFollowing(ctx, followerID, followingID)
+	return s.followRepo.GetOneByIDs(ctx, followerID, followingID) == nil
 }
 
 func (s *UserService) HashPassword(p string) string {

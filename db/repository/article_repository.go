@@ -22,7 +22,7 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 
 	defer tx.Rollback()
 
-	if err = r.db.QueryRowContext(ctx, `
+	err = tx.QueryRowContext(ctx, `
 	INSERT INTO
 		articles
 		(slug, title, description, body, author_id)
@@ -33,7 +33,9 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 		articles.created_at,
 		articles.updated_at
 	`, a.Slug, a.Title, a.Description, a.Body, a.Author.ID).
-		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
+
+	if err != nil {
 		return err
 	}
 
@@ -59,19 +61,21 @@ func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error
 
 	defer tx.Rollback()
 
-	if _, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	DELETE FROM
 		articles
 	WHERE
 		articles.slug = $1
-	`, slug); err != nil {
+	`, slug)
+
+	if err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
-func (r *ArticleRepository) Update(ctx context.Context, slug string, a *conduit.UpdateArticleArgs, dest *model.Article) error {
+func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a *conduit.UpdateArticleArgs, dest *model.Article) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
@@ -127,43 +131,35 @@ func (r *ArticleRepository) Update(ctx context.Context, slug string, a *conduit.
 	return tx.Commit()
 }
 
-func (r *ArticleRepository) Find(ctx context.Context, p *conduit.ArticleArgs) ([]model.Article, error) {
+func (r *ArticleRepository) Find(ctx context.Context, p *conduit.ArticleArgs) ([]*model.Article, error) {
 	row, err := r.db.QueryContext(ctx, `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at, slug
 	FROM
 		articles
-	
 	ORDER BY created_at ASC
 	LIMIT $1
 	OFFSET $2
-	`,
-		p.Limit, p.Offset,
-	)
+	`, p.Limit, p.Offset)
+
 	if err != nil {
 		return nil, err
 	}
 
-	articles := []model.Article{}
-
+	articles := []*model.Article{}
 	defer row.Close()
 
 	for row.Next() {
-		a := model.Article{
+		a := &model.Article{
 			Author: &model.User{},
 		}
-		if err = row.Scan(
-			&a.ID,
-			&a.Title,
-			&a.Description,
-			&a.Body,
-			&a.Author.ID,
-			&a.CreatedAt,
-			&a.UpdatedAt,
-			&a.Slug,
-		); err != nil {
+
+		err = row.Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt, &a.Slug)
+
+		if err != nil {
 			return nil, err
 		}
+
 		articles = append(articles, a)
 	}
 

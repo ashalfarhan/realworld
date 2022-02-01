@@ -48,6 +48,8 @@ func InitRoutes(s *service.Service) *mux.Router {
 	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.DeleteArticle)).Methods(http.MethodDelete)
 	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.UpdateArticle)).Methods(http.MethodPut)
+	articleRoute.HandleFunc("/{slug}/favorite", m.WithUser(ac.FavoriteArticle)).Methods(http.MethodPost)
+	articleRoute.HandleFunc("/{slug}/favorite", m.WithUser(ac.UnFavoriteArticle)).Methods(http.MethodDelete)
 
 	return r
 }

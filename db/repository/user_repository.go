@@ -24,7 +24,7 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 	// Defer a rollback incase returning error
 	defer tx.Rollback()
 
-	if err = tx.
+	err = tx.
 		QueryRowContext(ctx, `
 INSERT INTO
 	users
@@ -39,7 +39,9 @@ RETURNING
 			u.Bio,
 			u.Image,
 		).
-		Scan(&u.ID, &u.Bio, &u.Image); err != nil {
+		Scan(&u.ID, &u.Bio, &u.Image)
+
+	if err != nil {
 		return err
 	}
 
@@ -47,7 +49,7 @@ RETURNING
 	return tx.Commit()
 }
 
-func (r *UserRepository) FindOneById(ctx context.Context, id string, u *model.User) error {
+func (r *UserRepository) FindOneByID(ctx context.Context, id string, u *model.User) error {
 	return r.db.
 		QueryRowContext(ctx, `
 	SELECT
