@@ -41,8 +41,8 @@ For more information on how to this works with other frontends/backends, head ov
   - [x] List Articles 
   - [ ] Feed Articles
   - [x] Update Articles
-  - [ ] Favorite Articles
-  - [ ] Unfavorite Articles
+  - [x] Favorite Articles
+  - [x] Unfavorite Articles
 
 - Comment
   - [ ] Add Comment
