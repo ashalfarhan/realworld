@@ -20,7 +20,7 @@ func InitRoutes(s *service.Service) *mux.Router {
 	uc := controller.NewUserController(s)
 	usersRoute := apiRoute.PathPrefix("/users").Subrouter()
 
-	usersRoute.HandleFunc("/register", uc.RegisterUser).Methods(http.MethodPost)
+	usersRoute.HandleFunc("", uc.RegisterUser).Methods(http.MethodPost)
 	usersRoute.HandleFunc("/login", uc.LoginUser).Methods(http.MethodPost)
 
 	// User
