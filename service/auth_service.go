@@ -27,7 +27,7 @@ func NewAuthService() *AuthService {
 
 const (
 	jwtSecret = "super-secret"
-	jwtExp    = 20 * time.Minute
+	jwtExp    = 20 * time.Hour
 )
 
 func (AuthService) GenerateJWT(u *model.User) (string, error) {

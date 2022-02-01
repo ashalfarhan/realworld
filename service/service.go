@@ -7,9 +7,9 @@ import (
 )
 
 type Service struct {
-	*UserService
-	*AuthService
-	*ArticleService
+	UserService    *UserService
+	AuthService    *AuthService
+	ArticleService *ArticleService
 }
 
 func InitService(d *sql.DB) *Service {
