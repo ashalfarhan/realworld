@@ -37,7 +37,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.CreateOne(d)
+	u, err := c.userService.CreateOne(r.Context(), d)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -61,9 +61,9 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.GetOne(d)
+	u, err := c.userService.GetOne(r.Context(), d)
 	if err != nil {
-		response.ClientError(w, errors.New("invalid identity or password"))
+		response.Error(w, err.Code, err.Error)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	iu := c.authService.GetUserFromCtx(r)
 
-	u, err := c.userService.GetOneById(iu.UserID)
+	u, err := c.userService.GetOneById(r.Context(), iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -117,10 +117,10 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	iu := c.authService.GetUserFromCtx(r)
-	if err := c.userService.Update(d, iu.UserID); err != nil {
+	if err := c.userService.Update(r.Context(), d, iu.UserID); err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	response.Accepted(w)
+	response.Accepted(w, nil)
 }
