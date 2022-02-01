@@ -10,13 +10,13 @@ import (
 func Connect() *sql.DB {
 	connection, err := sql.Open("postgres", "user=postgres password=password dbname=postgres sslmode=disable")
 	if err != nil {
-		conduit.Logger.Panicf("failed to opening database connection: %s\n", err.Error())
+		conduit.Logger.Panicf("failed to opening database connection: %v\n", err)
 		return nil
 	}
 
 	if err = connection.Ping(); err != nil {
 		defer connection.Close()
-		conduit.Logger.Panicf("failed to connect to database %s\n", err.Error())
+		conduit.Logger.Panicf("failed to connect to database %v\n", err)
 		return nil
 	}
 

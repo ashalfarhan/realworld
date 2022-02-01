@@ -1,25 +1,37 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type ArticleTagsRepository struct {
 	db *sql.DB
 }
 
-func (r *ArticleTagsRepository) InsertOne(articleID string, tagName string) error {
-	_, err := r.db.Exec(`
+func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID string, tagName string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = tx.ExecContext(ctx, `
 	INSERT INTO 
 		article_tags
 		(article_id, tag_name)
 	VALUES
 		($1, $2)
-	`, articleID, tagName)
+	`, articleID, tagName); err != nil {
+		return err
+	}
 
-	return err
+	return tx.Commit()
 }
 
-func (r *ArticleTagsRepository) GetArticleTagsById(articleID string) ([]string, error) {
-	row, err := r.db.Query(`
+func (r *ArticleTagsRepository) GetArticleTagsById(ctx context.Context, articleID string) ([]string, error) {
+	row, err := r.db.QueryContext(ctx, `
 	SELECT 
 		tag_name
 	FROM 
@@ -46,8 +58,8 @@ func (r *ArticleTagsRepository) GetArticleTagsById(articleID string) ([]string, 
 	return tags, nil
 }
 
-func (r *ArticleTagsRepository) GetAllTags() ([]string, error) {
-	row, err := r.db.Query(`
+func (r *ArticleTagsRepository) GetAllTags(ctx context.Context) ([]string, error) {
+	row, err := r.db.QueryContext(ctx, `
 	SELECT 
 		DISTINCT(tag_name)
 	FROM 
@@ -59,7 +71,7 @@ func (r *ArticleTagsRepository) GetAllTags() ([]string, error) {
 	}
 
 	defer row.Close()
-	var tags []string
+	tags := []string{}
 
 	for row.Next() {
 		var tag string

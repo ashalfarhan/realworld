@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -13,8 +14,15 @@ type ArticleRepository struct {
 	db *sql.DB
 }
 
-func (r *ArticleRepository) InsertOne(a *model.Article) error {
-	return r.db.QueryRow(`
+func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if err = r.db.QueryRowContext(ctx, `
 	INSERT INTO
 		articles
 		(slug, title, description, body, author_id)
@@ -25,11 +33,15 @@ func (r *ArticleRepository) InsertOne(a *model.Article) error {
 		articles.created_at,
 		articles.updated_at
 	`, a.Slug, a.Title, a.Description, a.Body, a.Author.ID).
-		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
+		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
-func (r *ArticleRepository) FindOneBySlug(a *model.Article) error {
-	return r.db.QueryRow(`
+func (r *ArticleRepository) FindOneBySlug(ctx context.Context, a *model.Article) error {
+	return r.db.QueryRowContext(ctx, `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at
 	FROM
@@ -39,18 +51,27 @@ func (r *ArticleRepository) FindOneBySlug(a *model.Article) error {
 	`, a.Slug).Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt)
 }
 
-func (r *ArticleRepository) DeleteBySlug(slug string) error {
-	_, err := r.db.Exec(`
+func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = tx.Exec(`
 	DELETE FROM
 		articles
 	WHERE
 		articles.slug = $1
-	`, slug)
+	`, slug); err != nil {
+		return err
+	}
 
-	return err
+	return tx.Commit()
 }
 
-func (r *ArticleRepository) Update(slug string, a *conduit.UpdateArticleArgs) error {
+func (r *ArticleRepository) Update(ctx context.Context, slug string, a *conduit.UpdateArticleArgs, dest *model.Article) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
@@ -83,36 +104,48 @@ func (r *ArticleRepository) Update(slug string, a *conduit.UpdateArticleArgs) er
 
 	argIdx++
 	valArgs = append(valArgs, slug)
-	query := fmt.Sprintf("UPDATE articles SET %s WHERE articles.slug = $%d", strings.Join(updateArgs, ", "), argIdx)
+	query := fmt.Sprintf("UPDATE articles SET %s WHERE articles.slug = $%d RETURNING articles.updated_at", strings.Join(updateArgs, ", "), argIdx)
 
-	stmt, err := r.db.Prepare(query)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
-	if _, err := stmt.Exec(valArgs...); err != nil {
+
+	if err := stmt.QueryRowContext(ctx, valArgs...).Scan(&dest.UpdatedAt); err != nil {
 		return err
 	}
 
-	return nil
+	return tx.Commit()
 }
 
-func (r *ArticleRepository) GetFiltered(p *conduit.ArticleParams) ([]model.Article, error) {
-	row, err := r.db.Query(`
+func (r *ArticleRepository) Find(ctx context.Context, p *conduit.ArticleArgs) ([]model.Article, error) {
+	row, err := r.db.QueryContext(ctx, `
 	SELECT
-		id, title, description, body, author_id, created_at, updated_at
+		id, title, description, body, author_id, created_at, updated_at, slug
 	FROM
 		articles
+	
+	ORDER BY created_at ASC
 	LIMIT $1
 	OFFSET $2
-	ORDER BY created_at DESC
-	`, p.Limit, p.Offset)
+	`,
+		p.Limit, p.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	var articles []model.Article
+	articles := []model.Article{}
+
 	defer row.Close()
 
 	for row.Next() {
@@ -127,6 +160,7 @@ func (r *ArticleRepository) GetFiltered(p *conduit.ArticleParams) ([]model.Artic
 			&a.Author.ID,
 			&a.CreatedAt,
 			&a.UpdatedAt,
+			&a.Slug,
 		); err != nil {
 			return nil, err
 		}

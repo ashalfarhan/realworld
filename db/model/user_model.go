@@ -13,8 +13,8 @@ type User struct {
 	Username  string     `json:"username"`
 	Bio       NullString `json:"bio"`
 	Image     NullString `json:"image"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	CreatedAt time.Time  `json:"-"`
+	UpdatedAt time.Time  `json:"-"`
 }
 
 func (u *User) ValidatePassword(incPass string) bool {
