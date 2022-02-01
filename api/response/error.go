@@ -1,7 +1,9 @@
 package response
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/go-playground/validator/v10"
@@ -21,6 +23,10 @@ func InternalError(w http.ResponseWriter) {
 	Error(w, http.StatusInternalServerError, conduit.ErrInternal)
 }
 
+func UnauthorizeError(w http.ResponseWriter) {
+	Error(w, http.StatusUnauthorized, conduit.ErrUnauthorized)
+}
+
 func EntityError(w http.ResponseWriter, err error) {
 	e, ok := err.(validator.ValidationErrors)
 	if !ok {
@@ -30,14 +36,11 @@ func EntityError(w http.ResponseWriter, err error) {
 
 	errors := map[string][]string{}
 	for _, field := range e {
-		errors[field.Field()] = append(errors[field.Field()], field.Error())
+		key := strings.ToLower(field.Field())
+		errors[key] = append(errors[key], fmt.Sprintf("%s %s", field.Tag(), field.Param()))
 	}
 
 	JSON(w, http.StatusUnprocessableEntity, M{
 		"errors": errors,
 	})
-}
-
-func UnauthorizeError(w http.ResponseWriter) {
-	Error(w, http.StatusUnauthorized, conduit.ErrUnauthorized)
 }
