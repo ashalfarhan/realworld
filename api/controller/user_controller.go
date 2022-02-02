@@ -37,7 +37,12 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.CreateOne(r.Context(), d)
+	u, err := c.userService.CreateOne(r.Context(), &service.CreateOneArgs{
+		Email:    d.User.Email,
+		Username: d.User.Username,
+		Password: d.User.Password,
+	})
+
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -61,13 +66,17 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.GetOne(r.Context(), d)
+	u, err := c.userService.GetOne(r.Context(), &service.GetOneArgs{
+		Email:    d.User.Email,
+		Username: d.User.Username,
+	})
+
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	if valid := u.ValidatePassword(d.Password); !valid {
+	if valid := u.ValidatePassword(d.User.Password); !valid {
 		response.ClientError(w, errors.New("invalid identity or password"))
 		return
 	}
@@ -86,7 +95,9 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Image:    u.Image,
 	}
 
-	response.Ok(w, res)
+	response.Ok(w, response.M{
+		"user": res,
+	})
 }
 
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {

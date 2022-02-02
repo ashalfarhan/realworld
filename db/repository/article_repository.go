@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 )
 
@@ -75,7 +74,14 @@ func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error
 	return tx.Commit()
 }
 
-func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a *conduit.UpdateArticleArgs, dest *model.Article) error {
+type UpdateArticleValues struct {
+	Title       *string
+	Slug        *string
+	Body        *string
+	Description *string
+}
+
+func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a *UpdateArticleValues, dest *model.Article) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
@@ -131,7 +137,14 @@ func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a 
 	return tx.Commit()
 }
 
-func (r *ArticleRepository) Find(ctx context.Context, p *conduit.ArticleArgs) ([]*model.Article, error) {
+type FindArticlesArgs struct {
+	// Tag    string `validate:"max=20"`
+	// Author string `validate:"alphanum"`
+	Limit  int `validate:"min=1,max=25"`
+	Offset int `validate:"min=0"`
+}
+
+func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*model.Article, error) {
 	row, err := r.db.QueryContext(ctx, `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at, slug

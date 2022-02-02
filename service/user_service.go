@@ -42,7 +42,12 @@ func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *
 	return u, nil
 }
 
-func (s *UserService) GetOne(ctx context.Context, d *dto.LoginUserDto) (*model.User, *ServiceError) {
+type GetOneArgs struct {
+	Email    string
+	Username string
+}
+
+func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *ServiceError) {
 	u := &model.User{
 		Email:    d.Email,
 		Username: d.Username,
@@ -60,7 +65,13 @@ func (s *UserService) GetOne(ctx context.Context, d *dto.LoginUserDto) (*model.U
 	return u, nil
 }
 
-func (s *UserService) CreateOne(ctx context.Context, d *dto.RegisterUserDto) (*model.User, *ServiceError) {
+type CreateOneArgs struct {
+	Email    string
+	Username string
+	Password string
+}
+
+func (s *UserService) CreateOne(ctx context.Context, d *CreateOneArgs) (*model.User, *ServiceError) {
 	u := &model.User{
 		Email:    d.Email,
 		Username: d.Username,
@@ -90,34 +101,34 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 		return nil, err
 	}
 
-	args := &conduit.UpdateUserArgs{
+	args := &repository.UpdateUserValues{
 		ID:    uid,
-		Bio:   d.Bio,
-		Image: d.Image,
+		Bio:   d.User.Bio,
+		Image: d.User.Image,
 	}
 
-	if len(d.Email) != 0 {
-		args.Email = &d.Email
-		u.Email = d.Email
+	if len(d.User.Email) != 0 {
+		args.Email = &d.User.Email
+		u.Email = d.User.Email
 	}
-	if len(d.Username) != 0 {
-		args.Username = &d.Username
-		u.Username = d.Username
+	if len(d.User.Username) != 0 {
+		args.Username = &d.User.Username
+		u.Username = d.User.Username
 	}
-	if len(d.Password) != 0 {
-		hashed := s.HashPassword(d.Password)
+	if len(d.User.Password) != 0 {
+		hashed := s.HashPassword(d.User.Password)
 		args.Password = &hashed
 		u.Password = hashed
 	}
 
-	if d.Bio.Set {
-		args.Bio = d.Bio
-		u.Bio = d.Bio
+	if d.User.Bio.Set {
+		args.Bio = d.User.Bio
+		u.Bio = d.User.Bio
 	}
 
-	if d.Image.Set {
-		args.Image = d.Image
-		u.Image = d.Image
+	if d.User.Image.Set {
+		args.Image = d.User.Image
+		u.Image = d.User.Image
 	}
 
 	if err := s.userRepo.UpdateOne(ctx, args); err != nil {
@@ -136,7 +147,7 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 }
 
 func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
-	following, err := s.GetOne(ctx, &dto.LoginUserDto{Username: username})
+	following, err := s.GetOne(ctx, &GetOneArgs{Username: username})
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +170,7 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 }
 
 func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
-	following, err := s.GetOne(ctx, &dto.LoginUserDto{Username: username})
+	following, err := s.GetOne(ctx, &GetOneArgs{Username: username})
 	if err != nil {
 		return nil, err
 	}

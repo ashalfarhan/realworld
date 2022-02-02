@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 )
 
@@ -78,7 +77,18 @@ func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
 		Scan(&cand.ID, &cand.Email, &cand.Username, &cand.Password, &cand.Bio, &cand.Image)
 }
 
-func (r *UserRepository) UpdateOne(ctx context.Context, u *conduit.UpdateUserArgs) error {
+// Use Pointer to update
+// To determine if the field needs to be updated
+type UpdateUserValues struct {
+	ID       string
+	Email    *string
+	Username *string
+	Password *string
+	Image    model.NullString
+	Bio      model.NullString
+}
+
+func (r *UserRepository) UpdateOne(ctx context.Context, u *UpdateUserValues) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0

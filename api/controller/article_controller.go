@@ -8,6 +8,7 @@ import (
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -157,7 +158,7 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	args := &conduit.ArticleArgs{
+	args := &repository.FindArticlesArgs{
 		Limit:  limit,
 		Offset: offset,
 	}

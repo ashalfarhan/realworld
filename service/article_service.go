@@ -144,7 +144,7 @@ func (s *ArticleService) CreateSlug(title string) string {
 }
 
 func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug string, d *dto.UpdateArticleDto) (*model.Article, *ServiceError) {
-	args := &conduit.UpdateArticleArgs{}
+	args := &repository.UpdateArticleValues{}
 	ar, err := s.GetOneBySlug(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -181,7 +181,8 @@ func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug strin
 	return ar, nil
 }
 
-func (s *ArticleService) GetArticles(ctx context.Context, args *conduit.ArticleArgs) ([]*model.Article, *ServiceError) {
+
+func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
 		s.logger.Printf("Cannot Find::ArticleRepo args: %#v, Reason: %v", args, err)

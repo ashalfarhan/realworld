@@ -1,6 +1,6 @@
 POSTGRES_URL="postgres://postgres:password@localhost:5432/postgres?sslmode=disable"
 MIGRATION_PATH="./db/migrations"
-APIURL="http://localhost:4000/api"
+API_URL="http://localhost:4000/api"
 
 migrate-up:
 	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} up
@@ -21,4 +21,4 @@ test-ci:
 	@go test -v ./...
 
 conduit-spec:
-	APIURL=${APIURL} bash ./conduit/test/run-api-tests.sh
+	APIURL=${API_URL} bash ./conduit/spec/run-api-tests.sh
