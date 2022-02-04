@@ -13,7 +13,7 @@ type UserResponse struct {
 type ProfileResponse struct {
 	Username  string           `json:"username"`
 	Bio       model.NullString `json:"bio"`
-	Image     model.NullString `json:"Image"`
+	Image     model.NullString `json:"image"`
 	Following bool             `json:"following"`
 }
 

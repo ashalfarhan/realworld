@@ -22,6 +22,7 @@ func Bootstrap(db *sql.DB) {
 	if err := server.ListenAndServe(); err != nil {
 		defer db.Close()
 		conduit.Logger.Panicf("Failed to bootstrap the server: %v", err)
+		return
 	}
 }
 
