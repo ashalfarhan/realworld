@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ArticleTagsRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagName string) error {
@@ -22,8 +23,7 @@ func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagNam
 		article_tags
 		(article_id, tag_name)
 	VALUES
-		($1, $2)
-	`, articleID, tagName)
+		($1, $2)`, articleID, tagName)
 
 	if err != nil {
 		return err
@@ -33,54 +33,34 @@ func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagNam
 }
 
 func (r *ArticleTagsRepository) GetArticleTagsByID(ctx context.Context, articleID string) ([]string, error) {
-	row, err := r.db.QueryContext(ctx, `
+	var tags []string
+
+	err := r.db.SelectContext(ctx, &tags, `
 	SELECT
 		tag_name
 	FROM
 		article_tags
 	WHERE
-		article_tags.article_id = $1
-	`, articleID)
+		article_tags.article_id = $1`, articleID)
 
 	if err != nil {
 		return nil, err
-	}
-
-	defer row.Close()
-	var tags []string
-
-	for row.Next() {
-		var tag string
-		if err := row.Scan(&tag); err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
 	}
 
 	return tags, nil
 }
 
 func (r *ArticleTagsRepository) GetAllTags(ctx context.Context) ([]string, error) {
-	row, err := r.db.QueryContext(ctx, `
+	var tags []string
+
+	err := r.db.SelectContext(ctx, &tags, `
 	SELECT
 		DISTINCT(tag_name)
 	FROM
-		article_tags
-	`)
+		article_tags`)
 
 	if err != nil {
 		return nil, err
-	}
-
-	defer row.Close()
-	tags := []string{}
-
-	for row.Next() {
-		var tag string
-		if err := row.Scan(&tag); err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
 	}
 
 	return tags, nil

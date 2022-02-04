@@ -1,9 +1,8 @@
 package service
 
 import (
-	"database/sql"
-
 	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/jmoiron/sqlx"
 )
 
 type Service struct {
@@ -12,7 +11,7 @@ type Service struct {
 	ArticleService *ArticleService
 }
 
-func InitService(d *sql.DB) *Service {
+func InitService(d *sqlx.DB) *Service {
 	repo := repository.InitRepository(d)
 
 	return &Service{

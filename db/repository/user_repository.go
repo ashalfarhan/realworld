@@ -2,43 +2,42 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type UserRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 // See https://go.dev/doc/database/execute-transactions
 func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	// Defer a rollback incase returning error
 	defer tx.Rollback()
+	stmt, err := tx.PrepareNamedContext(ctx, `
+	INSERT INTO
+		users
+		(email, username, password, bio, image)
+	VALUES
+		(:email, :username, :password, :bio, :image)
+	RETURNING
+		users.id, users.bio, users.image`)
+	if err != nil {
+		return err
+	}
 
-	err = tx.
-		QueryRowContext(ctx, `
-INSERT INTO
-	users
-	(email, username, password, bio, image)
-VALUES
-	($1, $2, $3, $4, $5)
-RETURNING
-	users.id, users.bio, users.image`,
-			u.Email,
-			u.Username,
-			u.Password,
-			u.Bio,
-			u.Image,
-		).
-		Scan(&u.ID, &u.Bio, &u.Image)
+	defer stmt.Close()
+	if err = stmt.GetContext(ctx, u, *u); err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err
@@ -50,19 +49,19 @@ RETURNING
 
 func (r *UserRepository) FindOneByID(ctx context.Context, id string, u *model.User) error {
 	return r.db.
-		QueryRowContext(ctx, `
+		GetContext(ctx, u, `
 	SELECT
 		id, email, username, bio, image, created_at, updated_at
 	FROM
 		users
 	WHERE
-		users.id = $1`, id).
-		Scan(&u.ID, &u.Email, &u.Username, &u.Bio, &u.Image, &u.CreatedAt, &u.UpdatedAt)
+		users.id = $1`, id)
+
 }
 
 func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
 	return r.db.
-		QueryRowContext(ctx, `
+		GetContext(ctx, cand, `
 	SELECT
 		id, email, username, password, bio, image 
 	FROM
@@ -70,11 +69,7 @@ func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
 	WHERE
 		users.email = $1 
 	OR
-		users.username = $2`,
-			cand.Email,
-			cand.Username,
-		).
-		Scan(&cand.ID, &cand.Email, &cand.Username, &cand.Password, &cand.Bio, &cand.Image)
+		users.username = $2`, cand.Email, cand.Username)
 }
 
 // Use Pointer to update

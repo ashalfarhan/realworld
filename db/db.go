@@ -1,14 +1,13 @@
 package db
 
 import (
-	"database/sql"
-
 	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-func Connect() *sql.DB {
-	connection, err := sql.Open("postgres", "user=postgres password=password dbname=postgres sslmode=disable")
+func Connect() *sqlx.DB {
+	connection, err := sqlx.Open("postgres", "user=postgres password=password dbname=postgres sslmode=disable")
 	if err != nil {
 		conduit.Logger.Panicf("Failed to opening database connection: %v\n", err)
 		return nil

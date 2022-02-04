@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 	"os"
 	"time"
@@ -10,9 +9,10 @@ import (
 	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/gorilla/handlers"
+	"github.com/jmoiron/sqlx"
 )
 
-func Bootstrap(db *sql.DB) {
+func Bootstrap(db *sqlx.DB) {
 	cf := config.LoadConfig()
 	serv := service.InitService(db)
 	server := InitServer(serv, cf)

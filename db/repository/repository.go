@@ -1,6 +1,6 @@
 package repository
 
-import "database/sql"
+import "github.com/jmoiron/sqlx"
 
 type Repository struct {
 	UserRepo             *UserRepository
@@ -10,7 +10,7 @@ type Repository struct {
 	ArticleFavoritesRepo *ArticleFavoritesRepository
 }
 
-func InitRepository(d *sql.DB) *Repository {
+func InitRepository(d *sqlx.DB) *Repository {
 	return &Repository{
 		UserRepo:             &UserRepository{d},
 		FollowRepo:           &FollowingRepository{d},

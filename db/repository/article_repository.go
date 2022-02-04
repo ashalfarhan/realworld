@@ -2,39 +2,39 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type ArticleRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) error {
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	defer tx.Rollback()
 
-	err = tx.QueryRowContext(ctx, `
-	INSERT INTO
-		articles
-		(slug, title, description, body, author_id)
-	VALUES
-		($1, $2, $3, $4, $5)
-	RETURNING
-		articles.id,
-		articles.created_at,
-		articles.updated_at
-	`, a.Slug, a.Title, a.Description, a.Body, a.Author.ID).
-		Scan(&a.ID, &a.CreatedAt, &a.UpdatedAt)
-
+	stmt, err := tx.PrepareNamedContext(ctx, `
+	INSERT INTO 
+		articles 
+		(slug, title, description, body, author_id) 
+	VALUES 
+		(:slug, :title, :description, :body, :author.id) 
+	RETURNING 
+		id, created_at, updated_at`)
 	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	if err = stmt.GetContext(ctx, a, *a); err != nil {
 		return err
 	}
 
@@ -42,14 +42,14 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 }
 
 func (r *ArticleRepository) FindOneBySlug(ctx context.Context, a *model.Article) error {
-	return r.db.QueryRowContext(ctx, `
+	return r.db.GetContext(ctx, a, `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at
 	FROM
 		articles
 	WHERE
 		articles.slug = $1
-	`, a.Slug).Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt)
+	`, a.Slug)
 }
 
 func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error {
@@ -61,11 +61,10 @@ func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error
 	defer tx.Rollback()
 
 	_, err = tx.ExecContext(ctx, `
-	DELETE FROM
-		articles
-	WHERE
-		articles.slug = $1
-	`, slug)
+	DELETE FROM 
+		articles 
+	WHERE 
+		articles.slug = $1`, slug)
 
 	if err != nil {
 		return err
@@ -152,8 +151,7 @@ func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*m
 		articles
 	ORDER BY created_at ASC
 	LIMIT $1
-	OFFSET $2
-	`, p.Limit, p.Offset)
+	OFFSET $2`, p.Limit, p.Offset)
 
 	if err != nil {
 		return nil, err

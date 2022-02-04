@@ -96,7 +96,7 @@ func (s *ArticleService) GetOneBySlug(ctx context.Context, slug string) (*model.
 
 	a.TagList = tags
 
-	if err := s.userRepo.FindOneByID(ctx, a.Author.ID, a.Author); err != nil {
+	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
 		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.Author.ID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}

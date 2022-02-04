@@ -15,7 +15,7 @@ For more information on how to this works with other frontends/backends, head ov
 
 # How it works
 
-> This codebase is for a realworld implementation in Go, using Gorilla Mux for http router, and built-in sql library to interact with PostgreSQL Database
+> This is a realworld implementation in Go, using Gorilla Mux for http router, and sqlx
 
 # Getting started
 

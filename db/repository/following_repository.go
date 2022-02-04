@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type FollowingRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following string) error {
@@ -21,8 +22,7 @@ func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following
 	INSERT INTO 
 		followings
 		(follower_id, following_id)
-	VALUES ($1, $2)
-	`, follower, following)
+	VALUES ($1, $2)`, follower, following)
 
 	if err != nil {
 		return err
@@ -45,8 +45,7 @@ func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, follow
 	WHERE
 		followings.follower_id = $1
 	AND
-		followings.following_id = $2
-	`, follower, following)
+		followings.following_id = $2`, follower, following)
 
 	if err != nil {
 		return err
@@ -63,6 +62,5 @@ func (r *FollowingRepository) GetOneByIDs(ctx context.Context, follower, followi
 	WHERE
 		followings.follower_id = $1
 	AND
-		followings.following_id = $2
-	`, follower, following).Err()
+		followings.following_id = $2`, follower, following).Err()
 }
