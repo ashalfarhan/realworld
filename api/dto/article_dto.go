@@ -1,18 +1,22 @@
 package dto
 
+type CreateArticleFields struct {
+	Title       string   `json:"title" validate:"required,max=255"`
+	Description string   `json:"description" validate:"required,max=255"`
+	Body        string   `json:"body" validate:"required"`
+	TagList     []string `json:"tagList" validate:"omitempty,unique"`
+}
+
 type CreateArticleDto struct {
-	Article struct {
-		Title       string   `json:"title" validate:"required,max=255"`
-		Description string   `json:"description" validate:"required,max=255"`
-		Body        string   `json:"body" validate:"required"`
-		TagList     []string `json:"tagList" validate:"omitempty,unique"`
-	} `json:"article" validate:"required"`
+	Article *CreateArticleFields `json:"article" validate:"required"`
+}
+
+type UpdateArticleFields struct {
+	Title       string `json:"title" validate:"max=255"`
+	Body        string `json:"body"`
+	Description string `json:"description" validate:"max=255"`
 }
 
 type UpdateArticleDto struct {
-	Article struct {
-		Title       string `json:"title" validate:"max=255"`
-		Body        string `json:"body"`
-		Description string `json:"description" validate:"max=255"`
-	} `json:"article" validate:"required"`
+	Article *UpdateArticleFields `json:"article" validate:"required"`
 }

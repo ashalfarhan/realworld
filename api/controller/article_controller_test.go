@@ -11,9 +11,10 @@ import (
 var articleController = &ArticleController{}
 
 func TestCreateArticle(t *testing.T) {
-
 	t.Run("Payload should have body, title, description", func(t *testing.T) {
-		payload := response.M{}
+		payload := response.M{
+			"article": response.M{},
+		}
 		var body DtoError
 		res := test.MakeRequest(http.MethodPost, "/api/articles", payload, articleController.CreateArticle, &body)
 
