@@ -43,7 +43,6 @@ For more information on how to this works with other frontends/backends, head ov
     - [x] Filter by tag
     - [ ] Filter by favorited of a user
     - [ ] Filter by author
-    - [ ] Filter by author
   - [x] Feed Articles
     - [x] Paginated
   - [x] Update Articles
