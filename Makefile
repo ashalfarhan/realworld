@@ -11,6 +11,9 @@ migrate-down:
 migrate-force:
 	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} force ${v}
 
+migrate-version:
+	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} version
+
 migrate-new:
 	@migrate create -ext sql -dir ${MIGRATION_PATH} -seq ${name}
 
