@@ -8,7 +8,7 @@ type Repository struct {
 	ArticleRepo          *ArticleRepository
 	ArticleTagsRepo      *ArticleTagsRepository
 	ArticleFavoritesRepo *ArticleFavoritesRepository
-	CommentRepo *CommentRepository
+	CommentRepo          *CommentRepository
 }
 
 func InitRepository(d *sqlx.DB) *Repository {

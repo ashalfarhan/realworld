@@ -100,6 +100,6 @@ func (r *CommentRepository) FindOneByID(ctx context.Context, commentID string) (
 	if err := r.db.GetContext(ctx, comm, query, commentID); err != nil {
 		return nil, err
 	}
-	
+
 	return comm, nil
 }
