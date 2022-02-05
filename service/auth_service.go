@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ashalfarhan/realworld/conduit"
@@ -69,6 +70,21 @@ func (a AuthService) GetUserFromCtx(r *http.Request) (*conduit.ConduitClaims, bo
 
 func (a AuthService) CreateUserCtx(parentCtx context.Context, claim *conduit.ConduitClaims) context.Context {
 	return context.WithValue(parentCtx, a.userCtxKey, claim)
+}
+
+func (a AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
+	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
+	if len(authHeader) != 2 {
+		return "", nil
+	}
+
+	jwt := authHeader[1]
+	claim, err := a.ParseJWT(jwt)
+	if err != nil {
+		return "", CreateServiceError(http.StatusUnauthorized, err)
+	}
+
+	return claim.UserID, nil
 }
 
 func getKey(t *jwt.Token) (interface{}, error) {

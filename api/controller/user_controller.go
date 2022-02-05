@@ -47,13 +47,13 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
-	
+
 	token, sErr := c.authService.GenerateJWT(u)
 	if sErr != nil {
 		response.InternalError(w)
 		return
 	}
-	
+
 	res := &conduit.UserResponse{
 		Email:    u.Email,
 		Username: u.Username,
