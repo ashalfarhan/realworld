@@ -39,11 +39,12 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 	}
 
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	a, err := c.articleService.Create(r.Context(), d, iu.UserID)
+	a, err := c.articleService.CreateArticle(r.Context(), d, iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
+
 	response.Created(w, response.M{
 		"article": a,
 	})
@@ -58,7 +59,7 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	a, err := c.articleService.GetOneBySlug(r.Context(), uid, slug)
+	a, err := c.articleService.GetArticleBySlug(r.Context(), uid, slug)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -109,7 +110,7 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 	slug := mux.Vars(r)["slug"]
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
-	ar, err := c.articleService.UpdateOneBySlug(r.Context(), iu.UserID, slug, d)
+	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu.UserID, slug, d)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -216,7 +217,7 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	articles, serr := c.articleService.GetFeed(r.Context(), args)
+	articles, serr := c.articleService.GetArticlesFeed(r.Context(), args)
 	if serr != nil {
 		response.Error(w, serr.Code, serr.Error)
 		return
