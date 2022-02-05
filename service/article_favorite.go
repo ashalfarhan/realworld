@@ -38,6 +38,5 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 
 func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
 	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
-	s.logger.Println(ptr, err)
 	return ptr != nil && err == nil
 }

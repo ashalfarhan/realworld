@@ -59,7 +59,7 @@ func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
 		}
 
-		s.logger.Printf("Cannot FindOne for %#v, Reason: %v", d, err)
+		s.logger.Printf("Cannot FindOne for %+v, Reason: %v", d, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -87,7 +87,7 @@ func (s *UserService) Register(ctx context.Context, d *RegisterArgs) (*model.Use
 		case ErrDuplicateUsername:
 			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
 		default:
-			s.logger.Printf("Cannot InsertOne for %#v, Reason: %v", d, err)
+			s.logger.Printf("Cannot InsertOne for %+v, Reason: %v", d, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 
@@ -139,7 +139,7 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 		case ErrDuplicateUsername:
 			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
 		default:
-			s.logger.Printf("Cannot UpdateOne payload:%#v args:%#v, Reason: %v", d, args, err)
+			s.logger.Printf("Cannot UpdateOne payload:%+v args:%+v, Reason: %v", d, args, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
