@@ -136,7 +136,7 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	q := r.URL.Query()
 	var limit, offset int
 	var err error
-	l, o := q.Get("limit"), q.Get("offset")
+	l, o, tag := q.Get("limit"), q.Get("offset"), q.Get("tag")
 
 	if l == "" {
 		limit = 5
@@ -161,6 +161,7 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	args := &repository.FindArticlesArgs{
 		Limit:  limit,
 		Offset: offset,
+		Tag:    tag,
 	}
 
 	v := validator.New()
@@ -170,6 +171,56 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	}
 
 	articles, serr := c.articleService.GetArticles(r.Context(), args)
+	if serr != nil {
+		response.Error(w, serr.Code, serr.Error)
+		return
+	}
+
+	response.Ok(w, response.M{
+		"articles": articles,
+	})
+}
+func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	var limit, offset int
+	var err error
+	l, o := q.Get("limit"), q.Get("offset")
+
+	if l == "" {
+		limit = 5
+	} else {
+		limit, err = strconv.Atoi(l)
+		if err != nil {
+			response.ClientError(w, err)
+			return
+		}
+	}
+
+	if o == "" {
+		offset = 0
+	} else {
+		offset, err = strconv.Atoi(o)
+		if err != nil {
+			response.ClientError(w, err)
+			return
+		}
+	}
+
+	iu, _ := c.authService.GetUserFromCtx(r)
+
+	args := &repository.FindArticlesArgs{
+		Limit:  limit,
+		Offset: offset,
+		UserID: iu.UserID,
+	}
+
+	v := validator.New()
+	if err := v.Struct(args); err != nil {
+		response.EntityError(w, err)
+		return
+	}
+
+	articles, serr := c.articleService.GetFeed(r.Context(), args)
 	if serr != nil {
 		response.Error(w, serr.Code, serr.Error)
 		return

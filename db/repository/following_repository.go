@@ -18,13 +18,12 @@ func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following
 
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, `
+	query := `
 	INSERT INTO 
 		followings
 		(follower_id, following_id)
-	VALUES ($1, $2)`, follower, following)
-
-	if err != nil {
+	VALUES ($1, $2)`
+	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
 
@@ -39,28 +38,37 @@ func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, follow
 
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, `
+	query := `
 	DELETE FROM
 		followings
 	WHERE
 		followings.follower_id = $1
 	AND
-		followings.following_id = $2`, follower, following)
-
-	if err != nil {
+		followings.following_id = $2`
+	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
-func (r *FollowingRepository) GetOneByIDs(ctx context.Context, follower, following string) error {
-	return r.db.QueryRowContext(ctx, `
-	SELECT *
+// Returns pointer to the following id.
+// To determine if "follower" is follow "following".
+// Check if pointer is not nill and err is nil
+func (r *FollowingRepository) FindOneByIDs(ctx context.Context, follower, following string) (*string, error) {
+	var ptr *string
+	query := `
+	SELECT 
+		followings.following_id
 	FROM
 		followings
 	WHERE
 		followings.follower_id = $1
 	AND
-		followings.following_id = $2`, follower, following).Err()
+		followings.following_id = $2`
+	if err := r.db.QueryRowContext(ctx, query, follower, following).Scan(ptr); err != nil {
+		return nil, err
+	}
+
+	return ptr, nil
 }

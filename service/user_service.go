@@ -65,13 +65,13 @@ func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *
 	return u, nil
 }
 
-type CreateOneArgs struct {
+type RegisterArgs struct {
 	Email    string
 	Username string
 	Password string
 }
 
-func (s *UserService) CreateOne(ctx context.Context, d *CreateOneArgs) (*model.User, *ServiceError) {
+func (s *UserService) Register(ctx context.Context, d *RegisterArgs) (*model.User, *ServiceError) {
 	u := &model.User{
 		Email:    d.Email,
 		Username: d.Username,
@@ -188,7 +188,8 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 }
 
 func (s *UserService) IsFollowing(ctx context.Context, followerID, followingID string) bool {
-	return s.followRepo.GetOneByIDs(ctx, followerID, followingID) == nil
+	ptr, err := s.followRepo.FindOneByIDs(ctx, followerID, followingID)
+	return ptr != nil && err == nil
 }
 
 func (s *UserService) HashPassword(p string) string {

@@ -13,15 +13,15 @@ type ArticleFavoritesRepository struct {
 func (r *ArticleFavoritesRepository) FindFavoritedArticleByUserId(ctx context.Context, userID string) ([]string, error) {
 	var article_ids []string
 
-	err := r.db.SelectContext(ctx, &article_ids, `
+	query := `
 	SELECT 
 		article_id 
 	FROM 
 		article_favorites 
 	WHERE 
-		article_favorites.user_id = $1`, userID)
+		article_favorites.user_id = $1`
 
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &article_ids, query, userID); err != nil {
 		return nil, err
 	}
 
@@ -36,14 +36,14 @@ func (r *ArticleFavoritesRepository) InsertOne(ctx context.Context, userID, arti
 
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, `
+	query := `
 	INSERT INTO 
 		article_favorites 
 		(user_id, article_id)
 	VALUES 
-		($1, $2)`, userID, articleID)
+		($1, $2)`
 
-	if err != nil {
+	if _, err = tx.ExecContext(ctx, query, userID, articleID); err != nil {
 		return err
 	}
 
@@ -58,28 +58,34 @@ func (r *ArticleFavoritesRepository) Delete(ctx context.Context, userID, article
 
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, `
+	query := `
 	DELETE FROM 
 		article_favorites 
 	WHERE 
 		article_favorites.user_id = $1 
 	AND 
-		article_favorites.article_id = $2`, userID, articleID)
+		article_favorites.article_id = $2`
 
-	if err != nil {
+	if _, err = tx.ExecContext(ctx, query, userID, articleID); err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
-func (r *ArticleFavoritesRepository) GetOneByIDs(ctx context.Context, userID, articleID string) error {
-	return r.db.QueryRowContext(ctx, `
-	SELECT * 
+func (r *ArticleFavoritesRepository) FindOneByIDs(ctx context.Context, userID, articleID string) (*string, error) {
+	var ptr *string
+	query := `
+	SELECT 
+		article_favorites.user_id
 	FROM 
 		article_favorites 
 	WHERE 
 		article_favorites.user_id = $1 
 	AND 
-		article_favorites.article_id = $2`, userID, articleID).Err()
+		article_favorites.article_id = $2`
+	if err := r.db.QueryRowContext(ctx, query, userID, articleID).Scan(ptr); err != nil {
+		return nil, err
+	}
+	return ptr, nil
 }

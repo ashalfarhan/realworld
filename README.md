@@ -15,7 +15,7 @@ For more information on how to this works with other frontends/backends, head ov
 
 # How it works
 
-> This is a realworld implementation in Go, using Gorilla Mux for http router, and sqlx
+> I'am using Gorilla Mux for http router, and sqlx for relational database interaction.
 
 # Getting started
 
@@ -38,8 +38,14 @@ For more information on how to this works with other frontends/backends, head ov
   - [x] Delete Article
   - [x] Get Tags
   - [x] Get Article by Slug
-  - [x] List Articles 
-  - [ ] Feed Articles
+  - [x] List Articles
+    - [x] Paginated
+    - [x] Filter by tag
+    - [ ] Filter by favorited of a user
+    - [ ] Filter by author
+    - [ ] Filter by author
+  - [x] Feed Articles
+    - [x] Paginated
   - [x] Update Articles
   - [x] Favorite Articles
   - [x] Unfavorite Articles

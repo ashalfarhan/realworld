@@ -22,14 +22,16 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 
 	// Defer a rollback incase returning error
 	defer tx.Rollback()
-	stmt, err := tx.PrepareNamedContext(ctx, `
+
+	query := `
 	INSERT INTO
 		users
 		(email, username, password, bio, image)
 	VALUES
 		(:email, :username, :password, :bio, :image)
 	RETURNING
-		users.id, users.bio, users.image`)
+		users.id, users.bio, users.image`
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -48,20 +50,19 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 }
 
 func (r *UserRepository) FindOneByID(ctx context.Context, id string, u *model.User) error {
-	return r.db.
-		GetContext(ctx, u, `
+	query := `
 	SELECT
 		id, email, username, bio, image, created_at, updated_at
 	FROM
 		users
 	WHERE
-		users.id = $1`, id)
+		users.id = $1`
+	return r.db.GetContext(ctx, u, query, id)
 
 }
 
 func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
-	return r.db.
-		GetContext(ctx, cand, `
+	query := `
 	SELECT
 		id, email, username, password, bio, image 
 	FROM
@@ -69,7 +70,8 @@ func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
 	WHERE
 		users.email = $1 
 	OR
-		users.username = $2`, cand.Email, cand.Username)
+		users.username = $2`
+	return r.db.GetContext(ctx, cand, query, cand.Email, cand.Username)
 }
 
 // Use Pointer to update

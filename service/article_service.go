@@ -43,15 +43,14 @@ func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, au
 		Title:       d.Title,
 		Description: d.Description,
 		Body:        d.Body,
-		Author: &model.User{
-			ID: authorID,
-		},
+		AuthorID:    authorID,
+		Author:      &model.User{},
 	}
 
 	a.Slug = s.CreateSlug(a.Title)
 
 	if err := s.articleRepo.InsertOne(ctx, a); err != nil {
-		s.logger.Printf("Cannot InsertOne to ArticleRepo for %#v, Reason: %v", a, err)
+		s.logger.Printf("Cannot InsertOne to ArticleRepo for %+v, Reason: %v", a, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -66,8 +65,8 @@ func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, au
 		}
 	}
 
-	if err := s.userRepo.FindOneByID(ctx, a.Author.ID, a.Author); err != nil {
-		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.Author.ID, err)
+	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -84,20 +83,20 @@ func (s *ArticleService) GetOneBySlug(ctx context.Context, slug string) (*model.
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, errors.New("no article found"))
 		}
-		s.logger.Printf("Cannot FindOneBySlug Article Repo for %#v, Reason: %v", a, err)
+		s.logger.Printf("Cannot FindOneBySlug Article Repo for %+v, Reason: %v", a, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
-	tags, err := s.tagsRepo.GetArticleTagsByID(ctx, a.ID)
+	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
-		s.logger.Printf("Cannot GetArticleTagsByID ArticleTags Repo for %s, Reason: %v", a.ID, err)
+		s.logger.Printf("Cannot FindArticleTagsByID ArticleTags Repo for %s, Reason: %v", a.ID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	a.TagList = tags
 
 	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
-		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.Author.ID, err)
+		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -110,7 +109,7 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug string, userID 
 		return err
 	}
 
-	if a.Author.ID != userID {
+	if a.AuthorID != userID {
 		return CreateServiceError(http.StatusForbidden, errors.New("you cannot delete this article"))
 	}
 
@@ -123,9 +122,9 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug string, userID 
 }
 
 func (s *ArticleService) GetAllTags(ctx context.Context) ([]string, *ServiceError) {
-	tags, err := s.tagsRepo.GetAllTags(ctx)
+	tags, err := s.tagsRepo.FindAllTags(ctx)
 	if err != nil {
-		s.logger.Printf("Cannot GetAllTags, Reason: %v", err)
+		s.logger.Printf("Cannot FindAllTags, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -169,37 +168,63 @@ func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug strin
 		ar.Slug = newSlug
 	}
 
-	if ar.Author.ID != userID {
+	if ar.AuthorID != userID {
 		return nil, CreateServiceError(http.StatusForbidden, errors.New("you cannot edit this article"))
 	}
 
 	if err := s.articleRepo.UpdateOneBySlug(ctx, slug, args, ar); err != nil {
-		s.logger.Printf("Cannot UpdateOneBySlug, slug: %s, payload: %#v, Reason: %v", slug, d, err)
+		s.logger.Printf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	return ar, nil
 }
 
-
 func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		s.logger.Printf("Cannot Find::ArticleRepo args: %#v, Reason: %v", args, err)
+		s.logger.Printf("Cannot Find::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	for _, a := range articles {
-		tags, err := s.tagsRepo.GetArticleTagsByID(ctx, a.ID)
+		tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 		if err != nil {
-			s.logger.Printf("Cannot GetArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
+			s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 
 		a.TagList = tags
+		a.Author = &model.User{}
 
-		if err := s.userRepo.FindOneByID(ctx, a.Author.ID, a.Author); err != nil {
-			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.Author.ID, err)
+		if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		}
+	}
+
+	return articles, nil
+}
+
+func (s *ArticleService) GetFeed(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
+	articles, err := s.articleRepo.FindByFollowed(ctx, args)
+	if err != nil {
+		s.logger.Printf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	for _, a := range articles {
+		tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
+		if err != nil {
+			s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		}
+
+		a.TagList = tags
+		a.Author = &model.User{}
+
+		if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
@@ -236,5 +261,6 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 }
 
 func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
-	return s.favoritesRepo.GetOneByIDs(ctx, userID, articleID) == nil
+	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
+	return ptr != nil && err == nil
 }

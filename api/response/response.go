@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/conduit"
@@ -15,6 +16,6 @@ func JSON(w http.ResponseWriter, statusCode int, resp interface{}) {
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		conduit.Logger.Printf("Failed to encode json response of %v, Error: %v\n", resp, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Fprint(w, err.Error())
 	}
 }

@@ -37,7 +37,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.CreateOne(r.Context(), &service.CreateOneArgs{
+	u, err := c.userService.Register(r.Context(), &service.RegisterArgs{
 		Email:    d.User.Email,
 		Username: d.User.Username,
 		Password: d.User.Password,

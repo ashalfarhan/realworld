@@ -29,18 +29,9 @@ func Bootstrap(db *sqlx.DB) {
 func InitServer(serv *service.Service, cf *config.Config) *http.Server {
 	r := InitRoutes(serv)
 
-	out := os.Stdout
-	var h http.Handler
-
-	if cf.Env == "dev" {
-		h = handlers.LoggingHandler(out, r)
-	} else {
-		h = handlers.CombinedLoggingHandler(out, r)
-	}
-
 	return &http.Server{
 		Addr:         cf.Addr,
-		Handler:      h,
+		Handler:      handlers.LoggingHandler(os.Stdout, r),
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
 		IdleTimeout:  5 * time.Second,

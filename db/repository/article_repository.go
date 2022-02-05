@@ -21,14 +21,15 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareNamedContext(ctx, `
+	query := `
 	INSERT INTO 
 		articles 
 		(slug, title, description, body, author_id) 
 	VALUES 
-		(:slug, :title, :description, :body, :author.id) 
+		(:slug, :title, :description, :body, :author_id) 
 	RETURNING 
-		id, created_at, updated_at`)
+		id, created_at, updated_at`
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -42,14 +43,15 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 }
 
 func (r *ArticleRepository) FindOneBySlug(ctx context.Context, a *model.Article) error {
-	return r.db.GetContext(ctx, a, `
+	query := `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at
 	FROM
 		articles
 	WHERE
-		articles.slug = $1
-	`, a.Slug)
+		articles.slug = $1`
+
+	return r.db.GetContext(ctx, a, query, a.Slug)
 }
 
 func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error {
@@ -60,13 +62,13 @@ func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error
 
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, `
+	query := `
 	DELETE FROM 
 		articles 
 	WHERE 
-		articles.slug = $1`, slug)
+		articles.slug = $1`
 
-	if err != nil {
+	if _, err = tx.ExecContext(ctx, query, slug); err != nil {
 		return err
 	}
 
@@ -137,41 +139,73 @@ func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a 
 }
 
 type FindArticlesArgs struct {
-	// Tag    string `validate:"max=20"`
-	// Author string `validate:"alphanum"`
-	Limit  int `validate:"min=1,max=25"`
-	Offset int `validate:"min=0"`
+	Tag    string `db:"tag"`
+	// Author string `validate:"alphanum" db:"author_id"`
+	UserID string `db:"user_id"`
+	Limit  int    `validate:"min=1,max=25" db:"limit"`
+	Offset int    `validate:"min=0" db:"offset"`
 }
 
 func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*model.Article, error) {
-	row, err := r.db.QueryContext(ctx, `
-	SELECT
-		id, title, description, body, author_id, created_at, updated_at, slug
-	FROM
-		articles
-	ORDER BY created_at ASC
-	LIMIT $1
-	OFFSET $2`, p.Limit, p.Offset)
+	articles := []*model.Article{}
+	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
+	if p.Tag != "" {
+		query += ` 
+		WHERE
+			articles.id
+		IN (
+			SELECT 
+				article_tags.article_id 
+			FROM 
+				article_tags
+			WHERE
+				article_tags.tag_name = :tag
+			)`
+	}
 
+	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
+	defer stmt.Close()
+
+	if err := stmt.SelectContext(ctx, &articles, p); err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}
+
+func (r *ArticleRepository) FindByFollowed(ctx context.Context, p *FindArticlesArgs) ([]*model.Article, error) {
 	articles := []*model.Article{}
-	defer row.Close()
+	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
 
-	for row.Next() {
-		a := &model.Article{
-			Author: &model.User{},
-		}
+	if p.UserID != "" {
+		query += ` 
+		WHERE
+			articles.author_id
+		IN (
+			SELECT 
+				followings.following_id 
+			FROM 
+				followings
+			WHERE
+				followings.follower_id = :user_id
+			)`
+	}
 
-		err = row.Scan(&a.ID, &a.Title, &a.Description, &a.Body, &a.Author.ID, &a.CreatedAt, &a.UpdatedAt, &a.Slug)
+	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	stmt, err := r.db.PrepareNamedContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
 
-		if err != nil {
-			return nil, err
-		}
+	defer stmt.Close()
 
-		articles = append(articles, a)
+	if err := stmt.SelectContext(ctx, &articles, p); err != nil {
+		return nil, err
 	}
 
 	return articles, nil

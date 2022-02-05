@@ -12,10 +12,10 @@ type Repository struct {
 
 func InitRepository(d *sqlx.DB) *Repository {
 	return &Repository{
-		UserRepo:             &UserRepository{d},
-		FollowRepo:           &FollowingRepository{d},
-		ArticleRepo:          &ArticleRepository{d},
-		ArticleTagsRepo:      &ArticleTagsRepository{d},
-		ArticleFavoritesRepo: &ArticleFavoritesRepository{d},
+		&UserRepository{d},
+		&FollowingRepository{d},
+		&ArticleRepository{d},
+		&ArticleTagsRepository{d},
+		&ArticleFavoritesRepository{d},
 	}
 }
