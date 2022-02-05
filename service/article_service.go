@@ -40,9 +40,9 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 
 func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, authorID string) (*model.Article, *ServiceError) {
 	a := &model.Article{
-		Title:       d.Title,
-		Description: d.Description,
-		Body:        d.Body,
+		Title:       d.Article.Title,
+		Description: d.Article.Description,
+		Body:        d.Article.Body,
 		AuthorID:    authorID,
 		Author:      &model.User{},
 	}
@@ -54,8 +54,8 @@ func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, au
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
-	if len(d.TagList) > 0 {
-		for _, tag := range d.TagList {
+	if len(d.Article.TagList) > 0 {
+		for _, tag := range d.Article.TagList {
 			if err := s.tagsRepo.InsertOne(ctx, a.ID, tag); err != nil {
 				s.logger.Printf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
 				return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -149,22 +149,22 @@ func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug strin
 		return nil, err
 	}
 
-	if len(d.Body) != 0 {
-		args.Body = &d.Body
-		ar.Body = d.Body
+	if len(d.Article.Body) != 0 {
+		args.Body = &d.Article.Body
+		ar.Body = d.Article.Body
 	}
 
-	if len(d.Description) != 0 {
-		args.Description = &d.Description
-		ar.Description = d.Description
+	if len(d.Article.Description) != 0 {
+		args.Description = &d.Article.Description
+		ar.Description = d.Article.Description
 	}
 
-	if len(d.Title) != 0 {
-		args.Title = &d.Title
-		newSlug := s.CreateSlug(d.Title)
+	if len(d.Article.Title) != 0 {
+		args.Title = &d.Article.Title
+		newSlug := s.CreateSlug(d.Article.Title)
 		args.Slug = &newSlug
 
-		ar.Title = d.Title
+		ar.Title = d.Article.Title
 		ar.Slug = newSlug
 	}
 
@@ -243,6 +243,7 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
+	a.Favorited = true
 	return a, nil
 }
 
@@ -251,12 +252,12 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 	if err != nil {
 		return nil, err
 	}
-
 	if err := s.favoritesRepo.Delete(ctx, userID, a.ID); err != nil {
 		s.logger.Printf("Cannot UnfavoriteArticle, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
+	a.Favorited = false
 	return a, nil
 }
 

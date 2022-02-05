@@ -9,7 +9,7 @@ import (
 
 func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
+		authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
 		if len(authHeader) != 2 {
 			response.UnauthorizeError(w)
 			return
