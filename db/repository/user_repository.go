@@ -19,16 +19,14 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 	if err != nil {
 		return err
 	}
-
-	// Defer a rollback incase returning error
-	defer tx.Rollback()
+	defer tx.Rollback() // Defer a rollback incase returning error
 
 	query := `
 	INSERT INTO
 		users
-		(email, username, password, bio, image)
+		(email, username, password)
 	VALUES
-		(:email, :username, :password, :bio, :image)
+		(:email, :username, :password)
 	RETURNING
 		users.id, users.bio, users.image`
 	stmt, err := tx.PrepareNamedContext(ctx, query)
@@ -38,10 +36,6 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 
 	defer stmt.Close()
 	if err = stmt.GetContext(ctx, u, *u); err != nil {
-		return err
-	}
-
-	if err != nil {
 		return err
 	}
 
