@@ -47,9 +47,23 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
+	
+	token, sErr := c.authService.GenerateJWT(u)
+	if sErr != nil {
+		response.InternalError(w)
+		return
+	}
+	
+	res := &conduit.UserResponse{
+		Email:    u.Email,
+		Username: u.Username,
+		Token:    token,
+		Bio:      u.Bio,
+		Image:    u.Image,
+	}
 
 	response.Created(w, response.M{
-		"user": u,
+		"user": res,
 	})
 }
 
@@ -81,8 +95,8 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, serr := c.authService.GenerateJWT(u)
-	if serr != nil {
+	token, sErr := c.authService.GenerateJWT(u)
+	if sErr != nil {
 		response.InternalError(w)
 		return
 	}

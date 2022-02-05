@@ -3,31 +3,24 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/ashalfarhan/realworld/test"
 )
 
 func TestHelloController(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/hello", nil)
-	w := httptest.NewRecorder()
-	Hello(w, req)
-	res := w.Result()
-	defer res.Body.Close()
-
-	expected := map[string]interface{}{
-		"result": "Hello",
-		"status": 200,
-	}
-
 	var result string
+
+	res := test.MakeRequest(http.MethodGet, "/api/hello", nil, Hello, &result)
+
 	json.NewDecoder(res.Body).Decode(&result)
 
-	if res.StatusCode != expected["status"] {
-		t.Fatalf("expected StatusCode to be %d, but got: %v", expected["status"], result)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected StatusCode to be %d, but got: %v", http.StatusOK, res.StatusCode)
 	}
 
-	if result != expected["result"] {
-		t.Fatalf("expected Response to be \"%s\", but got: %v", expected["result"], result)
+	if result != "Hello" {
+		t.Fatalf("expected Response to be \"%s\", but got: %v", "Hello", result)
 	}
 
 }

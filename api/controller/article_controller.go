@@ -7,7 +7,6 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
@@ -45,7 +44,6 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 		response.Error(w, err.Code, err.Error)
 		return
 	}
-
 	response.Created(w, response.M{
 		"article": a,
 	})
@@ -60,24 +58,8 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	iu, ok := c.authService.GetUserFromCtx(r)
-	res := &conduit.ArticleResponse{
-		Slug:        a.Slug,
-		Title:       a.Title,
-		Description: a.Description,
-		Body:        a.Body,
-		CreatedAt:   a.CreatedAt,
-		UpdatedAt:   a.UpdatedAt,
-		TagList:     a.TagList,
-		Author:      a.Author,
-	}
-
-	if ok {
-		res.Favorited = c.articleService.IsArticleFavorited(r.Context(), iu.UserID, a.ID)
-	}
-
 	response.Ok(w, response.M{
-		"article": res,
+		"article": a,
 	})
 }
 
@@ -177,7 +159,8 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.Ok(w, response.M{
-		"articles": articles,
+		"articles":      articles,
+		"articlesCount": len(articles),
 	})
 }
 func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +210,8 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Ok(w, response.M{
-		"articles": articles,
+		"articles":      articles,
+		"articlesCount": len(articles),
 	})
 }
 

@@ -25,8 +25,8 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 	uname := mux.Vars(r)["username"]
 
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-
 	profile, err := c.userService.FollowUser(r.Context(), iu.UserID, uname)
+
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
