@@ -73,7 +73,7 @@ func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, au
 	return a, nil
 }
 
-func (s *ArticleService) GetOneBySlug(ctx context.Context, slug string) (*model.Article, *ServiceError) {
+func (s *ArticleService) GetOneBySlug(ctx context.Context, userID string, slug string) (*model.Article, *ServiceError) {
 	a := &model.Article{
 		Slug:   slug,
 		Author: &model.User{},
@@ -94,17 +94,24 @@ func (s *ArticleService) GetOneBySlug(ctx context.Context, slug string) (*model.
 	}
 
 	a.TagList = tags
-
 	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
 		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
+	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
+
+	if err != nil {
+		s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	return a, nil
 }
 
-func (s *ArticleService) DeleteArticle(ctx context.Context, slug string, userID string) *ServiceError {
-	a, err := s.GetOneBySlug(ctx, slug)
+func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *ServiceError {
+	a, err := s.GetOneBySlug(ctx, userID, slug)
 	if err != nil {
 		return err
 	}
@@ -144,7 +151,7 @@ func (s *ArticleService) CreateSlug(title string) string {
 
 func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug string, d *dto.UpdateArticleDto) (*model.Article, *ServiceError) {
 	args := &repository.UpdateArticleValues{}
-	ar, err := s.GetOneBySlug(ctx, slug)
+	ar, err := s.GetOneBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +174,6 @@ func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug strin
 		ar.Title = d.Article.Title
 		ar.Slug = newSlug
 	}
-
 	if ar.AuthorID != userID {
 		return nil, CreateServiceError(http.StatusForbidden, errors.New("you cannot edit this article"))
 	}
@@ -199,6 +205,14 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 
 		if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
 			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		}
+
+		a.Favorited = s.IsArticleFavorited(ctx, args.UserID, a.ID)
+
+		a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
+		if err != nil {
+			s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
@@ -233,7 +247,7 @@ func (s *ArticleService) GetFeed(ctx context.Context, args *repository.FindArtic
 }
 
 func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	a, err := s.GetOneBySlug(ctx, slug)
+	a, err := s.GetOneBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +262,7 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 }
 
 func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	a, err := s.GetOneBySlug(ctx, slug)
+	a, err := s.GetOneBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -263,5 +277,6 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 
 func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
 	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
+	s.logger.Println(ptr, err)
 	return ptr != nil && err == nil
 }

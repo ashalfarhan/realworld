@@ -52,7 +52,13 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := mux.Vars(r)["slug"]
 
-	a, err := c.articleService.GetOneBySlug(r.Context(), slug)
+	uid, err := c.authService.GetUserIDFromReq(r)
+	if err != nil {
+		response.Error(w, err.Code, err.Error)
+		return
+	}
+
+	a, err := c.articleService.GetOneBySlug(r.Context(), uid, slug)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -152,6 +158,12 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var sErr *service.ServiceError
+	if args.UserID, sErr = c.authService.GetUserIDFromReq(r); err != nil {
+		response.Error(w, sErr.Code, sErr.Error)
+		return
+	}
+
 	articles, serr := c.articleService.GetArticles(r.Context(), args)
 	if serr != nil {
 		response.Error(w, serr.Code, serr.Error)
@@ -163,6 +175,7 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		"articlesCount": len(articles),
 	})
 }
+
 func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	var limit, offset int

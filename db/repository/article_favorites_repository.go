@@ -74,7 +74,7 @@ func (r *ArticleFavoritesRepository) Delete(ctx context.Context, userID, article
 }
 
 func (r *ArticleFavoritesRepository) FindOneByIDs(ctx context.Context, userID, articleID string) (*string, error) {
-	var ptr *string
+	var ptr string
 	query := `
 	SELECT 
 		article_favorites.user_id
@@ -84,8 +84,25 @@ func (r *ArticleFavoritesRepository) FindOneByIDs(ctx context.Context, userID, a
 		article_favorites.user_id = $1 
 	AND 
 		article_favorites.article_id = $2`
-	if err := r.db.QueryRowContext(ctx, query, userID, articleID).Scan(ptr); err != nil {
+	if err := r.db.QueryRowContext(ctx, query, userID, articleID).Scan(&ptr); err != nil {
 		return nil, err
 	}
-	return ptr, nil
+	return &ptr, nil
+}
+
+func (r *ArticleFavoritesRepository) CountFavorites(ctx context.Context, articleID string) (int, error) {
+	var count int
+	query := `
+	SELECT
+		COUNT(*)
+	FROM
+		article_favorites
+	WHERE
+		article_favorites.article_id = $1
+	`
+	if err := r.db.QueryRowContext(ctx, query, articleID).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
