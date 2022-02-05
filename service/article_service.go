@@ -25,6 +25,7 @@ type ArticleService struct {
 	userRepo      *repository.UserRepository
 	tagsRepo      *repository.ArticleTagsRepository
 	favoritesRepo *repository.ArticleFavoritesRepository
+	commentRepo   *repository.CommentRepository
 	logger        *log.Logger
 }
 
@@ -34,11 +35,12 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 		repo.UserRepo,
 		repo.ArticleTagsRepo,
 		repo.ArticleFavoritesRepo,
+		repo.CommentRepo,
 		conduit.NewLogger("article-service"),
 	}
 }
 
-func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, authorID string) (*model.Article, *ServiceError) {
+func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticleDto, authorID string) (*model.Article, *ServiceError) {
 	a := &model.Article{
 		Title:       d.Article.Title,
 		Description: d.Article.Description,
@@ -73,7 +75,7 @@ func (s *ArticleService) Create(ctx context.Context, d *dto.CreateArticleDto, au
 	return a, nil
 }
 
-func (s *ArticleService) GetOneBySlug(ctx context.Context, userID string, slug string) (*model.Article, *ServiceError) {
+func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, slug string) (*model.Article, *ServiceError) {
 	a := &model.Article{
 		Slug:   slug,
 		Author: &model.User{},
@@ -111,7 +113,7 @@ func (s *ArticleService) GetOneBySlug(ctx context.Context, userID string, slug s
 }
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *ServiceError {
-	a, err := s.GetOneBySlug(ctx, userID, slug)
+	a, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
 		return err
 	}
@@ -128,16 +130,6 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string)
 	return nil
 }
 
-func (s *ArticleService) GetAllTags(ctx context.Context) ([]string, *ServiceError) {
-	tags, err := s.tagsRepo.FindAllTags(ctx)
-	if err != nil {
-		s.logger.Printf("Cannot FindAllTags, Reason: %v", err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
-
-	return tags, nil
-}
-
 func (s *ArticleService) CreateSlug(title string) string {
 	id, err := gonanoid.New(defaultSlugId)
 	if err != nil {
@@ -149,9 +141,9 @@ func (s *ArticleService) CreateSlug(title string) string {
 	return fmt.Sprintf("%s-%s", slug, id)
 }
 
-func (s *ArticleService) UpdateOneBySlug(ctx context.Context, userID, slug string, d *dto.UpdateArticleDto) (*model.Article, *ServiceError) {
+func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug string, d *dto.UpdateArticleDto) (*model.Article, *ServiceError) {
 	args := &repository.UpdateArticleValues{}
-	ar, err := s.GetOneBySlug(ctx, userID, slug)
+	ar, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +212,7 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 	return articles, nil
 }
 
-func (s *ArticleService) GetFeed(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
+func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
 	articles, err := s.articleRepo.FindByFollowed(ctx, args)
 	if err != nil {
 		s.logger.Printf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
@@ -244,39 +236,4 @@ func (s *ArticleService) GetFeed(ctx context.Context, args *repository.FindArtic
 	}
 
 	return articles, nil
-}
-
-func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	a, err := s.GetOneBySlug(ctx, userID, slug)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.favoritesRepo.InsertOne(ctx, userID, a.ID); err != nil {
-		s.logger.Printf("Cannot FavoriteArticle, Reason: %v", err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
-
-	a.Favorited = true
-	return a, nil
-}
-
-func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	a, err := s.GetOneBySlug(ctx, userID, slug)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.favoritesRepo.Delete(ctx, userID, a.ID); err != nil {
-		s.logger.Printf("Cannot UnfavoriteArticle, Reason: %v", err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
-
-	a.Favorited = false
-	return a, nil
-}
-
-func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
-	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
-	s.logger.Println(ptr, err)
-	return ptr != nil && err == nil
 }
