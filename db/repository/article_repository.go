@@ -18,7 +18,6 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := `
@@ -33,8 +32,8 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 	if err != nil {
 		return err
 	}
-
 	defer stmt.Close()
+
 	if err = stmt.GetContext(ctx, a, *a); err != nil {
 		return err
 	}
@@ -59,7 +58,6 @@ func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := `
@@ -121,14 +119,12 @@ func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a 
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
-
 	defer stmt.Close()
 
 	if err := stmt.QueryRowContext(ctx, valArgs...).Scan(&dest.UpdatedAt); err != nil {
@@ -139,7 +135,7 @@ func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a 
 }
 
 type FindArticlesArgs struct {
-	Tag    string `db:"tag"`
+	Tag string `db:"tag"`
 	// Author string `validate:"alphanum" db:"author_id"`
 	UserID string `db:"user_id"`
 	Limit  int    `validate:"min=1,max=25" db:"limit"`
@@ -168,7 +164,6 @@ func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*m
 	if err != nil {
 		return nil, err
 	}
-
 	defer stmt.Close()
 
 	if err := stmt.SelectContext(ctx, &articles, p); err != nil {

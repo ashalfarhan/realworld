@@ -15,7 +15,6 @@ func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagNam
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := `

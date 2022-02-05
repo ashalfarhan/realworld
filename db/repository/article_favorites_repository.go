@@ -33,7 +33,6 @@ func (r *ArticleFavoritesRepository) InsertOne(ctx context.Context, userID, arti
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := `
@@ -55,7 +54,6 @@ func (r *ArticleFavoritesRepository) Delete(ctx context.Context, userID, article
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := `
