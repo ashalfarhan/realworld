@@ -11,7 +11,7 @@ import (
 func MakeRequest(method, target string, payload interface{}, handler http.HandlerFunc, bodyDest interface{}) *http.Response {
 	b, err := json.Marshal(payload)
 	if err != nil {
-		log.Panicf("Cannot marshal payload of %v %v\n", payload, err)
+		log.Panicf("Cannot marshal payload: %v, Reason: %v\n", payload, err)
 		return nil
 	}
 
@@ -23,7 +23,7 @@ func MakeRequest(method, target string, payload interface{}, handler http.Handle
 
 	defer res.Body.Close()
 	if err := json.NewDecoder(res.Body).Decode(bodyDest); err != nil {
-		log.Panicf("Cannot Decode response body: %v\n", err)
+		log.Panicf("Cannot Decode response body, Reason: %v\n", err)
 		return nil
 	}
 

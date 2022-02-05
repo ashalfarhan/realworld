@@ -45,6 +45,7 @@ func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *
 type GetOneArgs struct {
 	Email    string
 	Username string
+	UserID   string
 }
 
 func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *ServiceError) {

@@ -56,7 +56,7 @@ func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, follow
 // To determine if "follower" is follow "following".
 // Check if pointer is not nill and err is nil
 func (r *FollowingRepository) FindOneByIDs(ctx context.Context, follower, following string) (*string, error) {
-	var ptr *string
+	var ptr string
 	query := `
 	SELECT 
 		followings.following_id
@@ -66,9 +66,9 @@ func (r *FollowingRepository) FindOneByIDs(ctx context.Context, follower, follow
 		followings.follower_id = $1
 	AND
 		followings.following_id = $2`
-	if err := r.db.QueryRowContext(ctx, query, follower, following).Scan(ptr); err != nil {
+	if err := r.db.QueryRowContext(ctx, query, follower, following).Scan(&ptr); err != nil {
 		return nil, err
 	}
 
-	return ptr, nil
+	return &ptr, nil
 }

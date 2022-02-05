@@ -23,8 +23,8 @@ func InternalError(w http.ResponseWriter) {
 	Error(w, http.StatusInternalServerError, conduit.ErrInternal)
 }
 
-func UnauthorizeError(w http.ResponseWriter) {
-	Error(w, http.StatusUnauthorized, conduit.ErrUnauthorized)
+func UnauthorizeError(w http.ResponseWriter, reason string) {
+	Error(w, http.StatusUnauthorized, fmt.Errorf("%w: %s", conduit.ErrUnauthorized, reason))
 }
 
 func EntityError(w http.ResponseWriter, err error) {
