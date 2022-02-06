@@ -2,7 +2,7 @@ POSTGRES_URL="postgres://postgres:password@localhost:5432/postgres?sslmode=disab
 MIGRATION_PATH="./db/migrations"
 API_URL="http://localhost:4000/api"
 
-.PHONY: migrate-up migrate-down migrate-force migrate-version migrate-new test test-ci conduit-spec
+.PHONY: migrate-up migrate-down migrate-force migrate-version migrate-new test test-ci test-spec
 
 migrate-up:
 	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} up
@@ -25,5 +25,5 @@ test:
 test-ci:
 	@go test -failfast -cover -race -v ./...
 
-conduit-spec:
+test-spec:
 	APIURL=${API_URL} bash ./conduit/spec/run-api-tests.sh
