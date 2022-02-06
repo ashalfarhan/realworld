@@ -54,4 +54,4 @@ For more information on how to this works with other frontends/backends, head ov
 - [ ] List articles by favorited user
 - [ ] List articles by author
 - [ ] Containerize with Docker
-- [ ] Caching with Redis
+- [x] Caching with Redis
