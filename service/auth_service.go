@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -30,7 +29,7 @@ const (
 	jwtExp    = 20 * time.Hour
 )
 
-func (AuthService) GenerateJWT(u *model.User) (string, error) {
+func (AuthService) GenerateJWT(u *model.User) (string, *ServiceError) {
 	c := &conduit.ConduitClaims{
 		UserID:   u.ID,
 		Username: u.Username,
@@ -43,21 +42,21 @@ func (AuthService) GenerateJWT(u *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return "", fmt.Errorf("cannot sign jwt: %w", err)
+		return "", CreateServiceError(http.StatusInternalServerError, fmt.Errorf("cannot sign jwt: %w", err))
 	}
 
 	return str, nil
 }
 
-func (AuthService) ParseJWT(str string) (*conduit.ConduitClaims, error) {
+func (AuthService) ParseJWT(str string) (*conduit.ConduitClaims, *ServiceError) {
 	t, err := jwt.ParseWithClaims(str, &conduit.ConduitClaims{}, getKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse jwt: %w", err)
+		return nil, CreateServiceError(http.StatusUnauthorized, fmt.Errorf("cannot parse jwt: %w", err))
 	}
 
 	claim, ok := t.Claims.(*conduit.ConduitClaims)
 	if !ok {
-		return nil, errors.New("invalid claim")
+		return nil, CreateServiceError(http.StatusUnauthorized, ErrInvalidClaim)
 	}
 
 	return claim, nil
@@ -81,7 +80,7 @@ func (a AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
 	jwt := authHeader[1]
 	claim, err := a.ParseJWT(jwt)
 	if err != nil {
-		return "", CreateServiceError(http.StatusUnauthorized, err)
+		return "", err
 	}
 
 	return claim.UserID, nil

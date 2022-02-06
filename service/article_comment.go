@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
@@ -64,7 +63,7 @@ func (s *ArticleService) GetOneComment(ctx context.Context, commentID string) (*
 	comm, err := s.commentRepo.FindOneByID(ctx, commentID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, errors.New("no comment found"))
+			return nil, CreateServiceError(http.StatusNotFound, ErrNoCommentFound)
 		}
 
 		s.logger.Printf("Cannot FindOneByID::CommentRepo for %v, Reason: %v", commentID, err)
@@ -81,7 +80,7 @@ func (s *ArticleService) DeleteCommentByID(ctx context.Context, commentID, userI
 	}
 
 	if comm.AuthorID != userID {
-		return CreateServiceError(http.StatusForbidden, errors.New("you cannot delete this comment"))
+		return CreateServiceError(http.StatusForbidden, ErrNotAllowedDeleteComment)
 	}
 
 	if err := s.commentRepo.DeleteByID(ctx, commentID); err != nil {

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -83,14 +82,14 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, sl
 
 	if err := s.articleRepo.FindOneBySlug(ctx, a); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, errors.New("no article found"))
+			return nil, CreateServiceError(http.StatusNotFound, ErrNoArticleFound)
 		}
+
 		s.logger.Printf("Cannot FindOneBySlug Article Repo for %+v, Reason: %v", a, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	s.PopulateArticleField(ctx, a, userID)
-
 	return a, nil
 }
 
@@ -101,7 +100,7 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string)
 	}
 
 	if a.AuthorID != userID {
-		return CreateServiceError(http.StatusForbidden, errors.New("you cannot delete this article"))
+		return CreateServiceError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
 	}
 
 	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
@@ -149,7 +148,7 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug s
 		ar.Slug = newSlug
 	}
 	if ar.AuthorID != userID {
-		return nil, CreateServiceError(http.StatusForbidden, errors.New("you cannot edit this article"))
+		return nil, CreateServiceError(http.StatusForbidden, ErrNotAllowedUpdateArticle)
 	}
 
 	if err := s.articleRepo.UpdateOneBySlug(ctx, slug, args, ar); err != nil {

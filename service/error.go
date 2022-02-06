@@ -1,15 +1,30 @@
 package service
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/conduit"
 )
 
-const (
-	ErrDuplicateEmail     = "pq: duplicate key value violates unique constraint \"users_email_key\""
-	ErrDuplicateUsername  = "pq: duplicate key value violates unique constraint \"users_username_key\""
-	ErrDuplicateFollowing = "pq: duplicate key value violates unique constraint \"followings_pkey\""
+var (
+	// UserService Error
+	ErrNoUserFound   = errors.New("no user found")
+	ErrEmailExist    = errors.New("email already exist")
+	ErrUsernameExist = errors.New("username already exist")
+	ErrSelfFollow    = errors.New("you cannot follow your self")
+	ErrSelfUnfollow  = errors.New("you cannot unfollow your self")
+	ErrAlreadyFollow = errors.New("you are already follow this user")
+
+	// AuthService Error
+	ErrInvalidClaim = errors.New("invalid claim")
+
+	// ArticleService Error
+	ErrNoArticleFound          = errors.New("no article found")
+	ErrNotAllowedDeleteArticle = errors.New("you cannot delete this article")
+	ErrNotAllowedUpdateArticle = errors.New("you cannot edit this article")
+	ErrNoCommentFound          = errors.New("no comment found")
+	ErrNotAllowedDeleteComment = errors.New("you cannot delete this comment")
 )
 
 type ServiceError struct {

@@ -18,7 +18,7 @@ func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
 		jwt := authHeader[1]
 		claim, err := m.authService.ParseJWT(jwt)
 		if err != nil {
-			response.UnauthorizeError(w, err.Error())
+			response.Error(w, err.Code, err.Error)
 			return
 		}
 

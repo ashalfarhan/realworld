@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/ashalfarhan/realworld/conduit"
 )
 
 func TestIsFollowing(t *testing.T) {
@@ -54,8 +53,8 @@ func TestFollowUser(t *testing.T) {
 			t.Fatalf("expected return code: %d but got: %d\n", http.StatusBadRequest, err.Code)
 		}
 
-		if err.Error != conduit.ErrSelfFollow {
-			t.Fatalf("expected return error: %v but got: %v\n", conduit.ErrSelfFollow, err.Error)
+		if err.Error != ErrSelfFollow {
+			t.Fatalf("expected return error: %v but got: %v\n", ErrSelfFollow, err.Error)
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {
@@ -81,8 +80,8 @@ func TestUnfollowUser(t *testing.T) {
 			t.Fatalf("should return code: %d but got: %d\n", http.StatusBadRequest, err.Code)
 		}
 
-		if err.Error != conduit.ErrSelfUnfollow {
-			t.Fatalf("should return error: %v but got: %v\n", conduit.ErrSelfUnfollow, err.Error)
+		if err.Error != ErrSelfUnfollow {
+			t.Fatalf("should return error: %v but got: %v\n", ErrSelfUnfollow, err.Error)
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {

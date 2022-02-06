@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/db/repository"
 )
 
 func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
@@ -15,13 +15,13 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 	}
 
 	if followerID == following.ID {
-		return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrSelfFollow)
+		return nil, CreateServiceError(http.StatusBadRequest, ErrSelfFollow)
 	}
 
 	if err := s.followRepo.InsertOne(ctx, followerID, following.ID); err != nil {
 		switch err.Error() {
-		case ErrDuplicateFollowing:
-			return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrAlreadyFollow)
+		case repository.ErrDuplicateFollowing:
+			return nil, CreateServiceError(http.StatusBadRequest, ErrAlreadyFollow)
 		default:
 			s.logger.Printf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -38,7 +38,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 	}
 
 	if followerID == following.ID {
-		return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrSelfUnfollow)
+		return nil, CreateServiceError(http.StatusBadRequest, ErrSelfUnfollow)
 	}
 
 	if err := s.followRepo.DeleteOneIDs(ctx, followerID, following.ID); err != nil {
