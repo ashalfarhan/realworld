@@ -13,11 +13,10 @@ import (
 )
 
 func Bootstrap(db *sqlx.DB) {
-	cf := config.LoadConfig()
 	serv := service.InitService(db)
-	server := InitServer(serv, cf)
+	server := InitServer(serv)
 
-	conduit.Logger.Printf("Listening on %s in \"%s\" mode", cf.Addr, cf.Env)
+	conduit.Logger.Printf("Listening on %s in \"%s\" mode", config.Co.Addr, config.Co.Env)
 
 	if err := server.ListenAndServe(); err != nil {
 		defer db.Close()
@@ -26,11 +25,11 @@ func Bootstrap(db *sqlx.DB) {
 	}
 }
 
-func InitServer(serv *service.Service, cf *config.Config) *http.Server {
+func InitServer(serv *service.Service) *http.Server {
 	r := InitRoutes(serv)
 
 	return &http.Server{
-		Addr:         cf.Addr,
+		Addr:         config.Co.Addr,
 		Handler:      handlers.LoggingHandler(os.Stdout, r),
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
