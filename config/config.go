@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	PgSource string
-	Addr     string
-	Port     string
-	Env      string
+	PgSource  string
+	RedisPass string
+	Addr      string
+	Port      string
+	Env       string
 }
 
 var Co = &Config{}
@@ -35,4 +36,5 @@ func Load() {
 			os.Getenv("POSTGRES_PASSWORD"),
 			os.Getenv("POSTGRES_DB"),
 			os.Getenv("POSTGRES_SSLMODE"))
+	Co.RedisPass = os.Getenv("REDIS_PASSWORD")
 }
