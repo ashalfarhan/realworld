@@ -123,8 +123,20 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	res := &conduit.UserResponse{
+		Email:    u.Email,
+		Username: u.Username,
+		Bio:      u.Bio,
+		Image:    u.Image,
+	}
+	token := c.authService.GetToken(r)
+
+	if token != "" {
+		res.Token = token
+	}
+
 	response.Ok(w, response.M{
-		"user": u,
+		"user": res,
 	})
 }
 
@@ -148,7 +160,18 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	res := &conduit.UserResponse{
+		Email:    u.Email,
+		Username: u.Username,
+		Bio:      u.Bio,
+		Image:    u.Image,
+	}
+	token := c.authService.GetToken(r)
+	if token != "" {
+		res.Token = token
+	}
+
 	response.Accepted(w, response.M{
-		"user": u,
+		"user": res,
 	})
 }
