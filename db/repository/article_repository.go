@@ -142,8 +142,8 @@ type FindArticlesArgs struct {
 	Offset int    `validate:"min=0" db:"offset"`
 }
 
-func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*model.Article, error) {
-	articles := []*model.Article{}
+func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
+	articles := model.Articles{}
 	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
 	if p.Tag != "" {
 		query += ` 
@@ -173,8 +173,8 @@ func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) ([]*m
 	return articles, nil
 }
 
-func (r *ArticleRepository) FindByFollowed(ctx context.Context, p *FindArticlesArgs) ([]*model.Article, error) {
-	articles := []*model.Article{}
+func (r *ArticleRepository) FindByFollowed(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
+	articles := model.Articles{}
 	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
 
 	if p.UserID != "" {
