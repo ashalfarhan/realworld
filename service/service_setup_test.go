@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	mock        sqlmock.Sqlmock
-	userService *UserService
-	testCtx     = context.TODO()
+	mock           sqlmock.Sqlmock
+	userService    *UserService
+	articleService *ArticleService
+	testCtx        = context.TODO()
 )
 
 func TestMain(m *testing.M) {
@@ -32,6 +33,7 @@ func TestMain(m *testing.M) {
 
 	repo := repository.InitRepository(db)
 	userService = NewUserService(repo)
+	articleService = NewArticleService(repo)
 
 	os.Exit(m.Run())
 }
