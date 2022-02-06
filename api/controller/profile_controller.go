@@ -39,7 +39,9 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 		Following: true,
 	}
 
-	response.Accepted(w, res)
+	response.Ok(w, response.M{
+		"profile": res,
+	})
 }
 
 func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +62,9 @@ func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 		Following: false,
 	}
 
-	response.Accepted(w, res)
+	response.Ok(w, response.M{
+		"profile": res,
+	})
 }
 
 func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -81,5 +85,7 @@ func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
 		Following: following,
 	}
 
-	response.Success(w, http.StatusOK, res)
+	response.Ok(w, response.M{
+		"profile": res,
+	})
 }
