@@ -1,11 +1,11 @@
 package dto
 
 type CreateCommentFields struct {
-	Body        string `json:"body" validate:"required"`
-	AuthorID    string
-	ArticleSlug string
+	Body string `json:"body" validate:"required"`
 }
 
 type CreateCommentDto struct {
-	Comment *CreateCommentFields `json:"comment" validate:"required"`
+	AuthorID    string
+	ArticleSlug string
+	Comment     *CreateCommentFields `json:"comment" validate:"required"`
 }

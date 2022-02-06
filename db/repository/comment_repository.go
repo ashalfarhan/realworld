@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -20,7 +21,7 @@ func (r *CommentRepository) InsertOne(ctx context.Context, c *model.Comment) err
 
 	query := `
 	INSERT INTO
-		comments
+		article_comments
 		(body, author_id, article_id)
 	VALUES
 		(:body, :author_id, :article_id)
@@ -51,7 +52,7 @@ func (r *CommentRepository) FindByArticleID(ctx context.Context, args *FindComme
 	SELECT
 		id, body, author_id, created_at, updated_at
 	FROM 
-		comments
+		article_comments
 	WHERE 
 		article_id = :article_id
 	ORDER BY created_at DESC
@@ -78,9 +79,9 @@ func (r *CommentRepository) DeleteByID(ctx context.Context, commentID string) er
 	defer tx.Rollback()
 	query := `
 	DELETE FROM
-		comments
+		article_comments
 	WHERE
-		comments.id = $1`
+		article_comments.id = $1`
 	if _, err = tx.ExecContext(ctx, query, commentID); err != nil {
 		return err
 	}
@@ -89,15 +90,16 @@ func (r *CommentRepository) DeleteByID(ctx context.Context, commentID string) er
 }
 
 func (r *CommentRepository) FindOneByID(ctx context.Context, commentID string) (*model.Comment, error) {
-	var comm *model.Comment
+	comm := &model.Comment{}
 	query := `
 	SELECT
 		id, body, author_id, created_at, updated_at
 	FROM
-		comments
+		article_comments
 	WHERE
-		comments.author_id = $1`
+		article_comments.id = $1`
 	if err := r.db.GetContext(ctx, comm, query, commentID); err != nil {
+		conduit.Logger.Println(comm)
 		return nil, err
 	}
 
