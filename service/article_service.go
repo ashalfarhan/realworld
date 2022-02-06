@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
+	"github.com/ashalfarhan/realworld/cache"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/db/repository"
@@ -26,6 +27,7 @@ type ArticleService struct {
 	favoritesRepo *repository.ArticleFavoritesRepository
 	commentRepo   *repository.CommentRepository
 	logger        *log.Logger
+	caching       *CacheService
 }
 
 func NewArticleService(repo *repository.Repository) *ArticleService {
@@ -36,6 +38,7 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 		repo.ArticleFavoritesRepo,
 		repo.CommentRepo,
 		conduit.NewLogger("article-service"),
+		NewCacheService(cache.Ca),
 	}
 }
 
@@ -80,6 +83,11 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, sl
 		Author: &model.User{},
 	}
 
+	cacheKey := fmt.Sprintf("article-%s-%s", slug, userID)
+	if ok := s.caching.Get(ctx, cacheKey, a); ok {
+		return a, nil
+	}
+
 	if err := s.articleRepo.FindOneBySlug(ctx, a); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoArticleFound)
@@ -90,6 +98,7 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, sl
 	}
 
 	s.PopulateArticleField(ctx, a, userID)
+	s.caching.Set(ctx, cacheKey, a)
 	return a, nil
 }
 
@@ -159,8 +168,16 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug s
 	return ar, nil
 }
 
-func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
-	articles, err := s.articleRepo.Find(ctx, args)
+func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *ServiceError) {
+	var articles model.Articles
+	var err error
+	cacheKey := fmt.Sprintf("articles-list-%s-%d-%d", args.UserID, args.Limit, args.Offset)
+
+	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
+		return articles, nil
+	}
+
+	articles, err = s.articleRepo.Find(ctx, args)
 	if err != nil {
 		s.logger.Printf("Cannot Find::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -170,11 +187,20 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 		s.PopulateArticleField(ctx, a, args.UserID)
 	}
 
+	s.caching.Set(ctx, cacheKey, articles)
 	return articles, nil
 }
 
-func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) ([]*model.Article, *ServiceError) {
-	articles, err := s.articleRepo.FindByFollowed(ctx, args)
+func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *ServiceError) {
+	var articles model.Articles
+	var err error
+	cacheKey := fmt.Sprintf("articles-feed-%s-%d-%d", args.UserID, args.Limit, args.Offset)
+
+	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
+		return articles, nil
+	}
+
+	articles, err = s.articleRepo.FindByFollowed(ctx, args)
 	if err != nil {
 		s.logger.Printf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -184,6 +210,7 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 		s.PopulateArticleField(ctx, a, args.UserID)
 	}
 
+	s.caching.Set(ctx, cacheKey, articles)
 	return articles, nil
 }
 
