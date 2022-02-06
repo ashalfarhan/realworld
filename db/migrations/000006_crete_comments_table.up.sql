@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE IF NOT EXISTS article_comments (
     id           UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     comment_id      SERIAL,
 	body          TEXT NOT NULL,
@@ -6,11 +6,11 @@ CREATE TABLE IF NOT EXISTS comments (
 	updated_at      TIMESTAMP DEFAULT NOW() NOT NULL,
 	author_id         UUID NOT NULL,
 	article_id         UUID NOT NULL,
-    CONSTRAINT fk_comments_author
+    CONSTRAINT fk_article_comments_author
         FOREIGN KEY (author_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
-    CONSTRAINT fk_comments_article
+    CONSTRAINT fk_article_comments_article
         FOREIGN KEY (article_id)
         REFERENCES articles(id)
         ON DELETE CASCADE
