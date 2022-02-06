@@ -46,7 +46,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 	}
 
 	response.Created(w, response.M{
-		"article": a,
+		"article": a.Serialize(),
 	})
 }
 
@@ -66,7 +66,7 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 	}
 
 	response.Ok(w, response.M{
-		"article": a,
+		"article": a.Serialize(),
 	})
 }
 
@@ -117,7 +117,7 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 	}
 
 	response.Accepted(w, response.M{
-		"article": ar,
+		"article": ar.Serialize(),
 	})
 }
 
@@ -172,7 +172,7 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.Ok(w, response.M{
-		"articles":      articles,
+		"articles":      articles.Serialize(),
 		"articlesCount": len(articles),
 	})
 }
@@ -224,7 +224,7 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Ok(w, response.M{
-		"articles":      articles,
+		"articles":      articles.Serialize(),
 		"articlesCount": len(articles),
 	})
 }
@@ -239,7 +239,7 @@ func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Reque
 	}
 
 	response.Accepted(w, response.M{
-		"article": a,
+		"article": a.Serialize(),
 	})
 }
 
@@ -253,6 +253,6 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 	}
 
 	response.Accepted(w, response.M{
-		"article": a,
+		"article": a.Serialize(),
 	})
 }
