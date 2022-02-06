@@ -40,7 +40,8 @@ func (r *ArticleTagsRepository) FindArticleTagsByID(ctx context.Context, article
 	FROM
 		article_tags
 	WHERE
-		article_tags.article_id = $1`
+		article_tags.article_id = $1
+	ORDER BY tag_name ASC`
 	if err := r.db.SelectContext(ctx, &tags, query, articleID); err != nil {
 		return nil, err
 	}
@@ -55,8 +56,8 @@ func (r *ArticleTagsRepository) FindAllTags(ctx context.Context) ([]string, erro
 	SELECT
 		DISTINCT(tag_name)
 	FROM
-		article_tags`
-
+		article_tags
+	ORDER BY tag_name ASC`
 	if err := r.db.SelectContext(ctx, &tags, query); err != nil {
 		return nil, err
 	}
