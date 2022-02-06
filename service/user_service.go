@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
 
@@ -32,7 +31,7 @@ func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *
 	u := &model.User{}
 	if err := s.userRepo.FindOneByID(ctx, id, u); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
+			return nil, CreateServiceError(http.StatusNotFound, conduit.ErrNoUserFound)
 		}
 
 		s.logger.Printf("Cannot FindOneById for %s, Reason: %v", id, err)
@@ -56,7 +55,7 @@ func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *
 
 	if err := s.userRepo.FindOne(ctx, u); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, errors.New("no user found"))
+			return nil, CreateServiceError(http.StatusNotFound, conduit.ErrNoUserFound)
 		}
 
 		s.logger.Printf("Cannot FindOne for %+v, Reason: %v", d, err)
@@ -83,9 +82,9 @@ func (s *UserService) Register(ctx context.Context, d *RegisterArgs) (*model.Use
 	if err := s.userRepo.InsertOne(ctx, u); err != nil {
 		switch err.Error() {
 		case ErrDuplicateEmail:
-			return nil, CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrEmailExist)
 		case ErrDuplicateUsername:
-			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrUsernameExist)
 		default:
 			s.logger.Printf("Cannot InsertOne for %+v, Reason: %v", d, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -135,9 +134,9 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 	if err := s.userRepo.UpdateOne(ctx, args); err != nil {
 		switch err.Error() {
 		case ErrDuplicateEmail:
-			return nil, CreateServiceError(http.StatusBadRequest, errors.New("email already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrEmailExist)
 		case ErrDuplicateUsername:
-			return nil, CreateServiceError(http.StatusBadRequest, errors.New("username already exist"))
+			return nil, CreateServiceError(http.StatusBadRequest, conduit.ErrUsernameExist)
 		default:
 			s.logger.Printf("Cannot UpdateOne payload:%+v args:%+v, Reason: %v", d, args, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)

@@ -11,6 +11,8 @@ import (
 var articleController = &ArticleController{}
 
 func TestCreateArticle(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Payload should have body, title, description", func(t *testing.T) {
 		payload := response.M{
 			"article": response.M{},
@@ -50,6 +52,8 @@ func TestCreateArticle(t *testing.T) {
 }
 
 func TestGetArticleList(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should response error if \"limit\" below 1", func(t *testing.T) {
 		payload := response.M{}
 		var body DtoError

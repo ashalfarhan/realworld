@@ -13,6 +13,8 @@ type DtoError map[string]map[string][]string
 var userController = &UserController{}
 
 func TestLoginController(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should response error if not provide email or username", func(t *testing.T) {
 		payload := response.M{
 			"user": response.M{
@@ -33,6 +35,8 @@ func TestLoginController(t *testing.T) {
 }
 
 func TestRegisterController(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should response error if not provide email and username", func(t *testing.T) {
 		payload := response.M{
 			"user": response.M{
@@ -96,6 +100,8 @@ func TestRegisterController(t *testing.T) {
 }
 
 func TestUpdateUserController(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should response error if new password length is not the min (8)", func(t *testing.T) {
 		payload := response.M{
 			"user": response.M{

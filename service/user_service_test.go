@@ -1,42 +1,12 @@
 package service
 
 import (
-	"context"
-	"database/sql"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/repository"
-	"github.com/jmoiron/sqlx"
 )
-
-var (
-	mock sqlmock.Sqlmock
-	err  error
-	us   *UserService
-	ctx  context.Context
-)
-
-func TestMain(m *testing.M) {
-	var mockDb *sql.DB
-	mockDb, mock, err = sqlmock.New()
-	if err != nil {
-		panic(err)
-	}
-	defer mockDb.Close()
-
-	db := sqlx.NewDb(mockDb, "sqlmock")
-	defer db.Close()
-
-	repo := repository.InitRepository(db)
-	us = NewUserService(repo)
-	ctx = context.TODO()
-
-	os.Exit(m.Run())
-}
 
 func TestRegisterUser(t *testing.T) {
 	d := &RegisterArgs{
@@ -56,7 +26,7 @@ func TestRegisterUser(t *testing.T) {
 
 	mock.ExpectCommit()
 
-	u, err := us.Register(context.TODO(), d)
+	u, err := userService.Register(testCtx, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +61,7 @@ func TestUpdateUser(t *testing.T) {
 	mock.ExpectPrepare("UPDATE users SET").ExpectExec().WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	u, err := us.Update(context.TODO(), d, "")
+	u, err := userService.Update(testCtx, d, "")
 	if err != nil {
 		t.Fatal(err)
 	}
