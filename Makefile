@@ -1,8 +1,6 @@
-POSTGRES_URL="postgres://postgres:password@localhost:5432/postgres?sslmode=disable"
-MIGRATION_PATH="./db/migrations"
-API_URL="http://localhost:4000/api"
+include .env
 
-.PHONY: migrate-up migrate-down migrate-force migrate-version migrate-new test test-ci test-spec
+.PHONY: migrate-up migrate-down migrate-force migrate-version migrate-new test test-ci test-spec start-db
 
 migrate-up:
 	@migrate -database ${POSTGRES_URL} -path ${MIGRATION_PATH} up
@@ -27,3 +25,6 @@ test-ci:
 
 test-spec:
 	APIURL=${API_URL} bash ./conduit/spec/run-api-tests.sh
+
+start-db:
+	@docker-compose --env-file .env up -d
