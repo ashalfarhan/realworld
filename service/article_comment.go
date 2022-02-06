@@ -12,18 +12,24 @@ import (
 )
 
 func (s *ArticleService) CreateComment(ctx context.Context, d *dto.CreateCommentDto) (*model.Comment, *ServiceError) {
-	ar, err := s.GetArticleBySlug(ctx, "", d.Comment.ArticleSlug)
+	ar, err := s.GetArticleBySlug(ctx, d.AuthorID, d.ArticleSlug)
 	if err != nil {
 		return nil, err
 	}
 	c := &model.Comment{
 		Body:      d.Comment.Body,
-		AuthorID:  d.Comment.AuthorID,
+		AuthorID:  d.AuthorID,
 		ArticleID: ar.ID,
 	}
 
 	if err := s.commentRepo.InsertOne(ctx, c); err != nil {
-		s.logger.Printf("Cannot InsertOne::CommentRepo, Reason: %v", err)
+		s.logger.Printf("Cannot InsertOne::CommentRepo Args: %+v, Reason: %v", c, err)
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	c.Author = &model.User{}
+	if err := s.userRepo.FindOneByID(ctx, c.AuthorID, c.Author); err != nil {
+		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -41,6 +47,14 @@ func (s *ArticleService) GetComments(ctx context.Context, args *repository.FindC
 	if err != nil {
 		s.logger.Printf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	for _, c := range comments {
+		c.Author = &model.User{}
+		if err := s.userRepo.FindOneByID(ctx, c.AuthorID, c.Author); err != nil {
+			s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		}
 	}
 
 	return comments, nil
