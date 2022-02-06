@@ -51,7 +51,6 @@ For more information on how to this works with other frontends/backends, head ov
   ```
 
 ## Todo
-- [ ] Article Service Test
 - [ ] List articles by favorited user
 - [ ] List articles by author
 - [ ] Containerize with Docker
