@@ -89,25 +89,7 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, sl
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
-	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
-	if err != nil {
-		s.logger.Printf("Cannot FindArticleTagsByID ArticleTags Repo for %s, Reason: %v", a.ID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
-
-	a.TagList = tags
-	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
-		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
-
-	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
-	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
-
-	if err != nil {
-		s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
-	}
+	s.PopulateArticleField(ctx, a, userID)
 
 	return a, nil
 }
@@ -186,27 +168,7 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 	}
 
 	for _, a := range articles {
-		tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
-		if err != nil {
-			s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
-		}
-
-		a.TagList = tags
-		a.Author = &model.User{}
-
-		if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
-			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
-		}
-
-		a.Favorited = s.IsArticleFavorited(ctx, args.UserID, a.ID)
-
-		a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
-		if err != nil {
-			s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
-		}
+		s.PopulateArticleField(ctx, a, args.UserID)
 	}
 
 	return articles, nil
@@ -220,20 +182,34 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 	}
 
 	for _, a := range articles {
-		tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
-		if err != nil {
-			s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
-		}
-
-		a.TagList = tags
-		a.Author = &model.User{}
-
-		if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
-			s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
-		}
+		s.PopulateArticleField(ctx, a, args.UserID)
 	}
 
 	return articles, nil
+}
+
+func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, userID string) *ServiceError {
+	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
+	if err != nil {
+		s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
+		return CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	a.TagList = tags
+	a.Author = &model.User{}
+
+	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+		s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
+		return CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
+
+	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
+	if err != nil {
+		s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
+		return CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	return nil
 }
