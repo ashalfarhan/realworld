@@ -87,6 +87,15 @@ func (a AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
 	return claim.UserID, nil
 }
 
+func (a AuthService) GetToken(r *http.Request) string {
+	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
+	if len(authHeader) != 2 {
+		return ""
+	}
+
+	return authHeader[1]
+}
+
 func getKey(t *jwt.Token) (interface{}, error) {
 	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
