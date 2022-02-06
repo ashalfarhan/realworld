@@ -8,9 +8,9 @@ import (
 )
 
 func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	a, err := s.GetArticleBySlug(ctx, userID, slug)
-	if err != nil {
-		return nil, err
+	a, sErr := s.GetArticleBySlug(ctx, userID, slug)
+	if sErr != nil {
+		return nil, sErr
 	}
 
 	if err := s.favoritesRepo.InsertOne(ctx, userID, a.ID); err != nil {
@@ -19,6 +19,14 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 	}
 
 	a.Favorited = true
+	count, err := s.favoritesRepo.CountFavorites(ctx, a.ID)
+	if err != nil {
+		s.logger.Printf("Cannot CountFavorites, Reason: %v", err)
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	a.FavoritesCount = count
+
 	return a, nil
 }
 
