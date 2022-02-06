@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gosimple/slug v1.12.0
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.4
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
