@@ -12,7 +12,7 @@ For more information on how to this works with other frontends/backends, head ov
 
 # How it works
 
-> I'am using Gorilla Mux for http router, and sqlx for relational database interaction.
+> This is an implementation of Conduit (Medium Clone) built with Go Programming Language.
 
 ## Prerequisite
 - Git [Download](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
@@ -29,15 +29,19 @@ For more information on how to this works with other frontends/backends, head ov
   ```bash
   go mod tidy
   ```
-- Start PostgreSQL and Adminer
+- Start PostgreSQL and Adminer with `docker-compose`
   ```bash
-  docker-compose up -d
+  make start-db
+  ```
+- Run schema migrations with [migrate](https://github.com/golang-migrate/migrate)
+  ```bash
+  make migrate-up
   ```
 - Start the server
   ```bash
   go run .
   ```
-  Or using hot reload like [Air](https://github.com/cosmtrek/air)
+  Or using live reload like [Air](https://github.com/cosmtrek/air)
 
 
 ## Testing
