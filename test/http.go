@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 )
 
-func MakeRequest(method, target string, payload interface{}, handler http.HandlerFunc, bodyDest interface{}) *http.Response {
+func MakeRequest(method, target string, payload, bodyDest interface{}, handler http.HandlerFunc) *http.Response {
 	b, err := json.Marshal(payload)
 	if err != nil {
 		log.Panicf("Cannot marshal payload: %v, Reason: %v\n", payload, err)

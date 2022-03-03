@@ -6,6 +6,7 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/test"
+	"github.com/stretchr/testify/assert"
 )
 
 type DtoError map[string]map[string][]string
@@ -21,16 +22,15 @@ func TestLoginController(t *testing.T) {
 				"password": "secret",
 			},
 		}
+
 		var body DtoError
-		res := test.MakeRequest(http.MethodPost, "/api/users/login", payload, userController.LoginUser, &body)
-
-		if res.StatusCode != http.StatusUnprocessableEntity {
-			t.Fatalf("expected StatusCode to be %d, but got %d", http.StatusUnprocessableEntity, res.StatusCode)
-		}
-
-		if len(body["errors"]["username"]) == 0 && len(body["errors"]["email"]) == 0 {
-			t.Fatalf("expected validation errors in username and email, but got %v", body["errors"])
-		}
+		res := test.MakeRequest(http.MethodPost, "/api/users/login", payload, &body, userController.LoginUser)
+		as := assert.New(t)
+		as.Equal(res.StatusCode, http.StatusUnprocessableEntity)
+		as.Greater(len(body["errors"]["username"]), 0, "validation error in username")
+		as.Greater(len(body["errors"]["email"]), 0, "validation error in email")
+		as.Contains(body["errors"]["username"][0], "required")
+		as.Contains(body["errors"]["email"][0], "required")
 	})
 }
 
@@ -40,20 +40,18 @@ func TestRegisterController(t *testing.T) {
 	t.Run("Should response error if not provide email and username", func(t *testing.T) {
 		payload := response.M{
 			"user": response.M{
-				"password": "secret",
+				"password": "secret2020",
 			},
 		}
 
 		var body DtoError
-		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, userController.RegisterUser, &body)
-
-		if res.StatusCode != http.StatusUnprocessableEntity {
-			t.Fatalf("expected StatusCode to be %d, but got %d", http.StatusUnprocessableEntity, res.StatusCode)
-		}
-
-		if len(body["errors"]["username"]) == 0 && len(body["errors"]["email"]) == 0 {
-			t.Fatalf("expected validation errors in username and email, but got %v", body["errors"])
-		}
+		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, &body, userController.RegisterUser)
+		as := assert.New(t)
+		as.Equal(res.StatusCode, http.StatusUnprocessableEntity)
+		as.Greater(len(body["errors"]["username"]), 0, "validation error in username")
+		as.Greater(len(body["errors"]["email"]), 0, "validation error in email")
+		as.Contains(body["errors"]["username"][0], "required")
+		as.Contains(body["errors"]["email"][0], "required")
 	})
 
 	t.Run("Should response error if password is less than 8", func(t *testing.T) {
@@ -66,15 +64,11 @@ func TestRegisterController(t *testing.T) {
 		}
 
 		var body DtoError
-		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, userController.RegisterUser, &body)
-
-		if res.StatusCode != http.StatusUnprocessableEntity {
-			t.Fatalf("expected StatusCode to be %d, but got %d", http.StatusUnprocessableEntity, res.StatusCode)
-		}
-
-		if body["errors"]["password"][0] != "min 8" {
-			t.Fatalf("expected validation errors in password, but got %v", body["errors"])
-		}
+		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, &body, userController.RegisterUser)
+		as := assert.New(t)
+		as.Equal(res.StatusCode, http.StatusUnprocessableEntity)
+		as.Greater(len(body["errors"]["password"]), 0, "validation error in password")
+		as.Contains(body["errors"]["password"][0], "min 8")
 	})
 
 	t.Run("Should response error if not a valid email", func(t *testing.T) {
@@ -87,15 +81,11 @@ func TestRegisterController(t *testing.T) {
 		}
 
 		var body DtoError
-		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, userController.RegisterUser, &body)
-
-		if res.StatusCode != http.StatusUnprocessableEntity {
-			t.Fatalf("expected StatusCode to be %d, but got %d", http.StatusUnprocessableEntity, res.StatusCode)
-		}
-
-		if len(body["errors"]["email"]) == 0 {
-			t.Fatalf("expected validation errors in email, but got %v", body["errors"])
-		}
+		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, &body, userController.RegisterUser)
+		as := assert.New(t)
+		as.Equal(res.StatusCode, http.StatusUnprocessableEntity)
+		as.Greater(len(body["errors"]["email"]), 0, "validation error in email")
+		as.Contains(body["errors"]["email"][0], "email")
 	})
 }
 
@@ -108,15 +98,12 @@ func TestUpdateUserController(t *testing.T) {
 				"password": "asd",
 			},
 		}
+
 		var body DtoError
-		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, userController.RegisterUser, &body)
-
-		if res.StatusCode != http.StatusUnprocessableEntity {
-			t.Fatalf("expected StatusCode to be %d, but got %d", http.StatusUnprocessableEntity, res.StatusCode)
-		}
-
-		if body["errors"]["password"][0] == "min 8 " {
-			t.Fatalf("expected validation errors in password, but got %v", body["errors"])
-		}
+		res := test.MakeRequest(http.MethodPost, "/api/users/register", payload, &body, userController.RegisterUser)
+		as := assert.New(t)
+		as.Equal(res.StatusCode, http.StatusUnprocessableEntity)
+		as.Greater(len(body["errors"]["password"]), 0, "validation error in password")
+		as.Contains(body["errors"]["password"][0], "min 8")
 	})
 }

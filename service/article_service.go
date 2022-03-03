@@ -48,7 +48,7 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 		Description: d.Article.Description,
 		Body:        d.Article.Body,
 		AuthorID:    authorID,
-		Author:      &model.User{},
+		Author:      new(model.User),
 	}
 
 	a.Slug = s.CreateSlug(a.Title)

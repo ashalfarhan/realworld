@@ -19,10 +19,7 @@ type ArticleController struct {
 }
 
 func NewArticleController(s *service.Service) *ArticleController {
-	return &ArticleController{
-		articleService: s.ArticleService,
-		authService:    s.AuthService,
-	}
+	return &ArticleController{s.ArticleService, s.AuthService}
 }
 
 func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request) {
