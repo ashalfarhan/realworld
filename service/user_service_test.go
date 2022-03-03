@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ashalfarhan/realworld/api/dto"
+	. "github.com/ashalfarhan/realworld/service"
 	"github.com/stretchr/testify/assert"
 )
 

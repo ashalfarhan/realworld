@@ -1,10 +1,11 @@
-package service
+package service_test
 
 import (
 	"database/sql"
 	"net/http"
 	"testing"
-
+	
+	. "github.com/ashalfarhan/realworld/service"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )

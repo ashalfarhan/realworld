@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	. "github.com/ashalfarhan/realworld/service"
 	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/jmoiron/sqlx"
 )

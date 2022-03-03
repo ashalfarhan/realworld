@@ -1,9 +1,10 @@
-package controller
+package controller_test
 
 import (
 	"net/http"
 	"testing"
 
+	. "github.com/ashalfarhan/realworld/api/controller"
 	"github.com/ashalfarhan/realworld/test"
 	"github.com/stretchr/testify/assert"
 )
