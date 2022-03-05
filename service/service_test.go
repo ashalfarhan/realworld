@@ -7,6 +7,7 @@ import (
 
 	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/db/repository"
+	. "github.com/ashalfarhan/realworld/service"
 )
 
 var (
@@ -14,6 +15,7 @@ var (
 	articleRepoMock *repository.ArticleRepoMock
 	followRepoMock  *repository.FollowingRepoMock
 	repo            *repository.Repository
+	userService     *UserService
 )
 
 func TestMain(m *testing.M) {
@@ -26,7 +28,6 @@ func TestMain(m *testing.M) {
 func setup() {
 	config.Co.Env = "test"
 	log.Println("Setting up service test")
-
 	userRepoMock = new(repository.UserRepoMock)
 	articleRepoMock = new(repository.ArticleRepoMock)
 	followRepoMock = new(repository.FollowingRepoMock)
@@ -35,6 +36,8 @@ func setup() {
 		ArticleRepo: articleRepoMock,
 		FollowRepo:  followRepoMock,
 	}
+
+	userService = NewUserService(repo)
 }
 
 func teardown() {

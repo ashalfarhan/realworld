@@ -15,7 +15,6 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	userService := NewUserService(repo)
 	testCases := []struct {
 		desc       string
 		mockReturn error
@@ -67,4 +66,58 @@ func TestRegister(t *testing.T) {
 		as.Nil(err)
 		as.NotEqual(pw, reg.Password, "Registered user password should be hashed")
 	})
+
+	t.Parallel()
+}
+
+func TestGetOneById(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		mockReturn error
+		errCode    int
+		errError   error
+	}{
+		{
+			desc:       "Get one by id should fail if no rows",
+			mockReturn: sql.ErrNoRows,
+			errCode:    http.StatusNotFound,
+			errError:   ErrNoUserFound,
+		},
+		{
+			desc:       "Get one by id should fail if db error",
+			mockReturn: sql.ErrTxDone,
+			errCode:    http.StatusInternalServerError,
+			errError:   conduit.ErrInternal,
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			as := assert.New(t)
+			userRepoMock.
+				On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
+				Return(tC.mockReturn).
+				Once()
+			_, err := userService.GetOneById(context.TODO(), "id")
+			userRepoMock.AssertExpectations(t)
+
+			as.NotNil(err)
+			as.Equal(err.Code, tC.errCode)
+			as.Equal(err.Error, tC.errError)
+		})
+	}
+
+	t.Run("Get one by id should success", func(t *testing.T) {
+		as := assert.New(t)
+
+		userRepoMock.
+			On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil).
+			Once()
+		u, err := userService.GetOneById(context.TODO(), "id")
+		as.Nil(err)
+		as.NotNil(u)
+	})
+
+	t.Parallel()
 }
