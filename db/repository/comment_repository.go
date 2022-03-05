@@ -8,11 +8,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type CommentRepository struct {
+type CommentRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (r *CommentRepository) InsertOne(ctx context.Context, c *model.Comment) error {
+type CommentRepository interface {
+	InsertOne(ctx context.Context, c *model.Comment) error
+	FindByArticleID(ctx context.Context, args *FindCommentsByArticleIDArgs) ([]*model.Comment, error)
+	DeleteByID(ctx context.Context, commentID string) error
+	FindOneByID(ctx context.Context, commentID string) (*model.Comment, error)
+}
+
+func (r *CommentRepoImpl) InsertOne(ctx context.Context, c *model.Comment) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -46,7 +53,7 @@ type FindCommentsByArticleIDArgs struct {
 	Offset    int    `validate:"min=0" db:"offset"`
 }
 
-func (r *CommentRepository) FindByArticleID(ctx context.Context, args *FindCommentsByArticleIDArgs) ([]*model.Comment, error) {
+func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, args *FindCommentsByArticleIDArgs) ([]*model.Comment, error) {
 	var comments []*model.Comment
 	query := `
 	SELECT
@@ -71,7 +78,7 @@ func (r *CommentRepository) FindByArticleID(ctx context.Context, args *FindComme
 	return comments, nil
 }
 
-func (r *CommentRepository) DeleteByID(ctx context.Context, commentID string) error {
+func (r *CommentRepoImpl) DeleteByID(ctx context.Context, commentID string) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -89,7 +96,7 @@ func (r *CommentRepository) DeleteByID(ctx context.Context, commentID string) er
 	return tx.Commit()
 }
 
-func (r *CommentRepository) FindOneByID(ctx context.Context, commentID string) (*model.Comment, error) {
+func (r *CommentRepoImpl) FindOneByID(ctx context.Context, commentID string) (*model.Comment, error) {
 	comm := &model.Comment{}
 	query := `
 	SELECT

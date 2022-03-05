@@ -19,9 +19,7 @@ type AuthService struct {
 }
 
 func NewAuthService() *AuthService {
-	return &AuthService{
-		userCtxKey: "incoming-user",
-	}
+	return &AuthService{"incoming-user"}
 }
 
 const (

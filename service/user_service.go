@@ -14,8 +14,8 @@ import (
 )
 
 type UserService struct {
-	userRepo   *repository.UserRepository
-	followRepo *repository.FollowingRepository
+	userRepo   repository.UserRepository
+	followRepo repository.FollowingRepository
 	logger     *log.Logger
 }
 

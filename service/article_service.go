@@ -21,11 +21,11 @@ const (
 )
 
 type ArticleService struct {
-	articleRepo   *repository.ArticleRepository
-	userRepo      *repository.UserRepository
+	articleRepo   repository.ArticleRepository
+	userRepo      repository.UserRepository
 	tagsRepo      *repository.ArticleTagsRepository
-	favoritesRepo *repository.ArticleFavoritesRepository
-	commentRepo   *repository.CommentRepository
+	favoritesRepo repository.ArticleFavoritesRepository
+	commentRepo   repository.CommentRepository
 	logger        *log.Logger
 	caching       *CacheService
 }

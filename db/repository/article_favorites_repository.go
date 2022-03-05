@@ -6,11 +6,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ArticleFavoritesRepository struct {
+type ArticleFavoritesRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (r *ArticleFavoritesRepository) FindFavoritedArticleByUserId(ctx context.Context, userID string) ([]string, error) {
+type ArticleFavoritesRepository interface {
+	FindFavoritedArticleByUserId(context.Context, string) ([]string, error)
+	InsertOne(context.Context, string, string) error
+	Delete(context.Context, string, string) error
+	FindOneByIDs(context.Context, string, string) (*string, error)
+	CountFavorites(context.Context, string) (int, error)
+}
+
+func (r *ArticleFavoritesRepoImpl) FindFavoritedArticleByUserId(ctx context.Context, userID string) ([]string, error) {
 	var article_ids []string
 
 	query := `
@@ -28,7 +36,7 @@ func (r *ArticleFavoritesRepository) FindFavoritedArticleByUserId(ctx context.Co
 	return article_ids, nil
 }
 
-func (r *ArticleFavoritesRepository) InsertOne(ctx context.Context, userID, articleID string) error {
+func (r *ArticleFavoritesRepoImpl) InsertOne(ctx context.Context, userID, articleID string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -49,7 +57,7 @@ func (r *ArticleFavoritesRepository) InsertOne(ctx context.Context, userID, arti
 	return tx.Commit()
 }
 
-func (r *ArticleFavoritesRepository) Delete(ctx context.Context, userID, articleID string) error {
+func (r *ArticleFavoritesRepoImpl) Delete(ctx context.Context, userID, articleID string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -71,7 +79,7 @@ func (r *ArticleFavoritesRepository) Delete(ctx context.Context, userID, article
 	return tx.Commit()
 }
 
-func (r *ArticleFavoritesRepository) FindOneByIDs(ctx context.Context, userID, articleID string) (*string, error) {
+func (r *ArticleFavoritesRepoImpl) FindOneByIDs(ctx context.Context, userID, articleID string) (*string, error) {
 	var ptr string
 	query := `
 	SELECT 
@@ -88,7 +96,7 @@ func (r *ArticleFavoritesRepository) FindOneByIDs(ctx context.Context, userID, a
 	return &ptr, nil
 }
 
-func (r *ArticleFavoritesRepository) CountFavorites(ctx context.Context, articleID string) (int, error) {
+func (r *ArticleFavoritesRepoImpl) CountFavorites(ctx context.Context, articleID string) (int, error) {
 	var count int
 	query := `
 	SELECT

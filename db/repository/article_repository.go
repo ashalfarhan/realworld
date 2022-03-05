@@ -9,11 +9,20 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ArticleRepository struct {
+type ArticleRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) error {
+type ArticleRepository interface {
+	InsertOne(context.Context, *model.Article) error
+	FindOneBySlug(context.Context, *model.Article) error
+	DeleteBySlug(context.Context, string) error
+	UpdateOneBySlug(context.Context, string, *UpdateArticleValues, *model.Article) error
+	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
+	FindByFollowed(context.Context, *FindArticlesArgs) (model.Articles, error)
+}
+
+func (r *ArticleRepoImpl) InsertOne(ctx context.Context, a *model.Article) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -41,7 +50,7 @@ func (r *ArticleRepository) InsertOne(ctx context.Context, a *model.Article) err
 	return tx.Commit()
 }
 
-func (r *ArticleRepository) FindOneBySlug(ctx context.Context, a *model.Article) error {
+func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, a *model.Article) error {
 	query := `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at
@@ -53,7 +62,7 @@ func (r *ArticleRepository) FindOneBySlug(ctx context.Context, a *model.Article)
 	return r.db.GetContext(ctx, a, query, a.Slug)
 }
 
-func (r *ArticleRepository) DeleteBySlug(ctx context.Context, slug string) error {
+func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -80,7 +89,7 @@ type UpdateArticleValues struct {
 	Description *string
 }
 
-func (r *ArticleRepository) UpdateOneBySlug(ctx context.Context, slug string, a *UpdateArticleValues, dest *model.Article) error {
+func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, slug string, a *UpdateArticleValues, dest *model.Article) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
@@ -142,7 +151,7 @@ type FindArticlesArgs struct {
 	Offset int    `validate:"min=0" db:"offset"`
 }
 
-func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
+func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
 	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
 	if p.Tag != "" {
@@ -173,7 +182,7 @@ func (r *ArticleRepository) Find(ctx context.Context, p *FindArticlesArgs) (mode
 	return articles, nil
 }
 
-func (r *ArticleRepository) FindByFollowed(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
+func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
 	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
 

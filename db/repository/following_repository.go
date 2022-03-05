@@ -6,11 +6,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type FollowingRepository struct {
+type FollowingRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following string) error {
+type FollowingRepository interface {
+	InsertOne(context.Context, string, string) error
+	DeleteOneIDs(context.Context, string, string) error
+	FindOneByIDs(context.Context, string, string) (*string, error)
+}
+
+func (r *FollowingRepoImpl) InsertOne(ctx context.Context, follower, following string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -30,7 +36,7 @@ func (r *FollowingRepository) InsertOne(ctx context.Context, follower, following
 	return tx.Commit()
 }
 
-func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, following string) error {
+func (r *FollowingRepoImpl) DeleteOneIDs(ctx context.Context, follower, following string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -55,7 +61,7 @@ func (r *FollowingRepository) DeleteOneIDs(ctx context.Context, follower, follow
 // Returns pointer to the following id.
 // To determine if "follower" is follow "following".
 // Check if pointer is not nill and err is nil
-func (r *FollowingRepository) FindOneByIDs(ctx context.Context, follower, following string) (*string, error) {
+func (r *FollowingRepoImpl) FindOneByIDs(ctx context.Context, follower, following string) (*string, error) {
 	var ptr string
 	query := `
 	SELECT 

@@ -9,12 +9,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRepository struct {
+type UserRepoImpl struct {
 	db *sqlx.DB
 }
 
+type UserRepository interface {
+	InsertOne(context.Context, *model.User) error
+	FindOneByID(context.Context, string, *model.User) error
+	FindOne(context.Context, *model.User) error
+	UpdateOne(context.Context, *UpdateUserValues) error
+}
+
 // See https://go.dev/doc/database/execute-transactions
-func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
+func (r *UserRepoImpl) InsertOne(ctx context.Context, u *model.User) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -43,7 +50,7 @@ func (r *UserRepository) InsertOne(ctx context.Context, u *model.User) error {
 	return tx.Commit()
 }
 
-func (r *UserRepository) FindOneByID(ctx context.Context, id string, u *model.User) error {
+func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string, u *model.User) error {
 	query := `
 	SELECT
 		id, email, username, bio, image, created_at, updated_at
@@ -55,7 +62,7 @@ func (r *UserRepository) FindOneByID(ctx context.Context, id string, u *model.Us
 
 }
 
-func (r *UserRepository) FindOne(ctx context.Context, cand *model.User) error {
+func (r *UserRepoImpl) FindOne(ctx context.Context, cand *model.User) error {
 	query := `
 	SELECT
 		id, email, username, password, bio, image 
@@ -79,7 +86,7 @@ type UpdateUserValues struct {
 	Bio      model.NullString
 }
 
-func (r *UserRepository) UpdateOne(ctx context.Context, u *UpdateUserValues) error {
+func (r *UserRepoImpl) UpdateOne(ctx context.Context, u *UpdateUserValues) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
