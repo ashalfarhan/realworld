@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/repository"
 	. "github.com/ashalfarhan/realworld/service"
@@ -14,13 +15,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type TestCase struct {
+	desc       string
+	mockReturn error
+	errCode    int
+	errError   error
+}
+
 func TestRegister(t *testing.T) {
-	testCases := []struct {
-		desc       string
-		mockReturn error
-		errCode    int
-		errError   error
-	}{
+	testCases := []TestCase{
 		{
 			desc:       "Register should fail if username exist",
 			mockReturn: errors.New(repository.ErrDuplicateUsername),
@@ -71,12 +74,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestGetOneById(t *testing.T) {
-	testCases := []struct {
-		desc       string
-		mockReturn error
-		errCode    int
-		errError   error
-	}{
+	testCases := []TestCase{
 		{
 			desc:       "Get one by id should fail if no rows",
 			mockReturn: sql.ErrNoRows,
@@ -115,9 +113,76 @@ func TestGetOneById(t *testing.T) {
 			Return(nil).
 			Once()
 		u, err := userService.GetOneById(context.TODO(), "id")
+		userRepoMock.AssertExpectations(t)
+
 		as.Nil(err)
 		as.NotNil(u)
 	})
 
 	t.Parallel()
+}
+
+func TestUpdate(t *testing.T) {
+	userRepoMock.
+		On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
+
+	data := &dto.UpdateUserDto{
+		User: &dto.UpdateUserFields{
+			Password: "asd",
+			Email:    "asd@mail.com",
+		},
+	}
+
+	testCases := []TestCase{
+		{
+			desc:       "Update should fail if username exist",
+			mockReturn: errors.New(repository.ErrDuplicateUsername),
+			errCode:    http.StatusBadRequest,
+			errError:   ErrUsernameExist,
+		},
+		{
+			desc:       "Update should fail if email exist",
+			mockReturn: errors.New(repository.ErrDuplicateEmail),
+			errCode:    http.StatusBadRequest,
+			errError:   ErrEmailExist,
+		},
+		{
+			desc:       "Update should fail if db error",
+			mockReturn: sql.ErrTxDone,
+			errCode:    http.StatusInternalServerError,
+			errError:   conduit.ErrInternal,
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			as := assert.New(t)
+
+			userRepoMock.
+				On("UpdateOne", mock.Anything, mock.Anything).
+				Return(tC.mockReturn).
+				Once()
+			_, err := userService.Update(context.TODO(), data, "")
+			userRepoMock.AssertExpectations(t)
+
+			as.NotNil(err)
+			as.Equal(err.Code, tC.errCode)
+			as.Equal(err.Error, tC.errError)
+		})
+	}
+
+	t.Run("Update name should success", func(t *testing.T) {
+		as := assert.New(t)
+
+		userRepoMock.
+			On("UpdateOne", mock.Anything, mock.Anything).
+			Return(nil).
+			Once()
+		u, err := userService.Update(context.TODO(), data, "")
+		userRepoMock.AssertExpectations(t)
+
+		as.Nil(err)
+		as.Equal(u.Email, data.User.Email, "Should set new email")
+		as.NotEqual(u.Password, data.User.Password, "Should hash new password")
+	})
 }
