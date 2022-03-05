@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,17 +27,17 @@ func (m *ArticleRepoMock) DeleteBySlug(ctx context.Context, s string) error {
 	return args.Error(0)
 }
 
-func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, s string, uv *UpdateArticleValues, a *model.Article) error {
+func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, s string, uv *repository.UpdateArticleValues, a *model.Article) error {
 	args := m.Called(ctx, s, uv, a)
 	return args.Error(0)
 }
 
-func (m *ArticleRepoMock) Find(ctx context.Context, a *FindArticlesArgs) (model.Articles, error) {
+func (m *ArticleRepoMock) Find(ctx context.Context, a *repository.FindArticlesArgs) (model.Articles, error) {
 	args := m.Called(ctx, a)
 	return args.Get(0).(model.Articles), args.Error(1)
 }
 
-func (m *ArticleRepoMock) FindByFollowed(ctx context.Context, a *FindArticlesArgs) (model.Articles, error) {
+func (m *ArticleRepoMock) FindByFollowed(ctx context.Context, a *repository.FindArticlesArgs) (model.Articles, error) {
 	args := m.Called(ctx, a)
 	return args.Get(0).(model.Articles), args.Error(1)
 }

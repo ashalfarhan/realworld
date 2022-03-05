@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,7 +27,7 @@ func (m *UserRepoMock) FindOne(ctx context.Context, u *model.User) error {
 	return arg.Error(0)
 }
 
-func (m *UserRepoMock) UpdateOne(ctx context.Context, uv *UpdateUserValues) error {
+func (m *UserRepoMock) UpdateOne(ctx context.Context, uv *repository.UpdateUserValues) error {
 	arg := m.Called(ctx, uv)
 	return arg.Error(0)
 }
