@@ -3,7 +3,6 @@ module github.com/ashalfarhan/realworld
 go 1.17
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -28,6 +27,7 @@ require (
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.1.0 // indirect
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
