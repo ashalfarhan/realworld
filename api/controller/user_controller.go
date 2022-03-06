@@ -17,10 +17,7 @@ type UserController struct {
 }
 
 func NewUserController(s *service.Service) *UserController {
-	return &UserController{
-		userService: s.UserService,
-		authService: s.AuthService,
-	}
+	return &UserController{s.UserService, s.AuthService}
 }
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {

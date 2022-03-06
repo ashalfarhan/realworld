@@ -16,10 +16,7 @@ type ProfileController struct {
 }
 
 func NewProfileController(s *service.Service) *ProfileController {
-	return &ProfileController{
-		userService: s.UserService,
-		authService: s.AuthService,
-	}
+	return &ProfileController{s.UserService, s.AuthService}
 }
 
 func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
