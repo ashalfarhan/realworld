@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/controller"
+	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/middleware"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/gorilla/mux"
@@ -18,16 +19,13 @@ func InitRoutes(s *service.Service) *mux.Router {
 
 	// Users
 	uc := controller.NewUserController(s)
-	usersRoute := apiRoute.PathPrefix("/users").Subrouter()
 
-	usersRoute.HandleFunc("", uc.RegisterUser).Methods(http.MethodPost)
-	usersRoute.HandleFunc("/login", uc.LoginUser).Methods(http.MethodPost)
+	apiRoute.HandleFunc("/users", m.WithValidator(uc.RegisterUser, new(dto.RegisterUserDto))).Methods(http.MethodPost)
+	apiRoute.HandleFunc("/users/login", m.WithValidator(uc.LoginUser, new(dto.LoginUserDto))).Methods(http.MethodPost)
 
 	// User
-	userRoute := apiRoute.PathPrefix("/user").Subrouter()
-
-	userRoute.HandleFunc("", m.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
-	userRoute.HandleFunc("", m.WithUser(uc.UpdateCurrentUser)).Methods(http.MethodPut)
+	apiRoute.HandleFunc("/user", m.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
+	apiRoute.HandleFunc("/user", m.WithUser(uc.UpdateCurrentUser)).Methods(http.MethodPut)
 
 	// Profile
 	pc := controller.NewProfileController(s)

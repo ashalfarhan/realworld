@@ -26,17 +26,7 @@ func NewUserController(s *service.Service) *UserController {
 }
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var d *dto.RegisterUserDto
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.ClientError(w, err)
-		return
-	}
-
-	v := validator.New()
-	if err := v.Struct(d); err != nil {
-		response.EntityError(w, err)
-		return
-	}
+	d := r.Context().Value(dto.DtoCtxKey).(*dto.RegisterUserDto)
 
 	u, err := c.userService.Register(r.Context(), &service.RegisterArgs{
 		Email:    d.User.Email,
@@ -69,17 +59,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var d *dto.LoginUserDto
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.ClientError(w, err)
-		return
-	}
-
-	v := validator.New()
-	if err := v.Struct(d); err != nil {
-		response.EntityError(w, err)
-		return
-	}
+	d := r.Context().Value(dto.DtoCtxKey).(*dto.LoginUserDto)
 
 	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{
 		Email:    d.User.Email,

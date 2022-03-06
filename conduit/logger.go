@@ -9,7 +9,7 @@ import (
 	"github.com/ashalfarhan/realworld/config"
 )
 
-var Logger = log.New(os.Stdout, "[conduit-app] ", log.LstdFlags|log.Lmsgprefix)
+var Logger = log.New(os.Stdout, "[ConduitApp] ", log.LstdFlags|log.Lmsgprefix)
 
 func NewLogger(prefix string) *log.Logger {
 	var out io.Writer = os.Stdout
