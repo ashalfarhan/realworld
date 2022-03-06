@@ -3,6 +3,12 @@ version: '3.8'
 services:
   postgres:
     image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_SSLMODE=${POSTGRES_SSLMODE}
     ports:
       - 5432:5432
     volumes:
@@ -10,6 +16,8 @@ services:
 
   adminer:
     image: adminer:4-standalone
+    environment:
+      - ADMINER_DEFAULT_SERVER=${ADMINER_DEFAULT_SERVER}
     ports:
       - 8080:8080
 

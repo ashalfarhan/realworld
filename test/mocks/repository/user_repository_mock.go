@@ -17,14 +17,14 @@ func (m *UserRepoMock) InsertOne(ctx context.Context, u *model.User) error {
 	return arg.Error(0)
 }
 
-func (m *UserRepoMock) FindOneByID(ctx context.Context, s string, u *model.User) error {
-	arg := m.Called(ctx, s, u)
-	return arg.Error(0)
+func (m *UserRepoMock) FindOneByID(ctx context.Context, s string) (*model.User, error) {
+	arg := m.Called(ctx, s)
+	return arg.Get(0).(*model.User), arg.Error(1)
 }
 
-func (m *UserRepoMock) FindOne(ctx context.Context, u *model.User) error {
+func (m *UserRepoMock) FindOne(ctx context.Context, u *repository.FindOneUserFilter) (*model.User, error) {
 	arg := m.Called(ctx, u)
-	return arg.Error(0)
+	return arg.Get(0).(*model.User), arg.Error(1)
 }
 
 func (m *UserRepoMock) UpdateOne(ctx context.Context, uv *repository.UpdateUserValues) error {

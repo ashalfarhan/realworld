@@ -8,6 +8,7 @@ import (
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
 )
@@ -80,7 +81,7 @@ func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := c.userService.GetOne(r.Context(), &service.GetOneArgs{
+	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{
 		Email:    d.User.Email,
 		Username: d.User.Username,
 	})

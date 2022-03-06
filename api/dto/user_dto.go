@@ -23,9 +23,9 @@ type LoginUserDto struct {
 }
 
 type UpdateUserFields struct {
-	Email    string           `json:"email" validate:"omitempty,email"`
-	Username string           `json:"username" validate:"omitempty,max=40"`
-	Password string           `json:"password" validate:"omitempty,min=8,max=255"`
+	Email    *string          `json:"email" validate:"omitempty,email"`
+	Username *string          `json:"username" validate:"omitempty,max=40"`
+	Password *string          `json:"password" validate:"omitempty,min=8,max=255"`
 	Image    model.NullString `json:"image" validate:"url"`
 	Bio      model.NullString `json:"bio" validate:"max=255"`
 }

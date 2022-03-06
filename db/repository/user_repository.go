@@ -15,8 +15,8 @@ type UserRepoImpl struct {
 
 type UserRepository interface {
 	InsertOne(context.Context, *model.User) error
-	FindOneByID(context.Context, string, *model.User) error
-	FindOne(context.Context, *model.User) error
+	FindOneByID(context.Context, string) (*model.User, error)
+	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
 	UpdateOne(context.Context, *UpdateUserValues) error
 }
 
@@ -50,19 +50,34 @@ func (r *UserRepoImpl) InsertOne(ctx context.Context, u *model.User) error {
 	return tx.Commit()
 }
 
-func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string, u *model.User) error {
+func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string) (*model.User, error) {
+	u := &model.User{
+		ID: id,
+	}
+
 	query := `
 	SELECT
-		id, email, username, bio, image, created_at, updated_at
+		email, username, bio, image, created_at, updated_at
 	FROM
 		users
 	WHERE
 		users.id = $1`
-	return r.db.GetContext(ctx, u, query, id)
+
+	if err := r.db.GetContext(ctx, u, query, id); err != nil {
+		return nil, err
+	}
+	return u, nil
 
 }
 
-func (r *UserRepoImpl) FindOne(ctx context.Context, cand *model.User) error {
+type FindOneUserFilter struct {
+	Email    string
+	Username string
+}
+
+func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*model.User, error) {
+	u := new(model.User)
+
 	query := `
 	SELECT
 		id, email, username, password, bio, image 
@@ -72,11 +87,13 @@ func (r *UserRepoImpl) FindOne(ctx context.Context, cand *model.User) error {
 		users.email = $1 
 	OR
 		users.username = $2`
-	return r.db.GetContext(ctx, cand, query, cand.Email, cand.Username)
+
+	if err := r.db.GetContext(ctx, u, query, d.Email, d.Username); err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
-// Use Pointer to update
-// To determine if the field needs to be updated
 type UpdateUserValues struct {
 	ID       string
 	Email    *string

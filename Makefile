@@ -27,4 +27,4 @@ test-spec:
 	APIURL=${API_URL} bash ./conduit/spec/run-api-tests.sh
 
 start-db:
-	@docker-compose --env-file .env up -d
+	@docker-compose up -d
