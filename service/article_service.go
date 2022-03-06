@@ -37,7 +37,7 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 		repo.ArticleTagsRepo,
 		repo.ArticleFavoritesRepo,
 		repo.CommentRepo,
-		conduit.NewLogger("article-service"),
+		conduit.NewLogger("ArticleService"),
 		NewCacheService(cache.Ca),
 	}
 }

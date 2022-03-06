@@ -2,13 +2,11 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/go-playground/validator/v10"
 )
@@ -28,29 +26,11 @@ func NewUserController(s *service.Service) *UserController {
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	d := r.Context().Value(dto.DtoCtxKey).(*dto.RegisterUserDto)
 
-	u, err := c.userService.Register(r.Context(), &service.RegisterArgs{
-		Email:    d.User.Email,
-		Username: d.User.Username,
-		Password: d.User.Password,
-	})
+	res, err := c.authService.Register(r.Context(), d)
 
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
-	}
-
-	token, sErr := c.authService.GenerateJWT(u)
-	if sErr != nil {
-		response.InternalError(w)
-		return
-	}
-
-	res := &conduit.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Token:    token,
-		Bio:      u.Bio,
-		Image:    u.Image,
 	}
 
 	response.Created(w, response.M{
@@ -61,33 +41,11 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	d := r.Context().Value(dto.DtoCtxKey).(*dto.LoginUserDto)
 
-	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{
-		Email:    d.User.Email,
-		Username: d.User.Username,
-	})
+	res, err := c.authService.Login(r.Context(), d)
 
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
-	}
-
-	if valid := u.ValidatePassword(d.User.Password); !valid {
-		response.ClientError(w, errors.New("invalid identity or password"))
-		return
-	}
-
-	token, sErr := c.authService.GenerateJWT(u)
-	if sErr != nil {
-		response.InternalError(w)
-		return
-	}
-
-	res := &conduit.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Token:    token,
-		Bio:      u.Bio,
-		Image:    u.Image,
 	}
 
 	response.Ok(w, response.M{

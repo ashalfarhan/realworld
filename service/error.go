@@ -17,7 +17,8 @@ var (
 	ErrAlreadyFollow = errors.New("you are already follow this user")
 
 	// AuthService Error
-	ErrInvalidClaim = errors.New("invalid claim")
+	ErrInvalidClaim    = errors.New("invalid claim")
+	ErrInvalidIdentity = errors.New("invalid identity or password")
 
 	// ArticleService Error
 	ErrNoArticleFound          = errors.New("no article found")

@@ -21,7 +21,7 @@ const (
 func NewCacheService(s *redis.Client) *CacheService {
 	return &CacheService{
 		s,
-		conduit.NewLogger("cache-service"),
+		conduit.NewLogger("CacheService"),
 	}
 }
 

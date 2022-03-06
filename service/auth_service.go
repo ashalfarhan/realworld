@@ -3,23 +3,28 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/golang-jwt/jwt"
 )
 
 type userContextKey string
 
 type AuthService struct {
-	userCtxKey userContextKey
+	userCtxKey  userContextKey
+	userService *UserService
+	logger      *log.Logger
 }
 
-func NewAuthService() *AuthService {
-	return &AuthService{"incoming-user"}
+func NewAuthService(us *UserService) *AuthService {
+	return &AuthService{"incoming-user", us, conduit.NewLogger("AuthService")}
 }
 
 const (
@@ -27,7 +32,7 @@ const (
 	jwtExp    = 20 * time.Hour
 )
 
-func (AuthService) GenerateJWT(u *model.User) (string, *ServiceError) {
+func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 	c := &conduit.ConduitClaims{
 		UserID:   u.ID,
 		Username: u.Username,
@@ -40,15 +45,17 @@ func (AuthService) GenerateJWT(u *model.User) (string, *ServiceError) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return "", CreateServiceError(http.StatusInternalServerError, fmt.Errorf("cannot sign jwt: %w", err))
+		s.logger.Printf("Cannot sign jwt for: %#v, Reason: %v", u, err)
+		return "", fmt.Errorf("cannot sign jwt: %w", err)
 	}
 
 	return str, nil
 }
 
-func (AuthService) ParseJWT(str string) (*conduit.ConduitClaims, *ServiceError) {
-	t, err := jwt.ParseWithClaims(str, &conduit.ConduitClaims{}, getKey)
+func (s AuthService) ParseJWT(str string) (*conduit.ConduitClaims, *ServiceError) {
+	t, err := jwt.ParseWithClaims(str, new(conduit.ConduitClaims), getKey)
 	if err != nil {
+		s.logger.Printf("Cannot parse jwt for: %s, Reason: %v", str, err)
 		return nil, CreateServiceError(http.StatusUnauthorized, fmt.Errorf("cannot parse jwt: %w", err))
 	}
 
@@ -60,23 +67,23 @@ func (AuthService) ParseJWT(str string) (*conduit.ConduitClaims, *ServiceError) 
 	return claim, nil
 }
 
-func (a AuthService) GetUserFromCtx(r *http.Request) (*conduit.ConduitClaims, bool) {
-	u, ok := r.Context().Value(a.userCtxKey).(*conduit.ConduitClaims)
+func (s AuthService) GetUserFromCtx(r *http.Request) (*conduit.ConduitClaims, bool) {
+	u, ok := r.Context().Value(s.userCtxKey).(*conduit.ConduitClaims)
 	return u, ok
 }
 
-func (a AuthService) CreateUserCtx(parentCtx context.Context, claim *conduit.ConduitClaims) context.Context {
-	return context.WithValue(parentCtx, a.userCtxKey, claim)
+func (s AuthService) CreateUserCtx(parentCtx context.Context, claim *conduit.ConduitClaims) context.Context {
+	return context.WithValue(parentCtx, s.userCtxKey, claim)
 }
 
-func (a AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
+func (s AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
 	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
 	if len(authHeader) != 2 {
 		return "", nil
 	}
 
 	jwt := authHeader[1]
-	claim, err := a.ParseJWT(jwt)
+	claim, err := s.ParseJWT(jwt)
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +91,7 @@ func (a AuthService) GetUserIDFromReq(r *http.Request) (string, *ServiceError) {
 	return claim.UserID, nil
 }
 
-func (a AuthService) GetToken(r *http.Request) string {
+func (s AuthService) GetToken(r *http.Request) string {
 	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
 	if len(authHeader) != 2 {
 		return ""
@@ -99,4 +106,60 @@ func getKey(t *jwt.Token) (interface{}, error) {
 	}
 
 	return []byte(jwtSecret), nil
+}
+
+func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserDto) (*conduit.UserResponse, *ServiceError) {
+	u, sErr := s.userService.GetOne(ctx, &repository.FindOneUserFilter{
+		Email:    d.User.Email,
+		Username: d.User.Username,
+	})
+	if sErr != nil {
+		return nil, sErr
+	}
+
+	if valid := u.ValidatePassword(d.User.Password); !valid {
+		return nil, CreateServiceError(http.StatusBadRequest, ErrInvalidIdentity)
+	}
+
+	token, err := s.GenerateJWT(u)
+	if err != nil {
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	res := &conduit.UserResponse{
+		Email:    u.Email,
+		Username: u.Username,
+		Token:    token,
+		Bio:      u.Bio,
+		Image:    u.Image,
+	}
+
+	return res, nil
+}
+
+func (s *AuthService) Register(ctx context.Context, d *dto.RegisterUserDto) (*conduit.UserResponse, *ServiceError) {
+	u, sErr := s.userService.Register(ctx, &RegisterArgs{
+		Email:    d.User.Email,
+		Username: d.User.Username,
+		Password: d.User.Password,
+	})
+
+	if sErr != nil {
+		return nil, sErr
+	}
+
+	token, err := s.GenerateJWT(u)
+	if err != nil {
+		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+	}
+
+	res := &conduit.UserResponse{
+		Email:    u.Email,
+		Username: u.Username,
+		Token:    token,
+		Bio:      u.Bio,
+		Image:    u.Image,
+	}
+
+	return res, nil
 }

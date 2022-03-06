@@ -18,10 +18,10 @@ migrate-new:
 	@migrate create -ext sql -dir ${MIGRATION_PATH} -seq ${name}
 
 test:
-	@go test -failfast -parallel 2 ./...
+	@go test -failfast -parallel 2 ./service ./db/repository ./api/controller ./api/middleware
 
 test-ci:
-	@go test -failfast -cover -v -parallel 2 ./...
+	@go test -failfast -cover -v -parallel 2 ./service ./db/repository ./api/controller ./api/middleware
 
 test-spec:
 	APIURL=${API_URL} bash ./conduit/spec/run-api-tests.sh
