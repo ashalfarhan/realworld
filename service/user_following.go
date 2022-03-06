@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/repository"
 )
 
-func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
+func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -28,10 +28,17 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 		}
 	}
 
-	return following, nil
+	res := &conduit.ProfileResponse{
+		Username:  following.Username,
+		Bio:       following.Bio,
+		Image:     following.Image,
+		Following: true,
+	}
+
+	return res, nil
 }
 
-func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
+func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -46,7 +53,14 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 		return nil, CreateServiceError(http.StatusInternalServerError, err)
 	}
 
-	return following, nil
+	res := &conduit.ProfileResponse{
+		Username:  following.Username,
+		Bio:       following.Bio,
+		Image:     following.Image,
+		Following: false,
+	}
+
+	return res, nil
 }
 
 func (s *UserService) IsFollowing(ctx context.Context, followerID, followingID string) bool {

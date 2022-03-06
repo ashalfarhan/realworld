@@ -70,8 +70,6 @@ func TestRegister(t *testing.T) {
 		as.Nil(err)
 		as.NotEqual(pw, reg.Password, "Registered user password should be hashed")
 	})
-
-	t.Parallel()
 }
 
 func TestGetOneById(t *testing.T) {
@@ -119,8 +117,6 @@ func TestGetOneById(t *testing.T) {
 		as.Nil(err)
 		as.NotNil(u)
 	})
-
-	t.Parallel()
 }
 
 func TestUpdate(t *testing.T) {
@@ -187,6 +183,4 @@ func TestUpdate(t *testing.T) {
 		as.Nil(err)
 		as.NotEqual(u.Password, password, "Should hash new password")
 	})
-
-	t.Parallel()
 }

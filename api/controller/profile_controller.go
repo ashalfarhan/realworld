@@ -23,54 +23,33 @@ func NewProfileController(s *service.Service) *ProfileController {
 }
 
 func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
-	uname := mux.Vars(r)["username"]
-
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	profile, err := c.userService.FollowUser(r.Context(), iu.UserID, uname)
-
+	profile, err := c.userService.FollowUser(r.Context(), iu.UserID, mux.Vars(r)["username"])
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	res := &conduit.ProfileResponse{
-		Username:  profile.Username,
-		Bio:       profile.Bio,
-		Image:     profile.Image,
-		Following: true,
-	}
-
 	response.Ok(w, response.M{
-		"profile": res,
+		"profile": profile,
 	})
 }
 
 func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	uname := mux.Vars(r)["username"]
-
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	profile, err := c.userService.UnfollowUser(r.Context(), iu.UserID, uname)
-
+	profile, err := c.userService.UnfollowUser(r.Context(), iu.UserID, mux.Vars(r)["username"])
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	res := &conduit.ProfileResponse{
-		Username:  profile.Username,
-		Bio:       profile.Bio,
-		Image:     profile.Image,
-		Following: false,
-	}
-
 	response.Ok(w, response.M{
-		"profile": res,
+		"profile": profile,
 	})
 }
 
 func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
-	uname := mux.Vars(r)["username"]
-	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{Username: uname})
+	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{Username: mux.Vars(r)["username"]})
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
