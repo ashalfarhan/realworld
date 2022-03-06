@@ -48,7 +48,6 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 		Description: d.Article.Description,
 		Body:        d.Article.Body,
 		AuthorID:    authorID,
-		Author:      new(model.User),
 	}
 
 	a.Slug = s.CreateSlug(a.Title)
@@ -68,12 +67,13 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 			a.TagList = append(a.TagList, tag)
 		}
 	}
-
-	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
+	if err != nil {
 		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
+	a.Author = u
 	return a, nil
 }
 
@@ -222,12 +222,13 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 	}
 
 	a.TagList = tags
-	a.Author = &model.User{}
 
-	if err := s.userRepo.FindOneByID(ctx, a.AuthorID, a.Author); err != nil {
+	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
+	if err != nil {
 		s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
 		return CreateServiceError(http.StatusInternalServerError, nil)
 	}
+	a.Author = u
 
 	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
 

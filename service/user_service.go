@@ -23,13 +23,13 @@ func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{
 		repo.UserRepo,
 		repo.FollowRepo,
-		conduit.NewLogger("user-service"),
+		conduit.NewLogger("UserService"),
 	}
 }
 
 func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *ServiceError) {
-	u := &model.User{}
-	if err := s.userRepo.FindOneByID(ctx, id, u); err != nil {
+	u, err := s.userRepo.FindOneByID(ctx, id)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
 		}
@@ -41,19 +41,9 @@ func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *
 	return u, nil
 }
 
-type GetOneArgs struct {
-	Email    string
-	Username string
-	UserID   string
-}
-
-func (s *UserService) GetOne(ctx context.Context, d *GetOneArgs) (*model.User, *ServiceError) {
-	u := &model.User{
-		Email:    d.Email,
-		Username: d.Username,
-	}
-
-	if err := s.userRepo.FindOne(ctx, u); err != nil {
+func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilter) (*model.User, *ServiceError) {
+	u, err := s.userRepo.FindOne(ctx, d)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
 		}
@@ -101,22 +91,14 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 		return nil, err
 	}
 
-	args := &repository.UpdateUserValues{
-		ID:    uid,
-		Bio:   d.User.Bio,
-		Image: d.User.Image,
-	}
+	args := new(repository.UpdateUserValues)
+	args.ID = uid
+	args.Email = d.User.Email
+	args.Bio = d.User.Bio
+	args.Username = d.User.Username
 
-	if len(d.User.Email) != 0 {
-		args.Email = &d.User.Email
-		u.Email = d.User.Email
-	}
-	if len(d.User.Username) != 0 {
-		args.Username = &d.User.Username
-		u.Username = d.User.Username
-	}
-	if len(d.User.Password) != 0 {
-		hashed := s.HashPassword(d.User.Password)
+	if d.User.Password != nil {
+		hashed := s.HashPassword(*d.User.Password)
 		args.Password = &hashed
 		u.Password = hashed
 	}

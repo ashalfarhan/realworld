@@ -9,6 +9,7 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/db/repository"
 	. "github.com/ashalfarhan/realworld/service"
 	"github.com/stretchr/testify/assert"
@@ -93,8 +94,8 @@ func TestGetOneById(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
 			userRepoMock.
-				On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
-				Return(tC.mockReturn).
+				On("FindOneByID", mock.Anything, mock.Anything).
+				Return(&model.User{}, tC.mockReturn).
 				Once()
 			_, err := userService.GetOneById(context.TODO(), "id")
 			userRepoMock.AssertExpectations(t)
@@ -109,8 +110,8 @@ func TestGetOneById(t *testing.T) {
 		as := assert.New(t)
 
 		userRepoMock.
-			On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
-			Return(nil).
+			On("FindOneByID", mock.Anything, mock.Anything).
+			Return(&model.User{}, nil).
 			Once()
 		u, err := userService.GetOneById(context.TODO(), "id")
 		userRepoMock.AssertExpectations(t)
@@ -124,13 +125,15 @@ func TestGetOneById(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	userRepoMock.
-		On("FindOneByID", mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
-
+		On("FindOneByID", mock.Anything, mock.Anything).
+		Return(&model.User{}, nil)
+	password := "asd"
+	email := "asd@mail.com"
 	data := &dto.UpdateUserDto{
+
 		User: &dto.UpdateUserFields{
-			Password: "asd",
-			Email:    "asd@mail.com",
+			Password: &password,
+			Email:    &email,
 		},
 	}
 
@@ -171,7 +174,7 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 
-	t.Run("Update name should success", func(t *testing.T) {
+	t.Run("Update user should success", func(t *testing.T) {
 		as := assert.New(t)
 
 		userRepoMock.
@@ -182,7 +185,8 @@ func TestUpdate(t *testing.T) {
 		userRepoMock.AssertExpectations(t)
 
 		as.Nil(err)
-		as.Equal(u.Email, data.User.Email, "Should set new email")
-		as.NotEqual(u.Password, data.User.Password, "Should hash new password")
+		as.NotEqual(u.Password, password, "Should hash new password")
 	})
+
+	t.Parallel()
 }

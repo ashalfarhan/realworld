@@ -9,7 +9,7 @@ import (
 )
 
 func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
-	following, err := s.GetOne(ctx, &GetOneArgs{Username: username})
+	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 }
 
 func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*model.User, *ServiceError) {
-	following, err := s.GetOne(ctx, &GetOneArgs{Username: username})
+	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
 	}
