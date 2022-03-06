@@ -2,16 +2,16 @@ package service
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 type CacheService struct {
 	store  *redis.Client
-	logger *log.Logger
+	logger *logrus.Entry
 }
 
 const (
@@ -21,7 +21,7 @@ const (
 func NewCacheService(s *redis.Client) *CacheService {
 	return &CacheService{
 		s,
-		conduit.NewLogger("CacheService"),
+		conduit.NewLogger("Service", "CacheService"),
 	}
 }
 

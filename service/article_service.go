@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
@@ -14,6 +13,7 @@ import (
 	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/gosimple/slug"
 	"github.com/matoous/go-nanoid/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,7 +26,7 @@ type ArticleService struct {
 	tagsRepo      *repository.ArticleTagsRepository
 	favoritesRepo repository.ArticleFavoritesRepository
 	commentRepo   repository.CommentRepository
-	logger        *log.Logger
+	logger        *logrus.Entry
 	caching       *CacheService
 }
 
@@ -37,7 +37,7 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 		repo.ArticleTagsRepo,
 		repo.ArticleFavoritesRepo,
 		repo.CommentRepo,
-		conduit.NewLogger("ArticleService"),
+		conduit.NewLogger("service", "ArticleService"),
 		NewCacheService(cache.Ca),
 	}
 }
@@ -63,7 +63,6 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 				s.logger.Printf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
 				return nil, CreateServiceError(http.StatusInternalServerError, nil)
 			}
-
 			a.TagList = append(a.TagList, tag)
 		}
 	}
@@ -77,7 +76,7 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 	return a, nil
 }
 
-func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID string, slug string) (*model.Article, *ServiceError) {
+func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
 	a := &model.Article{
 		Slug:   slug,
 		Author: &model.User{},

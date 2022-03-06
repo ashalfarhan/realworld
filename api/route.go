@@ -25,7 +25,7 @@ func InitRoutes(s *service.Service) *mux.Router {
 
 	// User
 	apiRoute.HandleFunc("/user", m.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
-	apiRoute.HandleFunc("/user", m.WithUser(uc.UpdateCurrentUser)).Methods(http.MethodPut)
+	apiRoute.HandleFunc("/user", m.WithUser(m.WithValidator(uc.UpdateCurrentUser, new(dto.UpdateArticleDto)))).Methods(http.MethodPut)
 
 	// Profile
 	pc := controller.NewProfileController(s)

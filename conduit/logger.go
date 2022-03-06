@@ -1,21 +1,22 @@
 package conduit
 
 import (
-	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/ashalfarhan/realworld/config"
+	"github.com/sirupsen/logrus"
 )
 
-var Logger = log.New(os.Stdout, "[ConduitApp] ", log.LstdFlags|log.Lmsgprefix)
+var Logger *logrus.Entry
 
-func NewLogger(prefix string) *log.Logger {
+func NewLogger(key, value string) *logrus.Entry {
 	var out io.Writer = os.Stdout
 	if config.Co.Env == "test" {
-		Logger.SetOutput(io.Discard)
 		out = io.Discard
 	}
-	return log.New(out, fmt.Sprintf("[%s] ", prefix), log.LstdFlags|log.Lmsgprefix|log.Llongfile)
+
+	l := logrus.WithField(key, value)
+	l.Logger.SetOutput(out)
+	return l
 }

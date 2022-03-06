@@ -49,7 +49,7 @@ func TestRegister(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
 			userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(tC.mockReturn).Once()
-			_, err := userService.Register(context.TODO(), &RegisterArgs{})
+			_, err := userService.Insert(context.TODO(), &RegisterArgs{})
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -62,7 +62,7 @@ func TestRegister(t *testing.T) {
 		pw := "password"
 		as := assert.New(t)
 		userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(nil).Once()
-		reg, err := userService.Register(context.TODO(), &RegisterArgs{
+		reg, err := userService.Insert(context.TODO(), &RegisterArgs{
 			Password: pw,
 		})
 		userRepoMock.AssertExpectations(t)

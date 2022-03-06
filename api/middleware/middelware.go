@@ -1,20 +1,19 @@
 package middleware
 
 import (
-	"log"
-
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/service"
+	"github.com/sirupsen/logrus"
 )
 
 type ConduitMiddleware struct {
 	authService *service.AuthService
-	logger *log.Logger
+	logger      *logrus.Entry
 }
 
 func NewMiddleware(s *service.Service) *ConduitMiddleware {
 	return &ConduitMiddleware{
 		s.AuthService,
-		conduit.NewLogger("ConduitMiddleware"),
+		conduit.NewLogger("Service", "ConduitMiddleware"),
 	}
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/golang-jwt/jwt"
+	"github.com/sirupsen/logrus"
 )
 
 type userContextKey string
@@ -20,11 +20,11 @@ type userContextKey string
 type AuthService struct {
 	userCtxKey  userContextKey
 	userService *UserService
-	logger      *log.Logger
+	logger      *logrus.Entry
 }
 
 func NewAuthService(us *UserService) *AuthService {
-	return &AuthService{"incoming-user", us, conduit.NewLogger("AuthService")}
+	return &AuthService{"incoming-user", us, conduit.NewLogger("service", "AuthService")}
 }
 
 const (
@@ -42,6 +42,7 @@ func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 		},
 	}
 
+	s.logger.Infof("Generating jwt %#v", c)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
@@ -108,16 +109,17 @@ func getKey(t *jwt.Token) (interface{}, error) {
 	return []byte(jwtSecret), nil
 }
 
-func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserDto) (*conduit.UserResponse, *ServiceError) {
+func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserFields) (*conduit.UserResponse, *ServiceError) {
+	s.logger.Infof("POST Login %#v", d)
 	u, sErr := s.userService.GetOne(ctx, &repository.FindOneUserFilter{
-		Email:    d.User.Email,
-		Username: d.User.Username,
+		Email:    d.Email,
+		Username: d.Username,
 	})
 	if sErr != nil {
 		return nil, sErr
 	}
 
-	if valid := u.ValidatePassword(d.User.Password); !valid {
+	if valid := u.ValidatePassword(d.Password); !valid {
 		return nil, CreateServiceError(http.StatusBadRequest, ErrInvalidIdentity)
 	}
 
@@ -137,11 +139,12 @@ func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserDto) (*conduit.
 	return res, nil
 }
 
-func (s *AuthService) Register(ctx context.Context, d *dto.RegisterUserDto) (*conduit.UserResponse, *ServiceError) {
-	u, sErr := s.userService.Register(ctx, &RegisterArgs{
-		Email:    d.User.Email,
-		Username: d.User.Username,
-		Password: d.User.Password,
+func (s *AuthService) Register(ctx context.Context, d *dto.RegisterUserFields) (*conduit.UserResponse, *ServiceError) {
+	s.logger.Infof("POST Register %#v", d)
+	u, sErr := s.userService.Insert(ctx, &RegisterArgs{
+		Email:    d.Email,
+		Username: d.Username,
+		Password: d.Password,
 	})
 
 	if sErr != nil {

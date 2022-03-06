@@ -3,27 +3,27 @@ package service
 import (
 	"context"
 	"database/sql"
-	"log"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
 	userRepo   repository.UserRepository
 	followRepo repository.FollowingRepository
-	logger     *log.Logger
+	logger     *logrus.Entry
 }
 
 func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{
 		repo.UserRepo,
 		repo.FollowRepo,
-		conduit.NewLogger("UserService"),
+		conduit.NewLogger("service", "UserService"),
 	}
 }
 
@@ -33,7 +33,6 @@ func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
 		}
-
 		s.logger.Printf("Cannot FindOneById for %s, Reason: %v", id, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
@@ -47,7 +46,6 @@ func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilte
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
 		}
-
 		s.logger.Printf("Cannot FindOne for %+v, Reason: %v", d, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
@@ -61,7 +59,7 @@ type RegisterArgs struct {
 	Password string
 }
 
-func (s *UserService) Register(ctx context.Context, d *RegisterArgs) (*model.User, *ServiceError) {
+func (s *UserService) Insert(ctx context.Context, d *RegisterArgs) (*model.User, *ServiceError) {
 	u := &model.User{
 		Email:    d.Email,
 		Username: d.Username,
@@ -79,7 +77,6 @@ func (s *UserService) Register(ctx context.Context, d *RegisterArgs) (*model.Use
 			s.logger.Printf("Cannot InsertOne for %+v, Reason: %v", d, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
-
 	}
 
 	return u, nil
@@ -120,7 +117,7 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserDto, uid stri
 		case repository.ErrDuplicateUsername:
 			return nil, CreateServiceError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			s.logger.Printf("Cannot UpdateOne payload:%+v args:%+v, Reason: %v", d, args, err)
+			s.logger.Printf("Cannot InsertOne for %+v, Reason: %v", d, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}

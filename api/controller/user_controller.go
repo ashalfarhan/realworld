@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/service"
-	"github.com/go-playground/validator/v10"
 )
 
 type UserController struct {
@@ -22,8 +20,7 @@ func NewUserController(s *service.Service) *UserController {
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	d := r.Context().Value(dto.DtoCtxKey).(*dto.RegisterUserDto)
-
-	res, err := c.authService.Register(r.Context(), d)
+	res, err := c.authService.Register(r.Context(), d.User)
 
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
@@ -37,8 +34,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 func (c *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	d := r.Context().Value(dto.DtoCtxKey).(*dto.LoginUserDto)
-
-	res, err := c.authService.Login(r.Context(), d)
+	res, err := c.authService.Login(r.Context(), d.User)
 
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
@@ -77,17 +73,7 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
-	var d *dto.UpdateUserDto
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.ClientError(w, err)
-		return
-	}
-
-	v := validator.New()
-	if err := v.Struct(d); err != nil {
-		response.EntityError(w, err)
-		return
-	}
+	d := r.Context().Value(dto.DtoCtxKey).(*dto.UpdateUserDto)
 
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 	u, err := c.userService.Update(r.Context(), d, iu.UserID)
