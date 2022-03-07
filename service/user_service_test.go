@@ -48,8 +48,11 @@ func TestRegister(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
-			userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(tC.mockReturn).Once()
-			_, err := userService.Insert(context.TODO(), &RegisterArgs{})
+			userRepoMock.
+				On("InsertOne", mock.Anything, mock.Anything).
+				Return(&model.User{}, tC.mockReturn).
+				Once()
+			_, err := userService.Insert(context.TODO(), &dto.RegisterUserFields{})
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -61,13 +64,17 @@ func TestRegister(t *testing.T) {
 	t.Run("Register should success", func(t *testing.T) {
 		pw := "password"
 		as := assert.New(t)
-		userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(nil).Once()
-		reg, err := userService.Insert(context.TODO(), &RegisterArgs{
+		userRepoMock.
+			On("InsertOne", mock.Anything, mock.Anything).
+			Return(&model.User{}, nil).
+			Once()
+		reg, err := userService.Insert(context.TODO(), &dto.RegisterUserFields{
 			Password: pw,
 		})
 		userRepoMock.AssertExpectations(t)
 
 		as.Nil(err)
+		as.NotNil(reg)
 		as.NotEqual(pw, reg.Password, "Registered user password should be hashed")
 	})
 }
@@ -125,12 +132,9 @@ func TestUpdate(t *testing.T) {
 		Return(&model.User{}, nil)
 	password := "asd"
 	email := "asd@mail.com"
-	data := &dto.UpdateUserDto{
-
-		User: &dto.UpdateUserFields{
-			Password: &password,
-			Email:    &email,
-		},
+	data := &dto.UpdateUserFields{
+		Password: &password,
+		Email:    &email,
 	}
 
 	testCases := []TestCase{
@@ -158,7 +162,7 @@ func TestUpdate(t *testing.T) {
 			as := assert.New(t)
 
 			userRepoMock.
-				On("UpdateOne", mock.Anything, mock.Anything).
+				On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
 				Return(tC.mockReturn).
 				Once()
 			_, err := userService.Update(context.TODO(), data, "")
@@ -174,7 +178,7 @@ func TestUpdate(t *testing.T) {
 		as := assert.New(t)
 
 		userRepoMock.
-			On("UpdateOne", mock.Anything, mock.Anything).
+			On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).
 			Once()
 		u, err := userService.Update(context.TODO(), data, "")

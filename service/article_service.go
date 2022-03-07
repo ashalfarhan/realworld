@@ -42,23 +42,20 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 	}
 }
 
-func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticleDto, authorID string) (*model.Article, *ServiceError) {
-	a := &model.Article{
-		Title:       d.Article.Title,
-		Description: d.Article.Description,
-		Body:        d.Article.Body,
-		AuthorID:    authorID,
-	}
+func (s *ArticleService) CreateArticle(
+	ctx context.Context, d *dto.CreateArticleFields, authorID string,
+) (*model.Article, *ServiceError) {
+	s.logger.Infof("CreateArticle %#v, author_id: %s", d, authorID)
 
-	a.Slug = s.CreateSlug(a.Title)
-
-	if err := s.articleRepo.InsertOne(ctx, a); err != nil {
+	d.Slug = s.CreateSlug(d.Title)
+	a, err := s.articleRepo.InsertOne(ctx, d, authorID)
+	if err != nil {
 		s.logger.Printf("Cannot InsertOne to ArticleRepo for %+v, Reason: %v", a, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
-	if len(d.Article.TagList) > 0 {
-		for _, tag := range d.Article.TagList {
+	if len(d.TagList) > 0 {
+		for _, tag := range d.TagList {
 			if err := s.tagsRepo.InsertOne(ctx, a.ID, tag); err != nil {
 				s.logger.Printf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
 				return nil, CreateServiceError(http.StatusInternalServerError, nil)
@@ -66,6 +63,7 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 			a.TagList = append(a.TagList, tag)
 		}
 	}
+
 	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
 	if err != nil {
 		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
@@ -79,15 +77,17 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *dto.CreateArticle
 func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
 	a := &model.Article{
 		Slug:   slug,
-		Author: &model.User{},
+		Author: new(model.User),
 	}
 
-	cacheKey := fmt.Sprintf("article-%s-%s", slug, userID)
+	cacheKey := fmt.Sprintf("article|slug:%s|user_id:%s", slug, userID)
 	if ok := s.caching.Get(ctx, cacheKey, a); ok {
+		s.logger.Infof("Response with cache %s", cacheKey)
 		return a, nil
 	}
 
-	if err := s.articleRepo.FindOneBySlug(ctx, a); err != nil {
+	ar, err := s.articleRepo.FindOneBySlug(ctx, a.Slug)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, CreateServiceError(http.StatusNotFound, ErrNoArticleFound)
 		}
@@ -96,18 +96,21 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug stri
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
+	a = ar
 	s.PopulateArticleField(ctx, a, userID)
 	s.caching.Set(ctx, cacheKey, a)
 	return a, nil
 }
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *ServiceError {
+	s.logger.Infof("DeleteArticle slug: %s user_id: %s", slug, userID)
 	a, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
 		return err
 	}
 
 	if a.AuthorID != userID {
+		s.logger.Warnf("Forbidden delete article author_id: %s, user_id: %s", a.AuthorID, userID)
 		return CreateServiceError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
 	}
 
@@ -122,15 +125,17 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string)
 func (s *ArticleService) CreateSlug(title string) string {
 	id, err := gonanoid.New(defaultSlugId)
 	if err != nil {
-		s.logger.Printf("Cannot create nanoid for %s, Reason: %v", title, err)
+		s.logger.Errorf("Cannot create nanoid for %s, Reason: %v", title, err)
 	}
 
 	slug := slug.Make(title)
-
 	return fmt.Sprintf("%s-%s", slug, id)
 }
 
-func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug string, d *dto.UpdateArticleDto) (*model.Article, *ServiceError) {
+func (s *ArticleService) UpdateArticleBySlug(
+	ctx context.Context, userID, slug string, d *dto.UpdateArticleDto,
+) (*model.Article, *ServiceError) {
+	s.logger.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
 	args := &repository.UpdateArticleValues{}
 	ar, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
@@ -167,12 +172,15 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug s
 	return ar, nil
 }
 
-func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *ServiceError) {
+func (s *ArticleService) GetArticles(
+	ctx context.Context, args *repository.FindArticlesArgs,
+) (model.Articles, *ServiceError) {
 	var articles model.Articles
 	var err error
-	cacheKey := fmt.Sprintf("articles-list-%s-%d-%d", args.UserID, args.Limit, args.Offset)
 
+	cacheKey := fmt.Sprintf("articles-list|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
 	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
+		s.logger.Infof("Response with cache %s", cacheKey)
 		return articles, nil
 	}
 
@@ -190,12 +198,15 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 	return articles, nil
 }
 
-func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *ServiceError) {
+func (s *ArticleService) GetArticlesFeed(
+	ctx context.Context, args *repository.FindArticlesArgs,
+) (model.Articles, *ServiceError) {
 	var articles model.Articles
 	var err error
-	cacheKey := fmt.Sprintf("articles-feed-%s-%d-%d", args.UserID, args.Limit, args.Offset)
 
+	cacheKey := fmt.Sprintf("articles-feed|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
 	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
+		s.logger.Infof("Response with cache %s", cacheKey)
 		return articles, nil
 	}
 
@@ -213,7 +224,9 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 	return articles, nil
 }
 
-func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, userID string) *ServiceError {
+func (s *ArticleService) PopulateArticleField(
+	ctx context.Context, a *model.Article, userID string,
+) *ServiceError {
 	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
 		s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)

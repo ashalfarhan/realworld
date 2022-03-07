@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"errors"
 	"database/sql"
 	"net/http"
 	"testing"
@@ -25,7 +26,7 @@ func TestFollowUser(t *testing.T) {
 			Once()
 		followRepoMock.
 			On("InsertOne", mock.Anything, mock.Anything, mock.Anything).
-			Return(repository.ErrDuplicateFollowing).
+			Return(errors.New(repository.ErrDuplicateFollowing)).
 			Once()
 		u, err := userService.FollowUser(context.TODO(), "uid", "username")
 		userRepoMock.AssertExpectations(t)

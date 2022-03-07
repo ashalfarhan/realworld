@@ -9,6 +9,8 @@ import (
 )
 
 func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
+	s.logger.Infof("POST FollowUser folowerID: %s, username: %s", followerID, username)
+
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -23,7 +25,7 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 		case repository.ErrDuplicateFollowing:
 			return nil, CreateServiceError(http.StatusBadRequest, ErrAlreadyFollow)
 		default:
-			s.logger.Printf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
+			s.logger.Errorf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
 			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
@@ -39,6 +41,8 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 }
 
 func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
+	s.logger.Infof("POST UnfollowUser folowerID: %s, username: %s", followerID, username)
+
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -49,7 +53,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 	}
 
 	if err := s.followRepo.DeleteOneIDs(ctx, followerID, following.ID); err != nil {
-		s.logger.Printf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
+		s.logger.Errorf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, err)
 	}
 

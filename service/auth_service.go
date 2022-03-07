@@ -35,7 +35,6 @@ const (
 func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 	c := &conduit.ConduitClaims{
 		UserID:   u.ID,
-		Username: u.Username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(jwtExp).Unix(),
 			Audience:  "client.com",
@@ -46,7 +45,7 @@ func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		s.logger.Printf("Cannot sign jwt for: %#v, Reason: %v", u, err)
+		s.logger.Errorf("Cannot sign jwt for: %#v, Reason: %v", u, err)
 		return "", fmt.Errorf("cannot sign jwt: %w", err)
 	}
 
@@ -56,7 +55,7 @@ func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 func (s AuthService) ParseJWT(str string) (*conduit.ConduitClaims, *ServiceError) {
 	t, err := jwt.ParseWithClaims(str, new(conduit.ConduitClaims), getKey)
 	if err != nil {
-		s.logger.Printf("Cannot parse jwt for: %s, Reason: %v", str, err)
+		s.logger.Errorf("Cannot parse jwt for: %s, Reason: %v", str, err)
 		return nil, CreateServiceError(http.StatusUnauthorized, fmt.Errorf("cannot parse jwt: %w", err))
 	}
 
@@ -109,7 +108,7 @@ func getKey(t *jwt.Token) (interface{}, error) {
 	return []byte(jwtSecret), nil
 }
 
-func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserFields) (*conduit.UserResponse, *ServiceError) {
+func (s AuthService) Login(ctx context.Context, d *dto.LoginUserFields) (*conduit.UserResponse, *ServiceError) {
 	s.logger.Infof("POST Login %#v", d)
 	u, sErr := s.userService.GetOne(ctx, &repository.FindOneUserFilter{
 		Email:    d.Email,
@@ -139,14 +138,9 @@ func (s *AuthService) Login(ctx context.Context, d *dto.LoginUserFields) (*condu
 	return res, nil
 }
 
-func (s *AuthService) Register(ctx context.Context, d *dto.RegisterUserFields) (*conduit.UserResponse, *ServiceError) {
-	s.logger.Infof("POST Register %#v", d)
-	u, sErr := s.userService.Insert(ctx, &RegisterArgs{
-		Email:    d.Email,
-		Username: d.Username,
-		Password: d.Password,
-	})
-
+func (s AuthService) Register(ctx context.Context, d *dto.RegisterUserFields) (*conduit.UserResponse, *ServiceError) {
+	s.logger.Infof("POST Register %#v", *d)
+	u, sErr := s.userService.Insert(ctx, d)
 	if sErr != nil {
 		return nil, sErr
 	}

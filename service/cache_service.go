@@ -15,7 +15,7 @@ type CacheService struct {
 }
 
 const (
-	defaultTTL = time.Hour * 2
+	defaultTTL = time.Minute * 2
 )
 
 func NewCacheService(s *redis.Client) *CacheService {

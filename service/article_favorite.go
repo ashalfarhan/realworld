@@ -8,6 +8,8 @@ import (
 )
 
 func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
+	s.logger.Infof("FavoriteArticleBySlug user_id: %s, slug: %s", userID, slug)
+
 	a, sErr := s.GetArticleBySlug(ctx, userID, slug)
 	if sErr != nil {
 		return nil, sErr
@@ -31,6 +33,8 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 }
 
 func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
+	s.logger.Infof("UnfavoriteArticleBySlug user_id: %s, slug: %s", userID, slug)
+
 	a, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
@@ -45,6 +49,8 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 }
 
 func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
+	s.logger.Infof("IsArticleFavorited user_id: %s, article_id: %s", userID, articleID)
+
 	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
 	return ptr != nil && err == nil
 }
