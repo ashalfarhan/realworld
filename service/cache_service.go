@@ -19,10 +19,7 @@ const (
 )
 
 func NewCacheService(s *redis.Client) *CacheService {
-	return &CacheService{
-		s,
-		conduit.NewLogger("Service", "CacheService"),
-	}
+	return &CacheService{s, conduit.NewLogger("service", "CacheService")}
 }
 
 func (s *CacheService) Set(ctx context.Context, key string, value interface{}) {

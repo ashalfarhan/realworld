@@ -13,11 +13,8 @@ type Service struct {
 
 func InitService(d *sqlx.DB) *Service {
 	repo := repository.InitRepository(d)
-	us := NewUserService(repo)
-	as := NewArticleService(repo)
-	return &Service{
-		us,
-		NewAuthService(us),
-		as,
-	}
+	userService := NewUserService(repo)
+	articleService := NewArticleService(repo)
+	authService := NewAuthService(userService)
+	return &Service{userService, authService, articleService}
 }
