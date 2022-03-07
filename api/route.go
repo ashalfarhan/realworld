@@ -37,12 +37,14 @@ func InitRoutes(s *service.Service) *mux.Router {
 
 	// Article
 	ac := controller.NewArticleController(s)
-	articleRoute := apiRoute.PathPrefix("/articles").Subrouter()
+
 	// Tags
 	apiRoute.HandleFunc("/tags", ac.GetAllTags).Methods(http.MethodGet)
 
-	articleRoute.HandleFunc("", ac.GetFiltered).Methods(http.MethodGet)
-	articleRoute.HandleFunc("", m.WithUser(m.WithValidator(ac.CreateArticle, new(dto.CreateArticleDto)))).Methods(http.MethodPost)
+	apiRoute.HandleFunc("/articles", ac.GetFiltered).Methods(http.MethodGet)
+	apiRoute.HandleFunc("/articles", m.WithUser(m.WithValidator(ac.CreateArticle, new(dto.CreateArticleDto)))).Methods(http.MethodPost)
+
+	articleRoute := apiRoute.PathPrefix("/articles").Subrouter()
 	articleRoute.HandleFunc("/feed", m.WithUser(ac.GetFeed)).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.DeleteArticle)).Methods(http.MethodDelete)

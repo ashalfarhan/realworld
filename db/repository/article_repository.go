@@ -213,7 +213,7 @@ func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArg
 				followings
 			WHERE
 				followings.follower_id = :user_id
-			)`
+		)`
 	}
 
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"

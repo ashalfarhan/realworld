@@ -34,7 +34,7 @@ const (
 
 func (s AuthService) GenerateJWT(u *model.User) (string, error) {
 	c := &conduit.ConduitClaims{
-		UserID:   u.ID,
+		UserID: u.ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(jwtExp).Unix(),
 			Audience:  "client.com",

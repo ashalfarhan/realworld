@@ -57,7 +57,7 @@ func (s *ArticleService) CreateArticle(
 	if len(d.TagList) > 0 {
 		for _, tag := range d.TagList {
 			if err := s.tagsRepo.InsertOne(ctx, a.ID, tag); err != nil {
-				s.logger.Printf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
+				s.logger.Errorf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
 				return nil, CreateServiceError(http.StatusInternalServerError, nil)
 			}
 			a.TagList = append(a.TagList, tag)
@@ -66,7 +66,7 @@ func (s *ArticleService) CreateArticle(
 
 	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
 	if err != nil {
-		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
+		s.logger.Errorf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -115,7 +115,7 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string)
 	}
 
 	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
-		s.logger.Printf("Cannot DeleteArticleBySlug Article Repo for %s, Reason: %v", slug, err)
+		s.logger.Errorf("Cannot DeleteArticleBySlug Article Repo for %s, Reason: %v", slug, err)
 		return CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -136,6 +136,7 @@ func (s *ArticleService) UpdateArticleBySlug(
 	ctx context.Context, userID, slug string, d *dto.UpdateArticleDto,
 ) (*model.Article, *ServiceError) {
 	s.logger.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
+
 	args := &repository.UpdateArticleValues{}
 	ar, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
@@ -165,7 +166,7 @@ func (s *ArticleService) UpdateArticleBySlug(
 	}
 
 	if err := s.articleRepo.UpdateOneBySlug(ctx, slug, args, ar); err != nil {
-		s.logger.Printf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
+		s.logger.Errorf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -186,12 +187,14 @@ func (s *ArticleService) GetArticles(
 
 	articles, err = s.articleRepo.Find(ctx, args)
 	if err != nil {
-		s.logger.Printf("Cannot Find::ArticleRepo args: %+v, Reason: %v", args, err)
+		s.logger.Errorf("Cannot Find::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	for _, a := range articles {
-		s.PopulateArticleField(ctx, a, args.UserID)
+		if err := s.PopulateArticleField(ctx, a, args.UserID); err != nil {
+			return nil, err
+		}
 	}
 
 	s.caching.Set(ctx, cacheKey, articles)
@@ -201,6 +204,7 @@ func (s *ArticleService) GetArticles(
 func (s *ArticleService) GetArticlesFeed(
 	ctx context.Context, args *repository.FindArticlesArgs,
 ) (model.Articles, *ServiceError) {
+
 	var articles model.Articles
 	var err error
 
@@ -212,12 +216,14 @@ func (s *ArticleService) GetArticlesFeed(
 
 	articles, err = s.articleRepo.FindByFollowed(ctx, args)
 	if err != nil {
-		s.logger.Printf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
+		s.logger.Errorf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	for _, a := range articles {
-		s.PopulateArticleField(ctx, a, args.UserID)
+		if err := s.PopulateArticleField(ctx, a, args.UserID); err != nil {
+			return nil, err
+		}
 	}
 
 	s.caching.Set(ctx, cacheKey, articles)
@@ -229,24 +235,23 @@ func (s *ArticleService) PopulateArticleField(
 ) *ServiceError {
 	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
-		s.logger.Printf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
+		s.logger.Errorf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
 		return CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	a.TagList = tags
 
-	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
+	a.Author, err = s.userRepo.FindOneByID(ctx, a.AuthorID)
 	if err != nil {
-		s.logger.Printf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
+		s.logger.Errorf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
 		return CreateServiceError(http.StatusInternalServerError, nil)
 	}
-	a.Author = u
 
 	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
 
 	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {
-		s.logger.Printf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
+		s.logger.Errorf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
 		return CreateServiceError(http.StatusInternalServerError, nil)
 	}
 

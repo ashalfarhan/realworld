@@ -16,14 +16,14 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 	}
 
 	if err := s.favoritesRepo.InsertOne(ctx, userID, a.ID); err != nil {
-		s.logger.Printf("Cannot FavoriteArticle, Reason: %v", err)
+		s.logger.Errorf("Cannot FavoriteArticle, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
 	a.Favorited = true
 	count, err := s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {
-		s.logger.Printf("Cannot CountFavorites, Reason: %v", err)
+		s.logger.Errorf("Cannot CountFavorites, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -40,7 +40,7 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 		return nil, err
 	}
 	if err := s.favoritesRepo.Delete(ctx, userID, a.ID); err != nil {
-		s.logger.Printf("Cannot UnfavoriteArticle, Reason: %v", err)
+		s.logger.Errorf("Cannot UnfavoriteArticle, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
@@ -52,5 +52,8 @@ func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, article
 	s.logger.Infof("IsArticleFavorited user_id: %s, article_id: %s", userID, articleID)
 
 	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
+	if err != nil {
+		s.logger.Errorf("Error get favorites repo %v", err)
+	}
 	return ptr != nil && err == nil
 }

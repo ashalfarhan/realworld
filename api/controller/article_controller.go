@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/ashalfarhan/realworld/api/dto"
@@ -109,46 +110,22 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	var limit, offset int
-	var err error
-	l, o, tag := q.Get("limit"), q.Get("offset"), q.Get("tag")
-
-	if l == "" {
-		limit = 5
-	} else {
-		limit, err = strconv.Atoi(l)
-		if err != nil {
-			response.ClientError(w, err)
-			return
-		}
+	args, err := getArticleQueryParams(r.URL.Query())
+	if err != nil {
+		response.ClientError(w, err)
+		return
 	}
 
-	if o == "" {
-		offset = 0
-	} else {
-		offset, err = strconv.Atoi(o)
-		if err != nil {
-			response.ClientError(w, err)
-			return
-		}
+	id, serr := c.authService.GetUserIDFromReq(r)
+	if err != nil {
+		response.Error(w, serr.Code, serr.Error)
+		return
 	}
-
-	args := &repository.FindArticlesArgs{
-		Limit:  limit,
-		Offset: offset,
-		Tag:    tag,
-	}
+	args.UserID = id
 
 	v := validator.New()
 	if err := v.Struct(args); err != nil {
 		response.EntityError(w, err)
-		return
-	}
-
-	var sErr *service.ServiceError
-	if args.UserID, sErr = c.authService.GetUserIDFromReq(r); err != nil {
-		response.Error(w, sErr.Code, sErr.Error)
 		return
 	}
 
@@ -165,38 +142,13 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	var limit, offset int
-	var err error
-	l, o := q.Get("limit"), q.Get("offset")
-
-	if l == "" {
-		limit = 5
-	} else {
-		limit, err = strconv.Atoi(l)
-		if err != nil {
-			response.ClientError(w, err)
-			return
-		}
+	args, err := getArticleQueryParams(r.URL.Query())
+	if err != nil {
+		response.ClientError(w, err)
+		return
 	}
-
-	if o == "" {
-		offset = 0
-	} else {
-		offset, err = strconv.Atoi(o)
-		if err != nil {
-			response.ClientError(w, err)
-			return
-		}
-	}
-
 	iu, _ := c.authService.GetUserFromCtx(r)
-
-	args := &repository.FindArticlesArgs{
-		Limit:  limit,
-		Offset: offset,
-		UserID: iu.UserID,
-	}
+	args.UserID = iu.UserID
 
 	v := validator.New()
 	if err := v.Struct(args); err != nil {
@@ -242,4 +194,35 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 	response.Accepted(w, response.M{
 		"article": a.Serialize(),
 	})
+}
+
+func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, error) {
+	var limit, offset int
+	var err error
+	l, o := q.Get("limit"), q.Get("offset")
+
+	if l == "" {
+		limit = 5
+	} else {
+		limit, err = strconv.Atoi(l)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if o == "" {
+		offset = 0
+	} else {
+		offset, err = strconv.Atoi(o)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	args := &repository.FindArticlesArgs{
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	return args, nil
 }
