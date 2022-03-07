@@ -23,20 +23,10 @@ func NewArticleController(s *service.Service) *ArticleController {
 }
 
 func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request) {
-	var d *dto.CreateArticleDto
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.ClientError(w, err)
-		return
-	}
-
-	v := validator.New()
-	if err := v.Struct(d); err != nil {
-		response.EntityError(w, err)
-		return
-	}
+	d := r.Context().Value(dto.DtoCtxKey).(*dto.CreateArticleDto)
 
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	a, err := c.articleService.CreateArticle(r.Context(), d, iu.UserID)
+	a, err := c.articleService.CreateArticle(r.Context(), d.Article, iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return

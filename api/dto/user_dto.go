@@ -3,9 +3,9 @@ package dto
 import "github.com/ashalfarhan/realworld/db/model"
 
 type RegisterUserFields struct {
-	Email    string `json:"email" validate:"required,email"`
-	Username string `json:"username" validate:"required,max=40"`
-	Password string `json:"password" validate:"required,min=8,max=255"`
+	Email    string `json:"email" validate:"required,email" db:"email"`
+	Username string `json:"username" validate:"required,max=40" db:"username"`
+	Password string `json:"password" validate:"required,min=8,max=255" db:"password"`
 }
 
 type RegisterUserDto struct {

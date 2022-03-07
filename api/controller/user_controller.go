@@ -76,7 +76,7 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 	d := r.Context().Value(dto.DtoCtxKey).(*dto.UpdateUserDto)
 
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	u, err := c.userService.Update(r.Context(), d, iu.UserID)
+	u, err := c.userService.Update(r.Context(), d.User, iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return

@@ -14,6 +14,6 @@ type ConduitMiddleware struct {
 func NewMiddleware(s *service.Service) *ConduitMiddleware {
 	return &ConduitMiddleware{
 		s.AuthService,
-		conduit.NewLogger("Service", "ConduitMiddleware"),
+		conduit.NewLogger("context", "ConduitMiddleware"),
 	}
 }

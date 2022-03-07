@@ -14,7 +14,7 @@ var conn *sqlx.DB
 
 func init() {
 	config.Load()
-	conduit.Logger = logrus.WithField("App", "ConduitApp")
+	conduit.Logger = logrus.WithField("context", "ConduitApp")
 	cache.Init()
 }
 

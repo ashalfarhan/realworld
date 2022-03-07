@@ -25,7 +25,7 @@ func InitRoutes(s *service.Service) *mux.Router {
 
 	// User
 	apiRoute.HandleFunc("/user", m.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
-	apiRoute.HandleFunc("/user", m.WithUser(m.WithValidator(uc.UpdateCurrentUser, new(dto.UpdateArticleDto)))).Methods(http.MethodPut)
+	apiRoute.HandleFunc("/user", m.WithUser(m.WithValidator(uc.UpdateCurrentUser, new(dto.UpdateUserDto)))).Methods(http.MethodPut)
 
 	// Profile
 	pc := controller.NewProfileController(s)
@@ -42,7 +42,7 @@ func InitRoutes(s *service.Service) *mux.Router {
 	apiRoute.HandleFunc("/tags", ac.GetAllTags).Methods(http.MethodGet)
 
 	articleRoute.HandleFunc("", ac.GetFiltered).Methods(http.MethodGet)
-	articleRoute.HandleFunc("", m.WithUser(ac.CreateArticle)).Methods(http.MethodPost)
+	articleRoute.HandleFunc("", m.WithUser(m.WithValidator(ac.CreateArticle, new(dto.CreateArticleDto)))).Methods(http.MethodPost)
 	articleRoute.HandleFunc("/feed", m.WithUser(ac.GetFeed)).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.DeleteArticle)).Methods(http.MethodDelete)
