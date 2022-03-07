@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -14,19 +15,24 @@ type UserRepoImpl struct {
 }
 
 type UserRepository interface {
-	InsertOne(context.Context, *model.User) error
+	InsertOne(context.Context, *dto.RegisterUserFields) (*model.User, error)
 	FindOneByID(context.Context, string) (*model.User, error)
 	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
-	UpdateOne(context.Context, *UpdateUserValues) error
+	UpdateOne(context.Context, *dto.UpdateUserFields, string) error
 }
 
 // See https://go.dev/doc/database/execute-transactions
-func (r *UserRepoImpl) InsertOne(ctx context.Context, u *model.User) error {
+func (r *UserRepoImpl) InsertOne(ctx context.Context, d *dto.RegisterUserFields) (*model.User, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback() // Defer a rollback incase returning error
+	u := &model.User{
+		Email:    d.Email,
+		Username: d.Username,
+		Password: d.Password,
+	}
 
 	query := `
 	INSERT INTO
@@ -38,16 +44,16 @@ func (r *UserRepoImpl) InsertOne(ctx context.Context, u *model.User) error {
 		users.id, users.bio, users.image`
 	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer stmt.Close()
-	if err = stmt.GetContext(ctx, u, *u); err != nil {
-		return err
+	if err = stmt.GetContext(ctx, u, *d); err != nil {
+		return nil, err
 	}
 
 	// Commit and then return the error if any
-	return tx.Commit()
+	return u, tx.Commit()
 }
 
 func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string) (*model.User, error) {
@@ -94,16 +100,7 @@ func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*mode
 	return u, nil
 }
 
-type UpdateUserValues struct {
-	ID       string
-	Email    *string
-	Username *string
-	Password *string
-	Image    model.NullString
-	Bio      model.NullString
-}
-
-func (r *UserRepoImpl) UpdateOne(ctx context.Context, u *UpdateUserValues) error {
+func (r *UserRepoImpl) UpdateOne(ctx context.Context, u *dto.UpdateUserFields, uid string) error {
 	var updateArgs []string
 	var valArgs []interface{}
 	argIdx := 0
@@ -141,7 +138,7 @@ func (r *UserRepoImpl) UpdateOne(ctx context.Context, u *UpdateUserValues) error
 	updateArgs = append(updateArgs, "updated_at = NOW()")
 
 	argIdx++
-	valArgs = append(valArgs, u.ID)
+	valArgs = append(valArgs, uid)
 	query := fmt.Sprintf("UPDATE users SET %s WHERE users.id = $%d", strings.Join(updateArgs, ", "), argIdx)
 
 	tx, err := r.db.BeginTx(ctx, nil)

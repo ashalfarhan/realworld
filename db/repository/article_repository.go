@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/db/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -14,20 +15,26 @@ type ArticleRepoImpl struct {
 }
 
 type ArticleRepository interface {
-	InsertOne(context.Context, *model.Article) error
-	FindOneBySlug(context.Context, *model.Article) error
+	InsertOne(context.Context, *dto.CreateArticleFields, string) (*model.Article, error)
+	FindOneBySlug(context.Context, string) (*model.Article, error)
 	DeleteBySlug(context.Context, string) error
 	UpdateOneBySlug(context.Context, string, *UpdateArticleValues, *model.Article) error
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
 	FindByFollowed(context.Context, *FindArticlesArgs) (model.Articles, error)
 }
 
-func (r *ArticleRepoImpl) InsertOne(ctx context.Context, a *model.Article) error {
+func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *dto.CreateArticleFields, authorID string) (*model.Article, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
+	a := &model.Article{
+		Title:       d.Title,
+		Description: d.Description,
+		Body:        d.Body,
+		AuthorID:    authorID,
+	}
 
 	query := `
 	INSERT INTO 
@@ -39,18 +46,21 @@ func (r *ArticleRepoImpl) InsertOne(ctx context.Context, a *model.Article) error
 		id, created_at, updated_at`
 	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer stmt.Close()
 
 	if err = stmt.GetContext(ctx, a, *a); err != nil {
-		return err
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
 	}
 
-	return tx.Commit()
+	return a, nil
 }
 
-func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, a *model.Article) error {
+func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
 	query := `
 	SELECT
 		id, title, description, body, author_id, created_at, updated_at
@@ -58,8 +68,14 @@ func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, a *model.Article) e
 		articles
 	WHERE
 		articles.slug = $1`
+	a := new(model.Article)
+	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
+		return nil, err
+	}
 
-	return r.db.GetContext(ctx, a, query, a.Slug)
+	a.Slug = slug
+	a.Author = new(model.User)
+	return a, nil
 }
 
 func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
