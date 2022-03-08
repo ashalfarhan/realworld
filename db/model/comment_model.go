@@ -1,6 +1,9 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Comment struct {
 	ID        string `json:"id" db:"id"`
@@ -8,8 +11,8 @@ type Comment struct {
 	ArticleID string `json:"-" db:"article_id"`
 	AuthorID  string `json:"-" db:"author_id"`
 	Author    *User  `json:"author"`
-	CreatedAt string `json:"createdAt" db:"created_at"`
-	UpdatedAt string `json:"updatedAt" db:"updated_at"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 type Comments []*Comment
