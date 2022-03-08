@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -17,8 +16,8 @@ func (m *CommentRepoMock) InsertOne(ctx context.Context, c *model.Comment) error
 	return args.Error(0)
 }
 
-func (m *CommentRepoMock) FindByArticleID(ctx context.Context, a *repository.FindCommentsByArticleIDArgs) ([]*model.Comment, error) {
-	args := m.Called(ctx, a)
+func (m *CommentRepoMock) FindByArticleID(ctx context.Context, articleID string) ([]*model.Comment, error) {
+	args := m.Called(ctx, articleID)
 	return args.Get(0).([]*model.Comment), args.Error(1)
 }
 

@@ -28,7 +28,7 @@ func (m *UserRepoMock) FindOne(ctx context.Context, u *repository.FindOneUserFil
 	return arg.Get(0).(*model.User), arg.Error(1)
 }
 
-func (m *UserRepoMock) UpdateOne(ctx context.Context, uv *dto.UpdateUserFields, uid string) error {
-	arg := m.Called(ctx, uv, uid)
+func (m *UserRepoMock) UpdateOne(ctx context.Context, d *dto.UpdateUserFields, u *model.User) error {
+	arg := m.Called(ctx, d, u)
 	return arg.Error(0)
 }

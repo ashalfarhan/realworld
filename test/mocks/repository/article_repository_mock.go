@@ -28,8 +28,8 @@ func (m *ArticleRepoMock) DeleteBySlug(ctx context.Context, s string) error {
 	return args.Error(0)
 }
 
-func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, s string, uv *repository.UpdateArticleValues, a *model.Article) error {
-	args := m.Called(ctx, s, uv, a)
+func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, d *dto.UpdateArticleFields, a *model.Article) error {
+	args := m.Called(ctx, d, a)
 	return args.Error(0)
 }
 
