@@ -30,7 +30,7 @@ func (s *CacheService) Set(ctx context.Context, key string, value interface{}) {
 
 func (s *CacheService) Get(ctx context.Context, key string, dest interface{}) bool {
 	err := s.store.Get(ctx, key).Scan(dest)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		s.logger.Printf("Cannot restore cache. key=%s reason=%v\n", key, err)
 	}
 

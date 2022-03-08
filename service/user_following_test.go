@@ -2,8 +2,8 @@ package service_test
 
 import (
 	"context"
-	"errors"
 	"database/sql"
+	"errors"
 	"net/http"
 	"testing"
 

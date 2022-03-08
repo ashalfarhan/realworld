@@ -133,39 +133,25 @@ func (s *ArticleService) CreateSlug(title string) string {
 }
 
 func (s *ArticleService) UpdateArticleBySlug(
-	ctx context.Context, userID, slug string, d *dto.UpdateArticleDto,
+	ctx context.Context, userID, slug string, d *dto.UpdateArticleFields,
 ) (*model.Article, *ServiceError) {
 	s.logger.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
 
-	args := &repository.UpdateArticleValues{}
 	ar, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(d.Article.Body) != 0 {
-		args.Body = &d.Article.Body
-		ar.Body = d.Article.Body
-	}
-
-	if len(d.Article.Description) != 0 {
-		args.Description = &d.Article.Description
-		ar.Description = d.Article.Description
-	}
-
-	if len(d.Article.Title) != 0 {
-		args.Title = &d.Article.Title
-		newSlug := s.CreateSlug(d.Article.Title)
-		args.Slug = &newSlug
-
-		ar.Title = d.Article.Title
-		ar.Slug = newSlug
-	}
 	if ar.AuthorID != userID {
 		return nil, CreateServiceError(http.StatusForbidden, ErrNotAllowedUpdateArticle)
 	}
 
-	if err := s.articleRepo.UpdateOneBySlug(ctx, slug, args, ar); err != nil {
+	if v := d.Title; v != nil {
+		newSlug := s.CreateSlug(*v)
+		d.Slug = &newSlug
+	}
+
+	if err := s.articleRepo.UpdateOneBySlug(ctx, d, ar); err != nil {
 		s.logger.Errorf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}

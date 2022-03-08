@@ -78,21 +78,12 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserFields, uid s
 		return nil, err
 	}
 
-	if d.Password != nil {
-		hashed := s.HashPassword(*d.Password)
+	if v := d.Password; v != nil {
+		hashed := s.HashPassword(*v)
 		d.Password = &hashed
-		u.Password = hashed
 	}
 
-	if d.Bio.Set {
-		u.Bio = d.Bio
-	}
-
-	if d.Image.Set {
-		u.Image = d.Image
-	}
-
-	if err := s.userRepo.UpdateOne(ctx, d, uid); err != nil {
+	if err := s.userRepo.UpdateOne(ctx, d, u); err != nil {
 		switch err.Error() {
 		case repository.ErrDuplicateEmail:
 			return nil, CreateServiceError(http.StatusBadRequest, ErrEmailExist)
@@ -114,4 +105,22 @@ func (s *UserService) HashPassword(p string) string {
 	}
 
 	return string(hashed)
+}
+
+func (s *UserService) GetProfile(ctx context.Context, username, userID string) (*conduit.ProfileResponse, *ServiceError) {
+	u, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
+	if err != nil {
+		return nil, err
+	}
+
+	following := s.IsFollowing(ctx, userID, u.ID)
+
+	res := &conduit.ProfileResponse{
+		Username:  u.Username,
+		Bio:       u.Bio,
+		Image:     u.Image,
+		Following: following,
+	}
+
+	return res, nil
 }

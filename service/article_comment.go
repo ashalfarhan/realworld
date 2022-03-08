@@ -7,10 +7,11 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
 )
 
 func (s *ArticleService) CreateComment(ctx context.Context, d *dto.CreateCommentDto) (*model.Comment, *ServiceError) {
+	s.logger.Infof("POST CreateComment %#v", d)
+
 	ar, sErr := s.GetArticleBySlug(ctx, d.AuthorID, d.ArticleSlug)
 	if sErr != nil {
 		return nil, sErr
@@ -36,14 +37,13 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *dto.CreateComment
 	return c, nil
 }
 
-func (s *ArticleService) GetComments(ctx context.Context, args *repository.FindCommentsByArticleIDArgs, slug string) ([]*model.Comment, *ServiceError) {
+func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) ([]*model.Comment, *ServiceError) {
 	ar, sErr := s.GetArticleBySlug(ctx, "", slug)
 	if sErr != nil {
 		return nil, sErr
 	}
 
-	args.ArticleID = ar.ID
-	comments, err := s.commentRepo.FindByArticleID(ctx, args)
+	comments, err := s.commentRepo.FindByArticleID(ctx, ar.ID)
 	if err != nil {
 		s.logger.Printf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)

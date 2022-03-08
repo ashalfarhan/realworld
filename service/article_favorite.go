@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/db/model"
 )
 
 func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	s.logger.Infof("FavoriteArticleBySlug user_id: %s, slug: %s", userID, slug)
+	s.logger.Infof("POST FavoriteArticle user_id: %s, slug: %s", userID, slug)
 
 	a, sErr := s.GetArticleBySlug(ctx, userID, slug)
 	if sErr != nil {
@@ -33,7 +34,7 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 }
 
 func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *ServiceError) {
-	s.logger.Infof("UnfavoriteArticleBySlug user_id: %s, slug: %s", userID, slug)
+	s.logger.Infof("DELETE UnfavoriteArticle user_id: %s, slug: %s", userID, slug)
 
 	a, err := s.GetArticleBySlug(ctx, userID, slug)
 	if err != nil {
@@ -49,10 +50,12 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 }
 
 func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
-	s.logger.Infof("IsArticleFavorited user_id: %s, article_id: %s", userID, articleID)
+	if userID == "" {
+		return false
+	}
 
 	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		s.logger.Errorf("Error get favorites repo %v", err)
 	}
 	return ptr != nil && err == nil
