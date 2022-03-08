@@ -48,11 +48,11 @@ func InitRoutes(s *service.Service) *mux.Router {
 	articleRoute.HandleFunc("/feed", m.WithUser(ac.GetFeed)).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.DeleteArticle)).Methods(http.MethodDelete)
-	articleRoute.HandleFunc("/{slug}", m.WithUser(ac.UpdateArticle)).Methods(http.MethodPut)
+	articleRoute.HandleFunc("/{slug}", m.WithUser(m.WithValidator(ac.UpdateArticle, new(dto.UpdateArticleDto)))).Methods(http.MethodPut)
 	articleRoute.HandleFunc("/{slug}/favorite", m.WithUser(ac.FavoriteArticle)).Methods(http.MethodPost)
 	articleRoute.HandleFunc("/{slug}/favorite", m.WithUser(ac.UnFavoriteArticle)).Methods(http.MethodDelete)
 	articleRoute.HandleFunc("/{slug}/comments", ac.GetArticleComments).Methods(http.MethodGet)
-	articleRoute.HandleFunc("/{slug}/comments", m.WithUser(ac.CreateComment)).Methods(http.MethodPost)
+	articleRoute.HandleFunc("/{slug}/comments", m.WithUser(m.WithValidator(ac.CreateComment, new(dto.CreateCommentDto)))).Methods(http.MethodPost)
 	articleRoute.HandleFunc("/{slug}/comments/{id}", m.WithUser(ac.DeleteComment)).Methods(http.MethodDelete)
 
 	return r
