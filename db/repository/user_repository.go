@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/db/model"
@@ -18,7 +16,7 @@ type UserRepository interface {
 	InsertOne(context.Context, *dto.RegisterUserFields) (*model.User, error)
 	FindOneByID(context.Context, string) (*model.User, error)
 	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
-	UpdateOne(context.Context, *dto.UpdateUserFields, string) error
+	UpdateOne(context.Context, *dto.UpdateUserFields, *model.User) error
 }
 
 // See https://go.dev/doc/database/execute-transactions
@@ -63,7 +61,7 @@ func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string) (*model.User,
 
 	query := `
 	SELECT
-		email, username, bio, image, created_at, updated_at
+		id, email, username, bio, image, created_at, updated_at
 	FROM
 		users
 	WHERE
@@ -100,62 +98,51 @@ func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*mode
 	return u, nil
 }
 
-func (r *UserRepoImpl) UpdateOne(ctx context.Context, u *dto.UpdateUserFields, uid string) error {
-	var updateArgs []string
-	var valArgs []interface{}
-	argIdx := 0
-
-	if v := u.Email; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("email = $%d", argIdx))
-		valArgs = append(valArgs, *u.Email)
+func (r *UserRepoImpl) UpdateOne(ctx context.Context, d *dto.UpdateUserFields, u *model.User) error {
+	if v := d.Email; v != nil {
+		u.Email = *v
+	}
+	if v := d.Username; v != nil {
+		u.Username = *v
+	}
+	if v := d.Password; v != nil {
+		u.Password = *v
 	}
 
-	if v := u.Username; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("username = $%d", argIdx))
-		valArgs = append(valArgs, *u.Username)
+	if v := d.Bio; v.Set {
+		u.Bio = v
+	}
+	if v := d.Image; v.Set {
+		u.Image = v
 	}
 
-	if u.Bio.Set {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("bio = $%d", argIdx))
-		valArgs = append(valArgs, u.Bio)
-	}
-
-	if u.Image.Set {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("image = $%d", argIdx))
-		valArgs = append(valArgs, u.Image)
-	}
-
-	if v := u.Password; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("password = $%d", argIdx))
-		valArgs = append(valArgs, *u.Password)
-	}
-
-	updateArgs = append(updateArgs, "updated_at = NOW()")
-
-	argIdx++
-	valArgs = append(valArgs, uid)
-	query := fmt.Sprintf("UPDATE users SET %s WHERE users.id = $%d", strings.Join(updateArgs, ", "), argIdx)
-
-	tx, err := r.db.BeginTx(ctx, nil)
+	query := `
+	UPDATE users
+	SET
+		email = :email,
+		username = :username,
+		password = :password,
+		bio = :bio,
+		image = :image,
+		updated_at = NOW()
+	WHERE
+		users.id = :id
+	`
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx, query)
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
-	if _, err = stmt.ExecContext(ctx, valArgs...); err != nil {
+	if _, err = stmt.ExecContext(ctx, u); err != nil {
 		return err
 	}
 

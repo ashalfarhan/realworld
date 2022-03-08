@@ -13,10 +13,10 @@ type CommentRepoImpl struct {
 }
 
 type CommentRepository interface {
-	InsertOne(ctx context.Context, c *model.Comment) error
-	FindByArticleID(ctx context.Context, args *FindCommentsByArticleIDArgs) ([]*model.Comment, error)
-	DeleteByID(ctx context.Context, commentID string) error
-	FindOneByID(ctx context.Context, commentID string) (*model.Comment, error)
+	InsertOne(context.Context, *model.Comment) error
+	FindByArticleID(context.Context, string) ([]*model.Comment, error)
+	DeleteByID(context.Context, string) error
+	FindOneByID(context.Context, string) (*model.Comment, error)
 }
 
 func (r *CommentRepoImpl) InsertOne(ctx context.Context, c *model.Comment) error {
@@ -53,7 +53,7 @@ type FindCommentsByArticleIDArgs struct {
 	Offset    int    `validate:"min=0" db:"offset"`
 }
 
-func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, args *FindCommentsByArticleIDArgs) ([]*model.Comment, error) {
+func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, articleID string) ([]*model.Comment, error) {
 	var comments []*model.Comment
 	query := `
 	SELECT
@@ -61,17 +61,10 @@ func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, args *FindComment
 	FROM 
 		article_comments
 	WHERE 
-		article_id = :article_id
-	ORDER BY created_at DESC
-	LIMIT :limit
-	OFFSET :offset`
-	stmt, err := r.db.PrepareNamedContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
+		article_id = $1
+	ORDER BY created_at DESC`
 
-	if err = stmt.SelectContext(ctx, &comments, args); err != nil {
+	if err := r.db.SelectContext(ctx, &comments, query, articleID); err != nil {
 		return nil, err
 	}
 

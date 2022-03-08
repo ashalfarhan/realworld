@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/db/model"
@@ -18,7 +16,7 @@ type ArticleRepository interface {
 	InsertOne(context.Context, *dto.CreateArticleFields, string) (*model.Article, error)
 	FindOneBySlug(context.Context, string) (*model.Article, error)
 	DeleteBySlug(context.Context, string) error
-	UpdateOneBySlug(context.Context, string, *UpdateArticleValues, *model.Article) error
+	UpdateOneBySlug(context.Context, *dto.UpdateArticleFields, *model.Article) error
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
 	FindByFollowed(context.Context, *FindArticlesArgs) (model.Articles, error)
 }
@@ -34,6 +32,7 @@ func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *dto.CreateArticleFie
 		Description: d.Description,
 		Body:        d.Body,
 		AuthorID:    authorID,
+		Slug:        d.Slug,
 	}
 
 	query := `
@@ -98,61 +97,44 @@ func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
 	return tx.Commit()
 }
 
-type UpdateArticleValues struct {
-	Title       *string
-	Slug        *string
-	Body        *string
-	Description *string
-}
-
-func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, slug string, a *UpdateArticleValues, dest *model.Article) error {
-	var updateArgs []string
-	var valArgs []interface{}
-	argIdx := 0
-
-	if v := a.Body; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("body = $%d", argIdx))
-		valArgs = append(valArgs, *a.Body)
+func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *dto.UpdateArticleFields, a *model.Article) error {
+	if v := d.Title; v != nil {
+		a.Title = *v
+	}
+	if v := d.Slug; v != nil {
+		a.Slug = *v
+	}
+	if v := d.Body; v != nil {
+		a.Body = *v
+	}
+	if v := d.Description; v != nil {
+		a.Description = *v
 	}
 
-	if v := a.Title; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("title = $%d", argIdx))
-		valArgs = append(valArgs, *a.Title)
-	}
+	query := `
+	UPDATE articles
+	SET 
+		title = :title,
+		slug = :slug,
+		body = :body,
+		description = :description,
+		updated_at = NOW()
+	WHERE 
+		articles.id = :id`
 
-	if v := a.Slug; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("slug = $%d", argIdx))
-		valArgs = append(valArgs, *a.Slug)
-	}
-
-	if v := a.Description; v != nil {
-		argIdx++
-		updateArgs = append(updateArgs, fmt.Sprintf("description = $%d", argIdx))
-		valArgs = append(valArgs, *a.Description)
-	}
-
-	updateArgs = append(updateArgs, "updated_at = NOW()")
-
-	argIdx++
-	valArgs = append(valArgs, slug)
-	query := fmt.Sprintf("UPDATE articles SET %s WHERE articles.slug = $%d RETURNING articles.updated_at", strings.Join(updateArgs, ", "), argIdx)
-
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx, query)
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	if err := stmt.QueryRowContext(ctx, valArgs...).Scan(&dest.UpdatedAt); err != nil {
+	if _, err := stmt.ExecContext(ctx, a); err != nil {
 		return err
 	}
 
