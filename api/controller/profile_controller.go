@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/api/response"
-	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/gorilla/mux"
 )
@@ -46,23 +44,13 @@ func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
-	u, err := c.userService.GetOne(r.Context(), &repository.FindOneUserFilter{Username: mux.Vars(r)["username"]})
+	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
+	profile, err := c.userService.GetProfile(r.Context(), mux.Vars(r)["username"], iu.UserID)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
-
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	following := c.userService.IsFollowing(r.Context(), iu.UserID, u.ID)
-
-	res := &conduit.ProfileResponse{
-		Username:  u.Username,
-		Bio:       u.Bio,
-		Image:     u.Image,
-		Following: following,
-	}
-
 	response.Ok(w, response.M{
-		"profile": res,
+		"profile": profile,
 	})
 }

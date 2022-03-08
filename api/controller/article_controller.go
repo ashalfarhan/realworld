@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,15 +38,13 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
-
 	uid, err := c.authService.GetUserIDFromReq(r)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
 
-	a, err := c.articleService.GetArticleBySlug(r.Context(), uid, slug)
+	a, err := c.articleService.GetArticleBySlug(r.Context(), uid, mux.Vars(r)["slug"])
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
@@ -59,10 +56,9 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
 
-	if err := c.articleService.DeleteArticle(r.Context(), slug, iu.UserID); err != nil {
+	if err := c.articleService.DeleteArticle(r.Context(), mux.Vars(r)["slug"], iu.UserID); err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
 	}
@@ -83,22 +79,10 @@ func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request) {
-	var d *dto.UpdateArticleDto
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		response.ClientError(w, err)
-		return
-	}
+	d := r.Context().Value(dto.DtoCtxKey).(*dto.UpdateArticleDto)
 
-	v := validator.New()
-	if err := v.Struct(d); err != nil {
-		response.EntityError(w, err)
-		return
-	}
-
-	slug := mux.Vars(r)["slug"]
 	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-
-	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu.UserID, slug, d)
+	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu.UserID, mux.Vars(r)["slug"], d.Article)
 	if err != nil {
 		response.Error(w, err.Code, err.Error)
 		return
