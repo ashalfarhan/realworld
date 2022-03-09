@@ -6,7 +6,7 @@ type Repository struct {
 	UserRepo             UserRepository
 	FollowRepo           FollowingRepository
 	ArticleRepo          ArticleRepository
-	ArticleTagsRepo      *ArticleTagsRepository
+	ArticleTagsRepo      ArticleTagsRepository
 	ArticleFavoritesRepo ArticleFavoritesRepository
 	CommentRepo          CommentRepository
 }
@@ -16,7 +16,7 @@ func InitRepository(d *sqlx.DB) *Repository {
 		&UserRepoImpl{d},
 		&FollowingRepoImpl{d},
 		&ArticleRepoImpl{d},
-		&ArticleTagsRepository{d},
+		&ArticleTagsRepo{d},
 		&ArticleFavoritesRepoImpl{d},
 		&CommentRepoImpl{d},
 	}

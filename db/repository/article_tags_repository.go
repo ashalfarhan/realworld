@@ -6,12 +6,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ArticleTagsRepository struct {
+type ArticleTagsRepo struct {
 	db *sqlx.DB
 }
 
-func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagName string) error {
-	tx, err := r.db.BeginTx(ctx, nil)
+type ArticleTagsRepository interface {
+	InsertBulk(ctx context.Context, tags []InsertArticleTagsArgs) error
+	FindArticleTagsByID(ctx context.Context, articleID string) ([]string, error)
+	FindAllTags(ctx context.Context) ([]string, error)
+}
+
+type InsertArticleTagsArgs struct {
+	ArticleID string `db:"article_id"`
+	TagName   string `db:"tag_name"`
+}
+
+func (r *ArticleTagsRepo) InsertBulk(ctx context.Context, tags []InsertArticleTagsArgs) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -22,16 +33,16 @@ func (r *ArticleTagsRepository) InsertOne(ctx context.Context, articleID, tagNam
 		article_tags
 		(article_id, tag_name)
 	VALUES
-		($1, $2)`
+		(:article_id, :tag_name)`
 
-	if _, err = tx.ExecContext(ctx, query, articleID, tagName); err != nil {
+	if _, err = tx.NamedExecContext(ctx, query, tags); err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
-func (r *ArticleTagsRepository) FindArticleTagsByID(ctx context.Context, articleID string) ([]string, error) {
+func (r *ArticleTagsRepo) FindArticleTagsByID(ctx context.Context, articleID string) ([]string, error) {
 	var tags []string
 
 	query := `
@@ -49,7 +60,7 @@ func (r *ArticleTagsRepository) FindArticleTagsByID(ctx context.Context, article
 	return tags, nil
 }
 
-func (r *ArticleTagsRepository) FindAllTags(ctx context.Context) ([]string, error) {
+func (r *ArticleTagsRepo) FindAllTags(ctx context.Context) ([]string, error) {
 	var tags []string
 
 	query := `
