@@ -1,4 +1,4 @@
-package repository
+package repository_mocks
 
 import (
 	"context"

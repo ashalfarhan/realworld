@@ -14,12 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestFollowUser(t *testing.T) {
-	t.Run("Follow user should fail if already follow", func(t *testing.T) {
-		t.Cleanup(func() {
-			followRepoMock.Calls = nil
-			userRepoMock.Calls = nil
-		})
+type TestMap map[string]func(*testing.T)
+
+var tests = TestMap{
+	"Follow user should fail if already follow": func(t *testing.T) {
 		as := assert.New(t)
 		userRepoMock.On("FindOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, nil).
@@ -36,13 +34,8 @@ func TestFollowUser(t *testing.T) {
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusBadRequest)
 		as.Equal(err.Error, ErrAlreadyFollow)
-	})
-
-	t.Run("Follow user should fail if self follow", func(t *testing.T) {
-		t.Cleanup(func() {
-			followRepoMock.Calls = nil
-			userRepoMock.Calls = nil
-		})
+	},
+	"Follow user should fail if self follow": func(t *testing.T) {
 		uid := "uid"
 		as := assert.New(t)
 		userRepoMock.
@@ -51,58 +44,64 @@ func TestFollowUser(t *testing.T) {
 			Once()
 		u, err := userService.FollowUser(context.TODO(), uid, "username")
 		userRepoMock.AssertExpectations(t)
-		followRepoMock.AssertNotCalled(t, "InsertOne", mock.Anything, mock.Anything, mock.Anything)
+		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
 
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusBadRequest)
 		as.Equal(err.Error, ErrSelfFollow)
-	})
-
-	t.Run("Follow user should fail if not found", func(t *testing.T) {
-		t.Cleanup(func() {
-			followRepoMock.Calls = nil
-			userRepoMock.Calls = nil
-		})
+	},
+	"Follow user should fail if not found": func(t *testing.T) {
 		as := assert.New(t)
+
 		userRepoMock.
 			On("FindOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, sql.ErrNoRows).
 			Once()
 		u, err := userService.FollowUser(context.TODO(), "id", "username")
 		userRepoMock.AssertExpectations(t)
-		followRepoMock.AssertNotCalled(t, "InsertOne", mock.Anything, mock.Anything, mock.Anything)
+		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
 
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusNotFound)
 		as.Equal(err.Error, ErrNoUserFound)
-	})
-
-	t.Run("Follow user should success", func(t *testing.T) {
-		t.Cleanup(func() {
-			followRepoMock.Calls = nil
-			userRepoMock.Calls = nil
-		})
+	},
+	"Follow user should success": func(t *testing.T) {
 		as := assert.New(t)
-		id := "id1"
+		followerID := "followerID"
+
+		following := &model.User{
+			Username: "username",
+			ID:       "followingID",
+		}
 		userRepoMock.
 			On("FindOne", mock.Anything, mock.Anything).
-			Return(&model.User{}, nil).
+			Return(following, nil).
 			Once()
 		followRepoMock.
-			On("InsertOne", mock.Anything, mock.Anything, mock.Anything).
+			On("InsertOne", mock.Anything, followerID, following.ID).
 			Return(nil).
 			Once()
 
-		u, err := userService.FollowUser(context.TODO(), id, "username")
+		u, err := userService.FollowUser(context.TODO(), followerID, following.Username)
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
 
 		as.Nil(err)
 		as.NotNil(u)
 		as.True(u.Following)
-	})
+	},
+}
+
+func TestFollowUser(t *testing.T) {
+	for name, exec := range tests {
+		t.Run(name, exec)
+		// Teardown after each subtest
+		// like `afterEach` in jest
+		followRepoMock.Calls = nil
+		userRepoMock.Calls = nil
+	}
 }

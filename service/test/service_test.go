@@ -7,8 +7,8 @@ import (
 
 	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/db/repository"
+	repoMocks "github.com/ashalfarhan/realworld/db/repository/mocks"
 	. "github.com/ashalfarhan/realworld/service"
-	repoMocks "github.com/ashalfarhan/realworld/test/mocks/repository"
 )
 
 var (
