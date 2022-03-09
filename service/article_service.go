@@ -23,7 +23,7 @@ const (
 type ArticleService struct {
 	articleRepo   repository.ArticleRepository
 	userRepo      repository.UserRepository
-	tagsRepo      *repository.ArticleTagsRepository
+	tagsRepo      repository.ArticleTagsRepository
 	favoritesRepo repository.ArticleFavoritesRepository
 	commentRepo   repository.CommentRepository
 	logger        *logrus.Entry
@@ -45,7 +45,7 @@ func NewArticleService(repo *repository.Repository) *ArticleService {
 func (s *ArticleService) CreateArticle(
 	ctx context.Context, d *dto.CreateArticleFields, authorID string,
 ) (*model.Article, *ServiceError) {
-	s.logger.Infof("CreateArticle %#v, author_id: %s", d, authorID)
+	s.logger.Infof("POST CreateArticle %#v, author_id: %s", d, authorID)
 
 	d.Slug = s.CreateSlug(d.Title)
 	a, err := s.articleRepo.InsertOne(ctx, d, authorID)
@@ -54,13 +54,15 @@ func (s *ArticleService) CreateArticle(
 		return nil, CreateServiceError(http.StatusInternalServerError, nil)
 	}
 
-	if len(d.TagList) > 0 {
-		for _, tag := range d.TagList {
-			if err := s.tagsRepo.InsertOne(ctx, a.ID, tag); err != nil {
-				s.logger.Errorf("Cannot InsertOne ArticleTags Repo for %s, Reason: %v", tag, err)
-				return nil, CreateServiceError(http.StatusInternalServerError, nil)
-			}
+	if tgs := len(d.TagList); tgs > 0 {
+		tags := make([]repository.InsertArticleTagsArgs, tgs)
+		for i, tag := range d.TagList {
+			tags[i] = repository.InsertArticleTagsArgs{ArticleID: a.ID, TagName: tag}
 			a.TagList = append(a.TagList, tag)
+		}
+		if err := s.tagsRepo.InsertBulk(ctx, tags); err != nil {
+			s.logger.Errorf("Cannot InsertBulk::ArticleTags Repo for %v, Reason: %v", tags, err)
+			return nil, CreateServiceError(http.StatusInternalServerError, nil)
 		}
 	}
 

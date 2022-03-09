@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	userRepoMock    *repoMocks.UserRepoMock
-	articleRepoMock *repoMocks.ArticleRepoMock
-	followRepoMock  *repoMocks.FollowingRepoMock
-	repo            *repository.Repository
-	userService     *UserService
+	userRepoMock        *repoMocks.UserRepoMock
+	articleRepoMock     *repoMocks.ArticleRepoMock
+	followRepoMock      *repoMocks.FollowingRepoMock
+	articleTagsRepoMock *repoMocks.ArticleTagsRepoMock
+	repo                *repository.Repository
+	userService         *UserService
 )
 
 func TestMain(m *testing.M) {
@@ -33,10 +34,12 @@ func setup() {
 	userRepoMock = new(repoMocks.UserRepoMock)
 	articleRepoMock = new(repoMocks.ArticleRepoMock)
 	followRepoMock = new(repoMocks.FollowingRepoMock)
+	articleTagsRepoMock = new(repoMocks.ArticleTagsRepoMock)
 	repo = &repository.Repository{
-		UserRepo:    userRepoMock,
-		ArticleRepo: articleRepoMock,
-		FollowRepo:  followRepoMock,
+		UserRepo:        userRepoMock,
+		ArticleRepo:     articleRepoMock,
+		FollowRepo:      followRepoMock,
+		ArticleTagsRepo: articleTagsRepoMock,
 	}
 
 	userService = NewUserService(repo)
