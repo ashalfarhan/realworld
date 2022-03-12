@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -52,7 +51,7 @@ func TestRegister(t *testing.T) {
 				On("InsertOne", mock.Anything, mock.Anything).
 				Return(&model.User{}, tC.mockReturn).
 				Once()
-			_, err := userService.Insert(context.TODO(), &dto.RegisterUserFields{})
+			_, err := userService.Insert(tctx, &dto.RegisterUserFields{})
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -68,7 +67,7 @@ func TestRegister(t *testing.T) {
 			On("InsertOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, nil).
 			Once()
-		reg, err := userService.Insert(context.TODO(), &dto.RegisterUserFields{
+		reg, err := userService.Insert(tctx, &dto.RegisterUserFields{
 			Password: pw,
 		})
 		userRepoMock.AssertExpectations(t)
@@ -102,7 +101,7 @@ func TestGetOneById(t *testing.T) {
 				On("FindOneByID", mock.Anything, mock.Anything).
 				Return(&model.User{}, tC.mockReturn).
 				Once()
-			_, err := userService.GetOneById(context.TODO(), "id")
+			_, err := userService.GetOneById(tctx, "id")
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -118,7 +117,7 @@ func TestGetOneById(t *testing.T) {
 			On("FindOneByID", mock.Anything, mock.Anything).
 			Return(&model.User{}, nil).
 			Once()
-		u, err := userService.GetOneById(context.TODO(), "id")
+		u, err := userService.GetOneById(tctx, "id")
 		userRepoMock.AssertExpectations(t)
 
 		as.Nil(err)
@@ -165,7 +164,7 @@ func TestUpdate(t *testing.T) {
 				On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
 				Return(tC.mockReturn).
 				Once()
-			_, err := userService.Update(context.TODO(), data, "")
+			_, err := userService.Update(tctx, data, "")
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -181,7 +180,7 @@ func TestUpdate(t *testing.T) {
 			On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).
 			Once()
-		u, err := userService.Update(context.TODO(), data, "")
+		u, err := userService.Update(tctx, data, "")
 		userRepoMock.AssertExpectations(t)
 
 		as.Nil(err)

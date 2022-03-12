@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/ashalfarhan/realworld/db/repository"
 	repoMocks "github.com/ashalfarhan/realworld/db/repository/mocks"
 	. "github.com/ashalfarhan/realworld/service"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -18,12 +20,14 @@ var (
 	articleTagsRepoMock *repoMocks.ArticleTagsRepoMock
 	repo                *repository.Repository
 	userService         *UserService
+	articleService      *ArticleService
+	tctx                = context.TODO()
+	mockCtx             = mock.Anything
 )
 
 func TestMain(m *testing.M) {
 	setup()
 	code := m.Run()
-	teardown()
 	os.Exit(code)
 }
 
@@ -43,8 +47,5 @@ func setup() {
 	}
 
 	userService = NewUserService(repo)
-}
-
-func teardown() {
-	log.Println("Tearing down service test")
+	articleService = NewArticleService(repo)
 }

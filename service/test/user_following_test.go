@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -26,7 +25,7 @@ var tests = TestMap{
 			On("InsertOne", mock.Anything, mock.Anything, mock.Anything).
 			Return(errors.New(repository.ErrDuplicateFollowing)).
 			Once()
-		u, err := userService.FollowUser(context.TODO(), "uid", "username")
+		u, err := userService.FollowUser(tctx, "uid", "username")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
 
@@ -42,7 +41,7 @@ var tests = TestMap{
 			On("FindOne", mock.Anything, mock.Anything).
 			Return(&model.User{ID: uid}, nil).
 			Once()
-		u, err := userService.FollowUser(context.TODO(), uid, "username")
+		u, err := userService.FollowUser(tctx, uid, "username")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
@@ -59,7 +58,7 @@ var tests = TestMap{
 			On("FindOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, sql.ErrNoRows).
 			Once()
-		u, err := userService.FollowUser(context.TODO(), "id", "username")
+		u, err := userService.FollowUser(tctx, "id", "username")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
@@ -86,7 +85,7 @@ var tests = TestMap{
 			Return(nil).
 			Once()
 
-		u, err := userService.FollowUser(context.TODO(), followerID, following.Username)
+		u, err := userService.FollowUser(tctx, followerID, following.Username)
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
 
