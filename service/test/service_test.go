@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/ashalfarhan/realworld/config"
-	"github.com/ashalfarhan/realworld/db/repository"
-	repoMocks "github.com/ashalfarhan/realworld/db/repository/mocks"
+	"github.com/ashalfarhan/realworld/persistence/repository"
+	repoMocks "github.com/ashalfarhan/realworld/persistence/repository/mocks"
 	. "github.com/ashalfarhan/realworld/service"
 	"github.com/stretchr/testify/mock"
 )

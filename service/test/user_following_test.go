@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	. "github.com/ashalfarhan/realworld/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +32,7 @@ var tests = TestMap{
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusBadRequest)
-		as.Equal(err.Error, ErrAlreadyFollow)
+		as.Equal(err.Err, ErrAlreadyFollow)
 	},
 	"Follow user should fail if self follow": func(t *testing.T) {
 		uid := "uid"
@@ -49,7 +49,7 @@ var tests = TestMap{
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusBadRequest)
-		as.Equal(err.Error, ErrSelfFollow)
+		as.Equal(err.Err, ErrSelfFollow)
 	},
 	"Follow user should fail if not found": func(t *testing.T) {
 		as := assert.New(t)
@@ -66,7 +66,7 @@ var tests = TestMap{
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusNotFound)
-		as.Equal(err.Error, ErrNoUserFound)
+		as.Equal(err.Err, ErrNoUserFound)
 	},
 	"Follow user should success": func(t *testing.T) {
 		as := assert.New(t)
