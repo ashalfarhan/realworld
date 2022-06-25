@@ -3,9 +3,8 @@ package repository_mocks
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/persistence/repository"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -13,7 +12,7 @@ type ArticleRepoMock struct {
 	mock.Mock
 }
 
-func (m *ArticleRepoMock) InsertOne(ctx context.Context, a *dto.CreateArticleFields, slug string) (*model.Article, error) {
+func (m *ArticleRepoMock) InsertOne(ctx context.Context, a *model.CreateArticleFields, slug string) (*model.Article, error) {
 	args := m.Called(ctx, a, slug)
 	return args.Get(0).(*model.Article), args.Error(1)
 }
@@ -28,7 +27,7 @@ func (m *ArticleRepoMock) DeleteBySlug(ctx context.Context, s string) error {
 	return args.Error(0)
 }
 
-func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, d *dto.UpdateArticleFields, a *model.Article) error {
+func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, d *model.UpdateArticleFields, a *model.Article) error {
 	args := m.Called(ctx, d, a)
 	return args.Error(0)
 }

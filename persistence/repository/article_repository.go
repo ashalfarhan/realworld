@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,15 +12,15 @@ type ArticleRepoImpl struct {
 }
 
 type ArticleRepository interface {
-	InsertOne(context.Context, *dto.CreateArticleFields, string) (*model.Article, error)
+	InsertOne(context.Context, *model.CreateArticleFields, string) (*model.Article, error)
 	FindOneBySlug(context.Context, string) (*model.Article, error)
 	DeleteBySlug(context.Context, string) error
-	UpdateOneBySlug(context.Context, *dto.UpdateArticleFields, *model.Article) error
+	UpdateOneBySlug(context.Context, *model.UpdateArticleFields, *model.Article) error
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
 	FindByFollowed(context.Context, *FindArticlesArgs) (model.Articles, error)
 }
 
-func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *dto.CreateArticleFields, authorID string) (*model.Article, error) {
+func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleFields, authorID string) (*model.Article, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -97,7 +96,7 @@ func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
 	return tx.Commit()
 }
 
-func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *dto.UpdateArticleFields, a *model.Article) error {
+func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateArticleFields, a *model.Article) error {
 	if v := d.Title; v != nil {
 		a.Title = *v
 	}

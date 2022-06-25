@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,14 +12,14 @@ type UserRepoImpl struct {
 }
 
 type UserRepository interface {
-	InsertOne(context.Context, *dto.RegisterUserFields) (*model.User, error)
+	InsertOne(context.Context, *model.RegisterUserFields) (*model.User, error)
 	FindOneByID(context.Context, string) (*model.User, error)
 	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
-	UpdateOne(context.Context, *dto.UpdateUserFields, *model.User) error
+	UpdateOne(context.Context, *model.UpdateUserFields, *model.User) error
 }
 
 // See https://go.dev/doc/database/execute-transactions
-func (r *UserRepoImpl) InsertOne(ctx context.Context, d *dto.RegisterUserFields) (*model.User, error) {
+func (r *UserRepoImpl) InsertOne(ctx context.Context, d *model.RegisterUserFields) (*model.User, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*mode
 	return u, nil
 }
 
-func (r *UserRepoImpl) UpdateOne(ctx context.Context, d *dto.UpdateUserFields, u *model.User) error {
+func (r *UserRepoImpl) UpdateOne(ctx context.Context, d *model.UpdateUserFields, u *model.User) error {
 	if v := d.Email; v != nil {
 		u.Email = *v
 	}

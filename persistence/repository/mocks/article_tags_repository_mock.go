@@ -3,7 +3,7 @@ package repository_mocks
 import (
 	"context"
 
-	. "github.com/ashalfarhan/realworld/db/repository"
+	. "github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/stretchr/testify/mock"
 )
 

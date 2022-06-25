@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -99,7 +98,6 @@ func (r *CommentRepoImpl) FindOneByID(ctx context.Context, commentID string) (*m
 	WHERE
 		article_comments.id = $1`
 	if err := r.db.GetContext(ctx, comm, query, commentID); err != nil {
-		conduit.Logger.Println(comm)
 		return nil, err
 	}
 
