@@ -6,31 +6,31 @@ import (
 )
 
 type Article struct {
-	ID             string   `json:"id" db:"id"`
-	Slug           string   `json:"slug" db:"slug"`
-	Title          string   `json:"title" db:"title"`
-	Description    string   `json:"description" db:"description"`
-	Body           string   `json:"body" db:"body"`
-	CreatedAt      time.Time   `json:"createdAt" db:"created_at"`
-	UpdatedAt      time.Time   `json:"updatedAt" db:"updated_at"`
-	TagList        []string `json:"tagList"`
-	AuthorID       string   `json:"-" db:"author_id"`
-	Favorited      bool     `json:"favorited"`
-	FavoritesCount int      `json:"favoritesCount"`
-	Author         *User    `json:"author" db:"author"`
+	ID             string    `json:"id" db:"id"`
+	Slug           string    `json:"slug" db:"slug"`
+	Title          string    `json:"title" db:"title"`
+	Description    string    `json:"description" db:"description"`
+	Body           string    `json:"body" db:"body"`
+	CreatedAt      time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt      time.Time `json:"updatedAt" db:"updated_at"`
+	TagList        []string  `json:"tagList"`
+	AuthorID       string    `json:"-" db:"author_id"`
+	Favorited      bool      `json:"favorited"`
+	FavoritesCount int       `json:"favoritesCount"`
+	Author         *User     `json:"author" db:"author"`
 }
 
 type ArticleSerialized struct {
-	Slug           string   `json:"slug"`
-	Title          string   `json:"title"`
-	Description    string   `json:"description"`
-	Body           string   `json:"body"`
-	CreatedAt      time.Time   `json:"createdAt"`
-	UpdatedAt      time.Time   `json:"updatedAt"`
-	TagList        []string `json:"tagList"`
-	Favorited      bool     `json:"favorited"`
-	FavoritesCount int      `json:"favoritesCount"`
-	Author         *User    `json:"author"`
+	Slug           string    `json:"slug"`
+	Title          string    `json:"title"`
+	Description    string    `json:"description"`
+	Body           string    `json:"body"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	TagList        []string  `json:"tagList"`
+	Favorited      bool      `json:"favorited"`
+	FavoritesCount int       `json:"favoritesCount"`
+	Author         *User     `json:"author"`
 }
 
 func (a Article) Serialize() *ArticleSerialized {
