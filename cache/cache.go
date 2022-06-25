@@ -3,8 +3,8 @@ package cache
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/config"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -19,9 +19,9 @@ func Init() {
 
 	if _, err := Ca.Ping(context.TODO()).Result(); err != nil {
 		defer Ca.Close()
-		conduit.Logger.Panicf("Cannot Ping Redis, Reason: %v", err)
+		logger.Log.Panicf("Cannot Ping Redis, Reason: %v", err)
 		return
 	}
 
-	conduit.Logger.Println("Successfully initialize redis cache")
+	logger.Log.Println("Successfully initialize redis cache")
 }
