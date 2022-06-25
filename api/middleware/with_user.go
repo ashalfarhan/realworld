@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ashalfarhan/realworld/api/response"
+	"github.com/ashalfarhan/realworld/utils/jwt"
 )
 
 func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
@@ -15,14 +16,14 @@ func (m *ConduitMiddleware) WithUser(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		jwt := authHeader[1]
-		claim, err := m.authService.ParseJWT(jwt)
+		token := authHeader[1]
+		claim, err := jwt.ParseJWT(token)
 		if err != nil {
-			response.Error(w, err.Code, err.Error)
+			response.Err(w, err)
 			return
 		}
 
-		ctx := m.authService.CreateUserCtx(r.Context(), claim)
+		ctx := jwt.CreateUserCtx(r.Context(), claim)
 		next(w, r.WithContext(ctx))
 	}
 }

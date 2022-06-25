@@ -5,6 +5,7 @@ import (
 
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/service"
+	"github.com/ashalfarhan/realworld/utils/jwt"
 	"github.com/gorilla/mux"
 )
 
@@ -18,10 +19,10 @@ func NewProfileController(s *service.Service) *ProfileController {
 }
 
 func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	profile, err := c.userService.FollowUser(r.Context(), iu.UserID, mux.Vars(r)["username"])
+	iu, _ := jwt.CurrentUser(r) // There will always be a user
+	profile, err := c.userService.FollowUser(r.Context(), iu.Subject, mux.Vars(r)["username"])
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -31,10 +32,10 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	profile, err := c.userService.UnfollowUser(r.Context(), iu.UserID, mux.Vars(r)["username"])
+	iu, _ := jwt.CurrentUser(r) // There will always be a user
+	profile, err := c.userService.UnfollowUser(r.Context(), iu.Subject, mux.Vars(r)["username"])
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -44,10 +45,10 @@ func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	profile, err := c.userService.GetProfile(r.Context(), mux.Vars(r)["username"], iu.UserID)
+	iu, _ := jwt.CurrentUser(r) // There will always be a user
+	profile, err := c.userService.GetProfile(r.Context(), mux.Vars(r)["username"], iu.Subject)
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 	response.Ok(w, response.M{
