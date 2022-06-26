@@ -98,16 +98,10 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug stri
 
 func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	var articles model.Articles
-	var err error
 
-	// if cached := s.articleCache.Find(ctx, args); cached != nil {
-	// 	return cached, nil
-	// }
-
-	articles, err = s.articleRepo.Find(ctx, args)
+	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Errorf("Cannot Find::ArticleRepo args: %+v, Reason: %v", args, err)
+		log.Errorf("Cannot find articles args: %+v, Reason: %v", args, err)
 		return nil, conduit.GeneralError
 	}
 
@@ -117,22 +111,16 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 		}
 	}
 
-	// s.caching.Set(ctx, cacheKey, articles)
+	// TODO: Caching
 	return articles, nil
 }
 
 func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 
-	// cacheKey := fmt.Sprintf("articles-feed|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
-	// if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
-	// 	log.Infof("Response with cache %s", cacheKey)
-	// 	return articles, nil
-	// }
-
-	articles, err := s.articleRepo.FindByFollowed(ctx, args)
+	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Errorf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
+		log.Errorf("Cannot find articles args: %+v, Reason: %v", args, err)
 		return nil, conduit.GeneralError
 	}
 
@@ -142,7 +130,7 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 		}
 	}
 
-	// s.caching.Set(ctx, cacheKey, articles)
+	// TODO: Caching
 	return articles, nil
 }
 
@@ -192,10 +180,8 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug s
 }
 
 func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, userID string) *model.ConduitError {
-	log := logger.GetCtx(ctx)
 	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
-		log.Errorf("Cannot FindArticleTagsByID::ArticleTagsRepo for %s, Reason: %v", a.ID, err)
 		return conduit.GeneralError
 	}
 
@@ -203,7 +189,6 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 
 	a.Author, err = s.userRepo.FindOneByID(ctx, a.AuthorID)
 	if err != nil {
-		log.Errorf("Cannot FindOneByID::UserRepo for %s, Reason: %v", a.AuthorID, err)
 		return conduit.GeneralError
 	}
 
@@ -211,7 +196,6 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 
 	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {
-		log.Errorf("Cannot CountFavorites FavoritesRepo for %s, Reason: %v", a.ID, err)
 		return conduit.GeneralError
 	}
 

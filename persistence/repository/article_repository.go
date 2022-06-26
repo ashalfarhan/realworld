@@ -18,7 +18,6 @@ type ArticleRepository interface {
 	DeleteBySlug(context.Context, string) error
 	UpdateOneBySlug(context.Context, *model.UpdateArticleFields, *model.Article) error
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
-	FindByFollowed(context.Context, *FindArticlesArgs) (model.Articles, error)
 }
 
 func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleFields, authorID string) (*model.Article, error) {
@@ -130,7 +129,7 @@ type FindArticlesArgs struct {
 	Tag       string `db:"tag"`
 	Author    string `validate:"omitempty,uuid" db:"author_id"` // TODO: Change to username
 	UserID    string `db:"user_id"`
-	Favorited string `db:"favorited_by"` // TODO: Change to username 
+	Favorited string `db:"favorited_by"` // TODO: Change to username
 	Limit     int    `validate:"min=1,max=25" db:"limit"`
 	Offset    int    `validate:"min=0" db:"offset"`
 }
@@ -168,6 +167,15 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 		)`
 	}
 
+	if p.UserID != "" {
+		query += `
+		AND a.author_id IN (
+			SELECT f.following_id 
+			FROM followings as f
+			WHERE f.follower_id = :user_id
+		)`
+	}
+
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
 	logger.Log.Printf("Find sql:%s", query)
 	stmt, err := r.db.PrepareNamedContext(ctx, query)
@@ -179,39 +187,5 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 	if err := stmt.SelectContext(ctx, &articles, p); err != nil {
 		return nil, err
 	}
-	return articles, nil
-}
-
-func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
-	articles := model.Articles{}
-	query := `
-	SELECT 
-		a.id, a.title, 
-		a.description, a.body, 
-		a.author_id, a.created_at, 
-		a.updated_at, a.slug 
-	FROM articles as a`
-
-	if p.UserID != "" {
-		query += ` 
-		WHERE a.author_id IN (
-			SELECT f.following_id 
-			FROM followings as f
-			WHERE f.follower_id = :user_id
-		)`
-	}
-
-	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-	stmt, err := r.db.PrepareNamedContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	if err := stmt.SelectContext(ctx, &articles, p); err != nil {
-		return nil, err
-	}
-
 	return articles, nil
 }

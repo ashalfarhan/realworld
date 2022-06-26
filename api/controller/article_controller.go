@@ -179,8 +179,9 @@ func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, *model.C
 	var err error
 	limit, offset := q.Get("limit"), q.Get("offset")
 	args := &repository.FindArticlesArgs{
-		Tag:    q.Get("tag"),
-		Author: q.Get("author"),
+		Tag:       q.Get("tag"),
+		Author:    q.Get("author"),
+		Favorited: q.Get("favorited"),
 	}
 
 	if limit == "" {
