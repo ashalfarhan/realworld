@@ -3,7 +3,7 @@ package repository_mocks
 import (
 	"context"
 
-	. "github.com/ashalfarhan/realworld/persistence/repository"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -11,7 +11,7 @@ type ArticleTagsRepoMock struct {
 	mock.Mock
 }
 
-func (m *ArticleTagsRepoMock) InsertBulk(ctx context.Context, tags []InsertArticleTagsArgs) error {
+func (m *ArticleTagsRepoMock) InsertBulk(ctx context.Context, tags []repository.InsertArticleTagsArgs) error {
 	args := m.Called(ctx, tags)
 	return args.Error(0)
 }

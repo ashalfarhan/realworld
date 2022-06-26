@@ -141,8 +141,7 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 }
 
 type FindArticlesArgs struct {
-	Tag string `db:"tag"`
-	// Author string `validate:"alphanum" db:"author_id"`
+	Tag    string `db:"tag"`
 	UserID string `db:"user_id"`
 	Limit  int    `validate:"min=1,max=25" db:"limit"`
 	Offset int    `validate:"min=0" db:"offset"`
@@ -150,7 +149,13 @@ type FindArticlesArgs struct {
 
 func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
-	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
+	query := `
+	SELECT 
+		articles.id, articles.title, 
+		articles.description, articles.body, 
+		articles.author_id, articles.created_at, 
+		articles.updated_at, articles.slug 
+	FROM articles`
 	if p.Tag != "" {
 		query += ` 
 		WHERE
@@ -162,7 +167,7 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 				article_tags
 			WHERE
 				article_tags.tag_name = :tag
-			)`
+		)`
 	}
 
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
@@ -181,7 +186,13 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 
 func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
-	query := "SELECT articles.id, articles.title, articles.description, articles.body, articles.author_id, articles.created_at, articles.updated_at, articles.slug FROM articles"
+	query := `
+	SELECT 
+		articles.id, articles.title, 
+		articles.description, articles.body, 
+		articles.author_id, articles.created_at, 
+		articles.updated_at, articles.slug 
+	FROM articles`
 
 	if p.UserID != "" {
 		query += ` 
