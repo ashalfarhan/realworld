@@ -9,14 +9,10 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const (
-	DefaultTTL = time.Microsecond * 2 // Change to microsecond if testing with postman spec
-)
-
 func Init() *redis.Client {
 	Ca := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
-		Password: config.Co.RedisPass,
+		Password: config.RedisPass,
 		DB:       0,
 	})
 

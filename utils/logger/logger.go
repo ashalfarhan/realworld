@@ -14,7 +14,7 @@ var Log *logrus.Logger
 func Init() {
 	logger := logrus.New()
 	Log = logger
-	if config.Co.Env == "test" {
+	if config.Env == "test" {
 		logger.SetOutput(io.Discard)
 	}
 }

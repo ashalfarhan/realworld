@@ -8,7 +8,7 @@ import (
 )
 
 func Connect() *sqlx.DB {
-	conn, err := sqlx.Open("postgres", config.Co.PgSource)
+	conn, err := sqlx.Open("postgres", config.PgSource)
 	if err != nil {
 		logger.Log.Panicf("Failed to opening database connection: %v\n", err)
 		return nil

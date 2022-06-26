@@ -10,9 +10,8 @@ import (
 
 func InitServer(serv *service.Service) *http.Server {
 	r := InitRoutes(serv)
-
 	return &http.Server{
-		Addr:         config.Co.Addr,
+		Addr:         config.Addr,
 		Handler:      r,
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,

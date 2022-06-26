@@ -8,8 +8,6 @@ type CacheStore struct {
 
 func NewCacheStore(c *redis.Client) *CacheStore {
 	return &CacheStore{
-		ArticleStore: &ArticleStoreImpl{
-			client: c,
-		},
+		&ArticleStoreImpl{c},
 	}
 }

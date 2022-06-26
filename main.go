@@ -41,7 +41,7 @@ func main() {
 		}
 	}()
 
-	logger.Log.Printf("Listening on %s in %q mode", config.Co.Addr, config.Co.Env)
+	logger.Log.Printf("Listening on %s in %q mode", config.Addr, config.Env)
 
 	<-shutdown
 	logger.Log.Println("Gracefully shutdown...")

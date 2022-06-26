@@ -17,7 +17,7 @@ func InjectReqID(next http.Handler) http.Handler {
 		ctx := utils.CreateReqIDCtx(r.Context(), reqID)
 		w.Header().Set("X-Request-ID", reqID)
 		log := logger.GetCtx(ctx)
-		log.Printf("Incoming %q Request to %q", r.Method, r.URL.Path)
+		log.Printf("Incoming %q request to %q", r.Method, r.URL.Path)
 		log.Printf("QueyParams: %v", r.URL.Query())
 		next.ServeHTTP(w, r.WithContext(ctx))
 		end := time.Now()

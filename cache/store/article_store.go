@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ashalfarhan/realworld/cache"
+	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/model"
 	"github.com/go-redis/redis/v8"
 )
@@ -31,5 +31,5 @@ func (s *ArticleStoreImpl) FindOneBySlug(ctx context.Context, slug, userID strin
 
 func (s *ArticleStoreImpl) SaveBySlug(ctx context.Context, slug, userID string, a *model.Article) {
 	key := fmt.Sprintf("%s|slug:%s|user_id:%s", prefix, slug, userID)
-	s.client.SetEX(ctx, key, a, cache.DefaultTTL)
+	s.client.SetEX(ctx, key, a, config.CacheTTL)
 }
