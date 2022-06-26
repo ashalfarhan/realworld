@@ -1,11 +1,8 @@
 package jwt
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ashalfarhan/realworld/conduit"
@@ -29,7 +26,6 @@ func GenerateJWT(u *model.User) (string, error) {
 		Audience:  "client.com", // TODO: Change this
 		Subject:   u.ID,
 		IssuedAt:  now.Unix(),
-		// Issuer:    u.Username,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
@@ -53,40 +49,5 @@ func ParseJWT(str string) (*jwt.StandardClaims, *model.ConduitError) {
 	if !ok {
 		return nil, conduit.BuildError(401, errors.New("invalid claim"))
 	}
-	if err = claim.Valid(); err != nil {
-		return nil, conduit.BuildError(401, err)
-	}
 	return claim, nil
-}
-
-func CurrentUser(r *http.Request) (*jwt.StandardClaims, bool) {
-	u, ok := r.Context().Value(userCtx).(*jwt.StandardClaims)
-	return u, ok
-}
-
-func CreateUserCtx(ctx context.Context, claim *jwt.StandardClaims) context.Context {
-	return context.WithValue(ctx, userCtx, claim)
-}
-
-func GetUserIDFromReq(r *http.Request) (string, *model.ConduitError) {
-	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
-	if len(authHeader) != 2 {
-		return "", nil
-	}
-
-	jwt := authHeader[1]
-	claim, err := ParseJWT(jwt)
-	if err != nil {
-		return "", err
-	}
-
-	return claim.Subject, nil
-}
-
-func GetToken(r *http.Request) string {
-	authHeader := strings.Split(r.Header.Get("Authorization"), "Token ")
-	if len(authHeader) != 2 {
-		return ""
-	}
-	return authHeader[1]
 }

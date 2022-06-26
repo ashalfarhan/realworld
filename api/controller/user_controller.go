@@ -20,9 +20,9 @@ func NewUserController(s *service.Service) *UserController {
 }
 
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
+	iu := jwt.CurrentUser(r)
 
-	u, err := c.userService.GetOneById(r.Context(), iu.Subject)
+	u, err := c.userService.GetOneById(r.Context(), iu)
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -42,14 +42,13 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 
 func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 	req := new(model.UpdateUserDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
 
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	u, err := c.userService.Update(r.Context(), req.User, iu.Subject)
+	iu := jwt.CurrentUser(r)
+	u, err := c.userService.Update(r.Context(), req.User, iu)
 	if err != nil {
 		response.Err(w, err)
 		return

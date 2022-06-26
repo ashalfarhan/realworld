@@ -26,14 +26,13 @@ func NewArticleController(s *service.Service) *ArticleController {
 
 func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	req := new(model.CreateArticleDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
 
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	a, err := c.articleService.CreateArticle(r.Context(), req.Article, iu.Subject)
+	iu := jwt.CurrentUser(r) // There will always be a user
+	a, err := c.articleService.CreateArticle(r.Context(), req.Article, iu)
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -63,9 +62,8 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-
-	if err := c.articleService.DeleteArticle(r.Context(), mux.Vars(r)["slug"], iu.Subject); err != nil {
+	iu := jwt.CurrentUser(r)
+	if err := c.articleService.DeleteArticle(r.Context(), mux.Vars(r)["slug"], iu); err != nil {
 		response.Err(w, err)
 		return
 	}
@@ -87,14 +85,13 @@ func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 
 func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request) {
 	req := new(model.UpdateArticleDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
 
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu.Subject, mux.Vars(r)["slug"], req.Article)
+	iu := jwt.CurrentUser(r)
+	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"], req.Article)
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -143,8 +140,7 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 		response.ClientError(w, err)
 		return
 	}
-	iu, _ := jwt.CurrentUser(r)
-	args.UserID = iu.Subject
+	args.UserID = jwt.CurrentUser(r)
 
 	v := validator.New()
 	if err := v.Struct(args); err != nil {
@@ -165,9 +161,8 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	a, err := c.articleService.FavoriteArticleBySlug(r.Context(), iu.Subject, slug)
+	iu := jwt.CurrentUser(r)
+	a, err := c.articleService.FavoriteArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"])
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -179,9 +174,8 @@ func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	a, err := c.articleService.UnfavoriteArticleBySlug(r.Context(), iu.Subject, slug)
+	iu := jwt.CurrentUser(r) // There will always be a user
+	a, err := c.articleService.UnfavoriteArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"])
 	if err != nil {
 		response.Err(w, err)
 		return

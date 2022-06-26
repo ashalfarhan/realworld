@@ -19,8 +19,8 @@ func NewProfileController(s *service.Service) *ProfileController {
 }
 
 func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	profile, err := c.userService.FollowUser(r.Context(), iu.Subject, mux.Vars(r)["username"])
+	iu := jwt.CurrentUser(r)
+	profile, err := c.userService.FollowUser(r.Context(), iu, mux.Vars(r)["username"])
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -32,8 +32,8 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	profile, err := c.userService.UnfollowUser(r.Context(), iu.Subject, mux.Vars(r)["username"])
+	iu := jwt.CurrentUser(r)
+	profile, err := c.userService.UnfollowUser(r.Context(), iu, mux.Vars(r)["username"])
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -45,8 +45,8 @@ func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r) // There will always be a user
-	profile, err := c.userService.GetProfile(r.Context(), mux.Vars(r)["username"], iu.Subject)
+	iu := jwt.CurrentUser(r)
+	profile, err := c.userService.GetProfile(r.Context(), mux.Vars(r)["username"], iu)
 	if err != nil {
 		response.Err(w, err)
 		return

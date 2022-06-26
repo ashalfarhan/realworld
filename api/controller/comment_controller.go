@@ -12,14 +12,11 @@ import (
 
 func (c *ArticleController) CreateComment(w http.ResponseWriter, r *http.Request) {
 	req := new(model.CreateCommentDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
-	iu, _ := jwt.CurrentUser(r)
-
-	req.AuthorID = iu.Subject
+	req.AuthorID = jwt.CurrentUser(r)
 	req.ArticleSlug = mux.Vars(r)["slug"]
 
 	comm, err := c.articleService.CreateComment(r.Context(), req)
@@ -34,8 +31,8 @@ func (c *ArticleController) CreateComment(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) DeleteComment(w http.ResponseWriter, r *http.Request) {
-	iu, _ := jwt.CurrentUser(r)
-	if err := c.articleService.DeleteCommentByID(r.Context(), mux.Vars(r)["id"], iu.Subject); err != nil {
+	iu := jwt.CurrentUser(r)
+	if err := c.articleService.DeleteCommentByID(r.Context(), mux.Vars(r)["id"], iu); err != nil {
 		response.Err(w, err)
 		return
 	}

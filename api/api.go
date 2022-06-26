@@ -14,7 +14,7 @@ func Bootstrap(db *sqlx.DB) {
 	services := service.InitService(db)
 	server := InitServer(services)
 
-	logger.Log.Printf("Listening on %s in \"%s\" mode", config.Co.Addr, config.Co.Env)
+	logger.Log.Printf("Listening on %s in %q mode", config.Co.Addr, config.Co.Env)
 	if err := server.ListenAndServe(); err != nil {
 		defer db.Close()
 		logger.Log.Panicf("Failed to bootstrap the server: %v", err)

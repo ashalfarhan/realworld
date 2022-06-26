@@ -21,8 +21,7 @@ func NewAuthController(s *service.Service) *AuthController {
 
 func (c *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	req := new(model.RegisterUserDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
@@ -40,8 +39,7 @@ func (c *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 func (c *AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	req := new(model.LoginUserDto)
-	err := utils.ValidateDTO(r, req)
-	if err != nil {
+	if err := utils.ValidateDTO(r, req); err != nil {
 		response.Err(w, err)
 		return
 	}
