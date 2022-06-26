@@ -2,7 +2,6 @@ package service_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/ashalfarhan/realworld/persistence/repository"
 	repoMocks "github.com/ashalfarhan/realworld/persistence/repository/mocks"
 	. "github.com/ashalfarhan/realworld/service"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	config.Co.Env = "test"
-	log.Println("Setting up service test")
+	logger.Init()
 
 	userRepoMock = new(repoMocks.UserRepoMock)
 	articleRepoMock = new(repoMocks.ArticleRepoMock)
