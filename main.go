@@ -3,22 +3,21 @@ package main
 import (
 	"github.com/ashalfarhan/realworld/api"
 	"github.com/ashalfarhan/realworld/cache"
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/config"
-	"github.com/ashalfarhan/realworld/db"
+	"github.com/ashalfarhan/realworld/persistence"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
 )
 
 var conn *sqlx.DB
 
 func init() {
 	config.Load()
-	conduit.Logger = logrus.WithField("context", "ConduitApp")
+	logger.Init()
 	cache.Init()
 }
 
 func main() {
-	conn = db.Connect()
+	conn = persistence.Connect()
 	api.Bootstrap(conn)
 }

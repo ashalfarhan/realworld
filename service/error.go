@@ -2,9 +2,6 @@ package service
 
 import (
 	"errors"
-	"net/http"
-
-	"github.com/ashalfarhan/realworld/conduit"
 )
 
 var (
@@ -27,16 +24,3 @@ var (
 	ErrNoCommentFound          = errors.New("no comment found")
 	ErrNotAllowedDeleteComment = errors.New("you cannot delete this comment")
 )
-
-type ServiceError struct {
-	Code  int
-	Error error
-}
-
-func CreateServiceError(code int, original error) *ServiceError {
-	if code == http.StatusInternalServerError {
-		return &ServiceError{code, conduit.ErrInternal}
-	}
-
-	return &ServiceError{code, original}
-}

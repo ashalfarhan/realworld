@@ -5,74 +5,75 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
-	"github.com/sirupsen/logrus"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
 	userRepo   repository.UserRepository
 	followRepo repository.FollowingRepository
-	logger     *logrus.Entry
 }
 
 func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{
-		repo.UserRepo,
-		repo.FollowRepo,
-		conduit.NewLogger("service", "UserService"),
+		userRepo:   repo.UserRepo,
+		followRepo: repo.FollowRepo,
 	}
 }
 
-func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *ServiceError) {
+func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
 	u, err := s.userRepo.FindOneByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
+			return nil, conduit.BuildError(http.StatusNotFound, ErrNoUserFound)
 		}
-		s.logger.Errorf("Cannot FindOneById for %s, Reason: %v", id, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Errorf("Cannot FindOneById for %s, Reason: %v", id, err)
+		return nil, conduit.GeneralError
 	}
 
 	return u, nil
 }
 
-func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilter) (*model.User, *ServiceError) {
+func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilter) (*model.User, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
 	u, err := s.userRepo.FindOne(ctx, d)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, ErrNoUserFound)
+			return nil, conduit.BuildError(http.StatusNotFound, ErrNoUserFound)
 		}
-		s.logger.Errorf("Cannot FindOne for %+v, Reason: %v", d, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Errorf("Cannot FindOne for %+v, Reason: %v", d, err)
+		return nil, conduit.GeneralError
 	}
 
 	return u, nil
 }
 
-func (s *UserService) Insert(ctx context.Context, d *dto.RegisterUserFields) (*model.User, *ServiceError) {
+func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (*model.User, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
 	d.Password = s.HashPassword(d.Password)
 	u, err := s.userRepo.InsertOne(ctx, d)
 	if err != nil {
 		switch err.Error() {
 		case repository.ErrDuplicateEmail:
-			return nil, CreateServiceError(http.StatusBadRequest, ErrEmailExist)
+			return nil, conduit.BuildError(http.StatusBadRequest, ErrEmailExist)
 		case repository.ErrDuplicateUsername:
-			return nil, CreateServiceError(http.StatusBadRequest, ErrUsernameExist)
+			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			s.logger.Errorf("Cannot InsertOne for %+v, Reason: %v", *d, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+			log.Errorf("Cannot InsertOne for %+v, Reason: %v", *d, err)
+			return nil, conduit.GeneralError
 		}
 	}
 
 	return u, nil
 }
 
-func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserFields, uid string) (*model.User, *ServiceError) {
-	s.logger.Infof("PUT Update User %#v userID: %s", d, uid)
+func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, uid string) (*model.User, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
+	log.Infof("PUT Update User %#v userID: %s", d, uid)
 	u, err := s.GetOneById(ctx, uid)
 	if err != nil {
 		return nil, err
@@ -86,12 +87,12 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserFields, uid s
 	if err := s.userRepo.UpdateOne(ctx, d, u); err != nil {
 		switch err.Error() {
 		case repository.ErrDuplicateEmail:
-			return nil, CreateServiceError(http.StatusBadRequest, ErrEmailExist)
+			return nil, conduit.BuildError(http.StatusBadRequest, ErrEmailExist)
 		case repository.ErrDuplicateUsername:
-			return nil, CreateServiceError(http.StatusBadRequest, ErrUsernameExist)
+			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			s.logger.Errorf("Cannot InsertOne for %#v, Reason: %v", d, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+			log.Errorf("Cannot InsertOne for %#v, Reason: %v", d, err)
+			return nil, conduit.GeneralError
 		}
 	}
 
@@ -99,15 +100,11 @@ func (s *UserService) Update(ctx context.Context, d *dto.UpdateUserFields, uid s
 }
 
 func (s *UserService) HashPassword(p string) string {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
-	if err != nil {
-		s.logger.Errorf("Cannot HashPassword, Reason: %v", err)
-	}
-
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
 	return string(hashed)
 }
 
-func (s *UserService) GetProfile(ctx context.Context, username, userID string) (*conduit.ProfileResponse, *ServiceError) {
+func (s *UserService) GetProfile(ctx context.Context, username, userID string) (*model.ProfileResponse, *model.ConduitError) {
 	u, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -115,7 +112,7 @@ func (s *UserService) GetProfile(ctx context.Context, username, userID string) (
 
 	following := s.IsFollowing(ctx, userID, u.ID)
 
-	res := &conduit.ProfileResponse{
+	res := &model.ProfileResponse{
 		Username:  u.Username,
 		Bio:       u.Bio,
 		Image:     u.Image,

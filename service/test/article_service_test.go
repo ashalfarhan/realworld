@@ -3,8 +3,7 @@ package service_test
 import (
 	"testing"
 
-	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +16,7 @@ func TestCreateArticle(t *testing.T) {
 	userRepoMock.On("FindOneByID", mockCtx, authorID).Return(u, nil).Once()
 	as := assert.New(t)
 
-	d := &dto.CreateArticleFields{
+	d := &model.CreateArticleFields{
 		Title:   "My first article",
 		TagList: []string{"typescript", "react", "javascript", "golang"},
 	}

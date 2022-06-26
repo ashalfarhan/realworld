@@ -5,11 +5,14 @@ import (
 	"net/http"
 
 	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
+	"github.com/ashalfarhan/realworld/utils/logger"
 )
 
-func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
-	s.logger.Infof("POST FollowUser folowerID: %s, username: %s", followerID, username)
+func (s *UserService) FollowUser(ctx context.Context, followerID, username string) (*model.ProfileResponse, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
+	log.Infof("POST FollowUser folowerID: %s, username: %s", followerID, username)
 
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
@@ -17,20 +20,20 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 	}
 
 	if followerID == following.ID {
-		return nil, CreateServiceError(http.StatusBadRequest, ErrSelfFollow)
+		return nil, conduit.BuildError(http.StatusBadRequest, ErrSelfFollow)
 	}
 
 	if err := s.followRepo.InsertOne(ctx, followerID, following.ID); err != nil {
 		switch err.Error() {
 		case repository.ErrDuplicateFollowing:
-			return nil, CreateServiceError(http.StatusBadRequest, ErrAlreadyFollow)
+			return nil, conduit.BuildError(http.StatusBadRequest, ErrAlreadyFollow)
 		default:
-			s.logger.Errorf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+			log.Errorf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
+			return nil, conduit.GeneralError
 		}
 	}
 
-	res := &conduit.ProfileResponse{
+	res := &model.ProfileResponse{
 		Username:  following.Username,
 		Bio:       following.Bio,
 		Image:     following.Image,
@@ -40,8 +43,9 @@ func (s *UserService) FollowUser(ctx context.Context, followerID, username strin
 	return res, nil
 }
 
-func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*conduit.ProfileResponse, *ServiceError) {
-	s.logger.Infof("POST UnfollowUser folowerID: %s, username: %s", followerID, username)
+func (s *UserService) UnfollowUser(ctx context.Context, followerID, username string) (*model.ProfileResponse, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
+	log.Infof("POST UnfollowUser folowerID: %s, username: %s", followerID, username)
 
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
@@ -49,15 +53,15 @@ func (s *UserService) UnfollowUser(ctx context.Context, followerID, username str
 	}
 
 	if followerID == following.ID {
-		return nil, CreateServiceError(http.StatusBadRequest, ErrSelfUnfollow)
+		return nil, conduit.BuildError(http.StatusBadRequest, ErrSelfUnfollow)
 	}
 
 	if err := s.followRepo.DeleteOneIDs(ctx, followerID, following.ID); err != nil {
-		s.logger.Errorf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, err)
+		log.Errorf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followerID, following.ID, err)
+		return nil, conduit.GeneralError
 	}
 
-	res := &conduit.ProfileResponse{
+	res := &model.ProfileResponse{
 		Username:  following.Username,
 		Bio:       following.Bio,
 		Image:     following.Image,

@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/conduit"
-	"github.com/ashalfarhan/realworld/db/model"
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	. "github.com/ashalfarhan/realworld/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -51,12 +50,12 @@ func TestRegister(t *testing.T) {
 				On("InsertOne", mock.Anything, mock.Anything).
 				Return(&model.User{}, tC.mockReturn).
 				Once()
-			_, err := userService.Insert(tctx, &dto.RegisterUserFields{})
+			_, err := userService.Insert(tctx, &model.RegisterUserFields{})
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
 			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Error, tC.errError)
+			as.Equal(err.Err, tC.errError)
 		})
 	}
 
@@ -67,7 +66,7 @@ func TestRegister(t *testing.T) {
 			On("InsertOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, nil).
 			Once()
-		reg, err := userService.Insert(tctx, &dto.RegisterUserFields{
+		reg, err := userService.Insert(tctx, &model.RegisterUserFields{
 			Password: pw,
 		})
 		userRepoMock.AssertExpectations(t)
@@ -106,7 +105,7 @@ func TestGetOneById(t *testing.T) {
 
 			as.NotNil(err)
 			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Error, tC.errError)
+			as.Equal(err.Err, tC.errError)
 		})
 	}
 
@@ -131,7 +130,7 @@ func TestUpdate(t *testing.T) {
 		Return(&model.User{}, nil)
 	password := "asd"
 	email := "asd@mail.com"
-	data := &dto.UpdateUserFields{
+	data := &model.UpdateUserFields{
 		Password: &password,
 		Email:    &email,
 	}
@@ -169,7 +168,7 @@ func TestUpdate(t *testing.T) {
 
 			as.NotNil(err)
 			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Error, tC.errError)
+			as.Equal(err.Err, tC.errError)
 		})
 	}
 

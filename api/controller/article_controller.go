@@ -5,10 +5,13 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/ashalfarhan/realworld/api/dto"
 	"github.com/ashalfarhan/realworld/api/response"
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/ashalfarhan/realworld/service"
+	"github.com/ashalfarhan/realworld/utils"
+	"github.com/ashalfarhan/realworld/utils/jwt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
@@ -23,12 +26,16 @@ func NewArticleController(s *service.Service) *ArticleController {
 }
 
 func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request) {
-	d := r.Context().Value(dto.DtoCtxKey).(*dto.CreateArticleDto)
+	req := new(model.CreateArticleDto)
+	if err := utils.ValidateDTO(r, req); err != nil {
+		response.Err(w, err)
+		return
+	}
 
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	a, err := c.articleService.CreateArticle(r.Context(), d.Article, iu.UserID)
+	iu := jwt.CurrentUser(r)
+	a, err := c.articleService.CreateArticle(r.Context(), req.Article, iu)
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -38,15 +45,15 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Request) {
-	uid, err := c.authService.GetUserIDFromReq(r)
+	uid, err := jwt.GetUserIDFromReq(r)
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
 	a, err := c.articleService.GetArticleBySlug(r.Context(), uid, mux.Vars(r)["slug"])
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -56,10 +63,9 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request) {
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-
-	if err := c.articleService.DeleteArticle(r.Context(), mux.Vars(r)["slug"], iu.UserID); err != nil {
-		response.Error(w, err.Code, err.Error)
+	iu := jwt.CurrentUser(r)
+	if err := c.articleService.DeleteArticle(r.Context(), mux.Vars(r)["slug"], iu); err != nil {
+		response.Err(w, err)
 		return
 	}
 
@@ -69,7 +75,7 @@ func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request
 func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 	tags, err := c.articleService.GetAllTags(r.Context())
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -79,12 +85,16 @@ func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request) {
-	d := r.Context().Value(dto.DtoCtxKey).(*dto.UpdateArticleDto)
+	req := new(model.UpdateArticleDto)
+	if err := utils.ValidateDTO(r, req); err != nil {
+		response.Err(w, err)
+		return
+	}
 
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu.UserID, mux.Vars(r)["slug"], d.Article)
+	iu := jwt.CurrentUser(r)
+	ar, err := c.articleService.UpdateArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"], req.Article)
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -96,26 +106,20 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) {
 	args, err := getArticleQueryParams(r.URL.Query())
 	if err != nil {
-		response.ClientError(w, err)
+		response.Err(w, err)
 		return
 	}
 
-	id, serr := c.authService.GetUserIDFromReq(r)
+	id, serr := jwt.GetUserIDFromReq(r)
 	if err != nil {
-		response.Error(w, serr.Code, serr.Error)
+		response.Err(w, serr)
 		return
 	}
 	args.UserID = id
 
-	v := validator.New()
-	if err := v.Struct(args); err != nil {
-		response.EntityError(w, err)
-		return
-	}
-
 	articles, serr := c.articleService.GetArticles(r.Context(), args)
 	if serr != nil {
-		response.Error(w, serr.Code, serr.Error)
+		response.Err(w, serr)
 		return
 	}
 
@@ -128,21 +132,14 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 	args, err := getArticleQueryParams(r.URL.Query())
 	if err != nil {
-		response.ClientError(w, err)
+		response.Err(w, err)
 		return
 	}
-	iu, _ := c.authService.GetUserFromCtx(r)
-	args.UserID = iu.UserID
-
-	v := validator.New()
-	if err := v.Struct(args); err != nil {
-		response.EntityError(w, err)
-		return
-	}
+	args.UserID = jwt.CurrentUser(r)
 
 	articles, serr := c.articleService.GetArticlesFeed(r.Context(), args)
 	if serr != nil {
-		response.Error(w, serr.Code, serr.Error)
+		response.Err(w, serr)
 		return
 	}
 
@@ -153,11 +150,10 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	a, err := c.articleService.FavoriteArticleBySlug(r.Context(), iu.UserID, slug)
+	iu := jwt.CurrentUser(r)
+	a, err := c.articleService.FavoriteArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"])
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -167,11 +163,10 @@ func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Request) {
-	slug := mux.Vars(r)["slug"]
-	iu, _ := c.authService.GetUserFromCtx(r) // There will always be a user
-	a, err := c.articleService.UnfavoriteArticleBySlug(r.Context(), iu.UserID, slug)
+	iu := jwt.CurrentUser(r) // There will always be a user
+	a, err := c.articleService.UnfavoriteArticleBySlug(r.Context(), iu, mux.Vars(r)["slug"])
 	if err != nil {
-		response.Error(w, err.Code, err.Error)
+		response.Err(w, err)
 		return
 	}
 
@@ -180,32 +175,33 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 	})
 }
 
-func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, error) {
-	var limit, offset int
+func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, *model.ConduitError) {
 	var err error
-	l, o := q.Get("limit"), q.Get("offset")
-
-	if l == "" {
-		limit = 5
-	} else {
-		limit, err = strconv.Atoi(l)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if o == "" {
-		offset = 0
-	} else {
-		offset, err = strconv.Atoi(o)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	limit, offset := q.Get("limit"), q.Get("offset")
 	args := &repository.FindArticlesArgs{
-		Limit:  limit,
-		Offset: offset,
+		Tag:    q.Get("tag"),
+		Author: q.Get("author"),
+	}
+
+	if limit == "" {
+		// Default if not specified
+		limit = "5"
+	}
+	if args.Limit, err = strconv.Atoi(limit); err != nil {
+		return nil, conduit.BuildError(400, err)
+	}
+
+	if offset == "" {
+		// Default if not specified
+		offset = "0"
+	}
+	if args.Offset, err = strconv.Atoi(offset); err != nil {
+		return nil, conduit.BuildError(400, err)
+	}
+
+	v := validator.New()
+	if err = v.Struct(args); err != nil {
+		return nil, conduit.BuildError(http.StatusUnprocessableEntity, err)
 	}
 
 	return args, nil

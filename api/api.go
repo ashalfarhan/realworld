@@ -2,25 +2,22 @@ package api
 
 import (
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/service"
-	"github.com/gorilla/handlers"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 func Bootstrap(db *sqlx.DB) {
-	serv := service.InitService(db)
-	server := InitServer(serv)
+	services := service.InitService(db)
+	server := InitServer(services)
 
-	conduit.Logger.Printf("Listening on %s in \"%s\" mode", config.Co.Addr, config.Co.Env)
-
+	logger.Log.Printf("Listening on %s in %q mode", config.Co.Addr, config.Co.Env)
 	if err := server.ListenAndServe(); err != nil {
 		defer db.Close()
-		conduit.Logger.Panicf("Failed to bootstrap the server: %v", err)
+		logger.Log.Panicf("Failed to bootstrap the server: %v", err)
 		return
 	}
 }
@@ -30,7 +27,7 @@ func InitServer(serv *service.Service) *http.Server {
 
 	return &http.Server{
 		Addr:         config.Co.Addr,
-		Handler:      handlers.LoggingHandler(os.Stdout, r),
+		Handler:      r,
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
 		IdleTimeout:  5 * time.Second,

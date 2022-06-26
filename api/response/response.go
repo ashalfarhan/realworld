@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/utils/logger"
 )
 
 type M map[string]interface{}
@@ -15,7 +15,7 @@ func JSON(w http.ResponseWriter, statusCode int, resp interface{}) {
 	w.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		conduit.Logger.Printf("Failed to encode json response of %v, Error: %v\n", resp, err)
+		logger.Log.Printf("Failed to encode json response of %v, Error: %v\n", resp, err)
 		fmt.Fprint(w, err.Error())
 	}
 }

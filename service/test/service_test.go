@@ -2,14 +2,16 @@ package service_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 
+	"github.com/ashalfarhan/realworld/cache/store"
+	storeMocks "github.com/ashalfarhan/realworld/cache/store/mocks"
 	"github.com/ashalfarhan/realworld/config"
-	"github.com/ashalfarhan/realworld/db/repository"
-	repoMocks "github.com/ashalfarhan/realworld/db/repository/mocks"
+	"github.com/ashalfarhan/realworld/persistence/repository"
+	repoMocks "github.com/ashalfarhan/realworld/persistence/repository/mocks"
 	. "github.com/ashalfarhan/realworld/service"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -19,10 +21,15 @@ var (
 	followRepoMock      *repoMocks.FollowingRepoMock
 	articleTagsRepoMock *repoMocks.ArticleTagsRepoMock
 	repo                *repository.Repository
-	userService         *UserService
-	articleService      *ArticleService
-	tctx                = context.TODO()
-	mockCtx             = mock.Anything
+
+	articleStoreMock *storeMocks.ArticleStoreMock
+	cacheStore       *store.CacheStore
+
+	userService    *UserService
+	articleService *ArticleService
+
+	tctx    = context.TODO()
+	mockCtx = mock.Anything
 )
 
 func TestMain(m *testing.M) {
@@ -33,7 +40,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	config.Co.Env = "test"
-	log.Println("Setting up service test")
+	logger.Init()
 
 	userRepoMock = new(repoMocks.UserRepoMock)
 	articleRepoMock = new(repoMocks.ArticleRepoMock)
@@ -46,6 +53,11 @@ func setup() {
 		ArticleTagsRepo: articleTagsRepoMock,
 	}
 
+	articleStoreMock = new(storeMocks.ArticleStoreMock)
+	cacheStore = &store.CacheStore{
+		ArticleStore: articleStoreMock,
+	}
+
 	userService = NewUserService(repo)
-	articleService = NewArticleService(repo)
+	articleService = NewArticleService(repo, cacheStore)
 }

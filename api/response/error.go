@@ -6,25 +6,34 @@ import (
 	"strings"
 
 	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/model"
 	"github.com/go-playground/validator/v10"
 )
 
-func Error(w http.ResponseWriter, statusCode int, err error) {
+func errorJSON(w http.ResponseWriter, statusCode int, err error) {
+	if statusCode == http.StatusUnprocessableEntity {
+		EntityError(w, err)
+		return
+	}
 	JSON(w, statusCode, M{
 		"error": err.Error(),
 	})
 }
 
+func Err(w http.ResponseWriter, e *model.ConduitError) {
+	errorJSON(w, e.Code, e.Err)
+}
+
 func ClientError(w http.ResponseWriter, err error) {
-	Error(w, http.StatusBadRequest, err)
+	errorJSON(w, http.StatusBadRequest, err)
 }
 
 func InternalError(w http.ResponseWriter) {
-	Error(w, http.StatusInternalServerError, conduit.ErrInternal)
+	errorJSON(w, http.StatusInternalServerError, conduit.ErrInternal)
 }
 
 func UnauthorizeError(w http.ResponseWriter, reason string) {
-	Error(w, http.StatusUnauthorized, fmt.Errorf("%w: %s", conduit.ErrUnauthorized, reason))
+	errorJSON(w, http.StatusUnauthorized, fmt.Errorf("%w: %s", conduit.ErrUnauthorized, reason))
 }
 
 func EntityError(w http.ResponseWriter, err error) {

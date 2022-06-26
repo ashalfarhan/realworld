@@ -1,7 +1,8 @@
 package service
 
 import (
-	"github.com/ashalfarhan/realworld/db/repository"
+	"github.com/ashalfarhan/realworld/cache/store"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,8 +14,9 @@ type Service struct {
 
 func InitService(d *sqlx.DB) *Service {
 	repo := repository.InitRepository(d)
+	store := store.NewCacheStore()
 	userService := NewUserService(repo)
-	articleService := NewArticleService(repo)
+	articleService := NewArticleService(repo, store)
 	authService := NewAuthService(userService)
 	return &Service{userService, authService, articleService}
 }

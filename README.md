@@ -49,13 +49,10 @@ For more information on how to this works with other frontends/backends, head ov
   ```bash
   make test
   ```
-- E2E Testing with Conduit Spec
+- E2E Testing with Conduit Spec (Postman)
   ```bash
   make test-spec
   ```
 
 ## Todo
-- [ ] List articles by favorited user
-- [ ] List articles by author
 - [ ] Containerize with Docker
-- [x] Caching with Redis

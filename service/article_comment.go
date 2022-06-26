@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/api/dto"
-	"github.com/ashalfarhan/realworld/db/model"
+	"github.com/ashalfarhan/realworld/conduit"
+	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/utils/logger"
 )
 
-func (s *ArticleService) CreateComment(ctx context.Context, d *dto.CreateCommentDto) (*model.Comment, *ServiceError) {
-	s.logger.Infof("POST CreateComment %#v", d)
+func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateCommentDto) (*model.Comment, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
+	log.Infof("POST CreateComment %#v", d)
 
 	ar, sErr := s.GetArticleBySlug(ctx, d.AuthorID, d.ArticleSlug)
 	if sErr != nil {
@@ -23,21 +25,22 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *dto.CreateComment
 	}
 
 	if err := s.commentRepo.InsertOne(ctx, c); err != nil {
-		s.logger.Printf("Cannot InsertOne::CommentRepo Args: %+v, Reason: %v", c, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Printf("Cannot InsertOne::CommentRepo Args: %+v, Reason: %v", c, err)
+		return nil, conduit.GeneralError
 	}
 
 	u, err := s.userRepo.FindOneByID(ctx, c.AuthorID)
 	if err != nil {
-		s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
+		return nil, conduit.GeneralError
 	}
 
 	c.Author = u
 	return c, nil
 }
 
-func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) ([]*model.Comment, *ServiceError) {
+func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) ([]*model.Comment, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
 	ar, sErr := s.GetArticleBySlug(ctx, "", slug)
 	if sErr != nil {
 		return nil, sErr
@@ -45,15 +48,15 @@ func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) (
 
 	comments, err := s.commentRepo.FindByArticleID(ctx, ar.ID)
 	if err != nil {
-		s.logger.Printf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Printf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
+		return nil, conduit.GeneralError
 	}
 
 	for _, c := range comments {
 		u, err := s.userRepo.FindOneByID(ctx, c.AuthorID)
 		if err != nil {
-			s.logger.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
-			return nil, CreateServiceError(http.StatusInternalServerError, nil)
+			log.Printf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorID, err)
+			return nil, conduit.GeneralError
 		}
 		c.Author = u
 	}
@@ -61,33 +64,35 @@ func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) (
 	return comments, nil
 }
 
-func (s *ArticleService) GetOneComment(ctx context.Context, commentID string) (*model.Comment, *ServiceError) {
+func (s *ArticleService) GetOneComment(ctx context.Context, commentID string) (*model.Comment, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
 	comm, err := s.commentRepo.FindOneByID(ctx, commentID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, CreateServiceError(http.StatusNotFound, ErrNoCommentFound)
+			return nil, conduit.BuildError(http.StatusNotFound, ErrNoCommentFound)
 		}
 
-		s.logger.Printf("Cannot FindOneByID::CommentRepo for %v, Reason: %v", commentID, err)
-		return nil, CreateServiceError(http.StatusInternalServerError, nil)
+		log.Printf("Cannot FindOneByID::CommentRepo for %v, Reason: %v", commentID, err)
+		return nil, conduit.GeneralError
 	}
 
 	return comm, nil
 }
 
-func (s *ArticleService) DeleteCommentByID(ctx context.Context, commentID, userID string) *ServiceError {
+func (s *ArticleService) DeleteCommentByID(ctx context.Context, commentID, userID string) *model.ConduitError {
+	log := logger.GetCtx(ctx)
 	comm, err := s.GetOneComment(ctx, commentID)
 	if err != nil {
 		return err
 	}
 
 	if comm.AuthorID != userID {
-		return CreateServiceError(http.StatusForbidden, ErrNotAllowedDeleteComment)
+		return conduit.BuildError(http.StatusForbidden, ErrNotAllowedDeleteComment)
 	}
 
 	if err := s.commentRepo.DeleteByID(ctx, commentID); err != nil {
-		s.logger.Printf("Cannot DeleteByID::CommentRepo, Reason: %v", err)
-		return CreateServiceError(http.StatusInternalServerError, nil)
+		log.Printf("Cannot DeleteByID::CommentRepo, Reason: %v", err)
+		return conduit.GeneralError
 	}
 
 	return nil
