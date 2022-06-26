@@ -29,11 +29,8 @@ func (r *ArticleTagsRepo) InsertBulk(ctx context.Context, tags []InsertArticleTa
 	defer tx.Rollback()
 
 	query := `
-	INSERT INTO
-		article_tags
-		(article_id, tag_name)
-	VALUES
-		(:article_id, :tag_name)`
+	INSERT INTO article_tags (article_id, tag_name)
+	VALUES (:article_id, :tag_name)`
 
 	if _, err = tx.NamedExecContext(ctx, query, tags); err != nil {
 		return err
@@ -46,12 +43,8 @@ func (r *ArticleTagsRepo) FindArticleTagsByID(ctx context.Context, articleID str
 	var tags []string
 
 	query := `
-	SELECT
-		tag_name
-	FROM
-		article_tags
-	WHERE
-		article_tags.article_id = $1
+	SELECT tag_name FROM article_tags as at
+	WHERE at.article_id = $1
 	ORDER BY tag_name ASC`
 	if err := r.db.SelectContext(ctx, &tags, query, articleID); err != nil {
 		return nil, err
@@ -63,12 +56,7 @@ func (r *ArticleTagsRepo) FindArticleTagsByID(ctx context.Context, articleID str
 func (r *ArticleTagsRepo) FindAllTags(ctx context.Context) ([]string, error) {
 	var tags []string
 
-	query := `
-	SELECT
-		DISTINCT(tag_name)
-	FROM
-		article_tags
-	ORDER BY tag_name ASC`
+	query := "SELECT DISTINCT(tag_name) FROM article_tags ORDER BY tag_name ASC"
 	if err := r.db.SelectContext(ctx, &tags, query); err != nil {
 		return nil, err
 	}

@@ -36,13 +36,9 @@ func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleF
 	}
 
 	query := `
-	INSERT INTO 
-		articles 
-		(slug, title, description, body, author_id) 
-	VALUES 
-		(:slug, :title, :description, :body, :author_id) 
-	RETURNING 
-		id, created_at, updated_at`
+	INSERT INTO articles (slug, title, description, body, author_id) 
+	VALUES (:slug, :title, :description, :body, :author_id) 
+	RETURNING id, created_at, updated_at`
 	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -66,11 +62,7 @@ func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
 	}
 	defer tx.Rollback()
 
-	query := `
-	DELETE FROM 
-		articles 
-	WHERE 
-		articles.slug = $1`
+	query := "DELETE FROM articles as a WHERE a.slug = $1"
 
 	if _, err = tx.ExecContext(ctx, query, slug); err != nil {
 		return err
@@ -94,15 +86,12 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 	}
 
 	query := `
-	UPDATE articles
+	UPDATE articles as a
 	SET 
-		title = :title,
-		slug = :slug,
-		body = :body,
-		description = :description,
+		title = :title, slug = :slug,
+		body = :body, description = :description,
 		updated_at = NOW()
-	WHERE 
-		articles.id = :id`
+	WHERE a.id = :id`
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -125,12 +114,9 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 
 func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
 	query := `
-	SELECT
-		id, title, description, body, author_id, created_at, updated_at, slug
-	FROM
-		articles
-	WHERE
-		articles.slug = $1`
+	SELECT id, title, description, body, author_id, created_at, updated_at, slug
+	FROM articles as a
+	WHERE a.slug = $1`
 	a := new(model.Article)
 	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
 		return nil, err
@@ -157,8 +143,7 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 		a.description, a.body, 
 		a.author_id, a.created_at, 
 		a.updated_at, a.slug 
-	FROM articles as a
-		WHERE 1 = 1`
+	FROM articles as a WHERE 1 = 1`
 
 	if p.Author != "" {
 		query += `
@@ -167,29 +152,19 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 
 	if p.Tag != "" {
 		query += `
-		AND
-			a.id
-		IN (
-			SELECT 
-				at.article_id 
-			FROM 
-				article_tags as at
-			WHERE
-				at.tag_name = :tag
+		AND a.id IN (
+			SELECT at.article_id 
+			FROM article_tags as at
+			WHERE at.tag_name = :tag
 		)`
 	}
 
 	if p.Favorited != "" {
 		query += `
-		AND
-			a.id
-		IN (
-			SELECT
-				af.article_id
-			FROM
-				article_favorites as af
-			WHERE 
-				af.user_id = :favorited_by
+		AND a.id IN (
+			SELECT af.article_id
+			FROM article_favorites as af
+			WHERE af.user_id = :favorited_by
 		)`
 	}
 
@@ -219,15 +194,10 @@ func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArg
 
 	if p.UserID != "" {
 		query += ` 
-		WHERE
-			a.author_id
-		IN (
-			SELECT 
-				f.following_id 
-			FROM 
-				followings as f
-			WHERE
-				f.follower_id = :user_id
+		WHERE a.author_id IN (
+			SELECT f.following_id 
+			FROM followings as f
+			WHERE f.follower_id = :user_id
 		)`
 	}
 

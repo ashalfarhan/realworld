@@ -24,11 +24,7 @@ func (r *FollowingRepoImpl) InsertOne(ctx context.Context, follower, following s
 
 	defer tx.Rollback()
 
-	query := `
-	INSERT INTO 
-		followings
-		(follower_id, following_id)
-	VALUES ($1, $2)`
+	query := "INSERT INTO followings (follower_id, following_id) VALUES ($1, $2)"
 	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
@@ -44,13 +40,7 @@ func (r *FollowingRepoImpl) DeleteOneIDs(ctx context.Context, follower, followin
 
 	defer tx.Rollback()
 
-	query := `
-	DELETE FROM
-		followings
-	WHERE
-		followings.follower_id = $1
-	AND
-		followings.following_id = $2`
+	query := "DELETE FROM followings as f WHERE f.follower_id = $1 AND f.following_id = $2"
 	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
@@ -64,14 +54,8 @@ func (r *FollowingRepoImpl) DeleteOneIDs(ctx context.Context, follower, followin
 func (r *FollowingRepoImpl) FindOneByIDs(ctx context.Context, follower, following string) (*string, error) {
 	var ptr string
 	query := `
-	SELECT 
-		followings.following_id
-	FROM
-		followings
-	WHERE
-		followings.follower_id = $1
-	AND
-		followings.following_id = $2`
+	SELECT f.following_id FROM followings as f
+	WHERE f.follower_id = $1 AND f.following_id = $2`
 	if err := r.db.QueryRowContext(ctx, query, follower, following).Scan(&ptr); err != nil {
 		return nil, err
 	}
