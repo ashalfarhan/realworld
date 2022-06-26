@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -55,24 +56,6 @@ func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleF
 		return nil, err
 	}
 
-	return a, nil
-}
-
-func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
-	query := `
-	SELECT
-		id, title, description, body, author_id, created_at, updated_at
-	FROM
-		articles
-	WHERE
-		articles.slug = $1`
-	a := new(model.Article)
-	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
-		return nil, err
-	}
-
-	a.Slug = slug
-	a.Author = new(model.User)
 	return a, nil
 }
 
@@ -140,37 +123,78 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 	return tx.Commit()
 }
 
+func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
+	query := `
+	SELECT
+		id, title, description, body, author_id, created_at, updated_at, slug
+	FROM
+		articles
+	WHERE
+		articles.slug = $1`
+	a := new(model.Article)
+	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
+		return nil, err
+	}
+
+	a.Author = new(model.User)
+	return a, nil
+}
+
 type FindArticlesArgs struct {
-	Tag    string `db:"tag"`
-	UserID string `db:"user_id"`
-	Limit  int    `validate:"min=1,max=25" db:"limit"`
-	Offset int    `validate:"min=0" db:"offset"`
+	Tag       string `db:"tag"`
+	Author    string `validate:"omitempty,uuid" db:"author_id"` // TODO: Change to username
+	UserID    string `db:"user_id"`
+	Favorited string `db:"favorited_by"` // TODO: Change to username 
+	Limit     int    `validate:"min=1,max=25" db:"limit"`
+	Offset    int    `validate:"min=0" db:"offset"`
 }
 
 func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
 	query := `
 	SELECT 
-		articles.id, articles.title, 
-		articles.description, articles.body, 
-		articles.author_id, articles.created_at, 
-		articles.updated_at, articles.slug 
-	FROM articles`
+		a.id, a.title, 
+		a.description, a.body, 
+		a.author_id, a.created_at, 
+		a.updated_at, a.slug 
+	FROM articles as a
+		WHERE 1 = 1`
+
+	if p.Author != "" {
+		query += `
+		AND a.author_id = :author_id`
+	}
+
 	if p.Tag != "" {
-		query += ` 
-		WHERE
-			articles.id
+		query += `
+		AND
+			a.id
 		IN (
 			SELECT 
-				article_tags.article_id 
+				at.article_id 
 			FROM 
-				article_tags
+				article_tags as at
 			WHERE
-				article_tags.tag_name = :tag
+				at.tag_name = :tag
+		)`
+	}
+
+	if p.Favorited != "" {
+		query += `
+		AND
+			a.id
+		IN (
+			SELECT
+				af.article_id
+			FROM
+				article_favorites as af
+			WHERE 
+				af.user_id = :favorited_by
 		)`
 	}
 
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	logger.Log.Printf("Find sql:%s", query)
 	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -180,7 +204,6 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 	if err := stmt.SelectContext(ctx, &articles, p); err != nil {
 		return nil, err
 	}
-
 	return articles, nil
 }
 
@@ -188,23 +211,23 @@ func (r *ArticleRepoImpl) FindByFollowed(ctx context.Context, p *FindArticlesArg
 	articles := model.Articles{}
 	query := `
 	SELECT 
-		articles.id, articles.title, 
-		articles.description, articles.body, 
-		articles.author_id, articles.created_at, 
-		articles.updated_at, articles.slug 
-	FROM articles`
+		a.id, a.title, 
+		a.description, a.body, 
+		a.author_id, a.created_at, 
+		a.updated_at, a.slug 
+	FROM articles as a`
 
 	if p.UserID != "" {
 		query += ` 
 		WHERE
-			articles.author_id
+			a.author_id
 		IN (
 			SELECT 
-				followings.following_id 
+				f.following_id 
 			FROM 
-				followings
+				followings as f
 			WHERE
-				followings.follower_id = :user_id
+				f.follower_id = :user_id
 		)`
 	}
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ashalfarhan/realworld/api/response"
+	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/model"
 	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/ashalfarhan/realworld/service"
@@ -31,7 +32,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	iu := jwt.CurrentUser(r) // There will always be a user
+	iu := jwt.CurrentUser(r)
 	a, err := c.articleService.CreateArticle(r.Context(), req.Article, iu)
 	if err != nil {
 		response.Err(w, err)
@@ -105,7 +106,7 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) {
 	args, err := getArticleQueryParams(r.URL.Query())
 	if err != nil {
-		response.ClientError(w, err)
+		response.Err(w, err)
 		return
 	}
 
@@ -115,12 +116,6 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	args.UserID = id
-
-	v := validator.New()
-	if err := v.Struct(args); err != nil {
-		response.EntityError(w, err)
-		return
-	}
 
 	articles, serr := c.articleService.GetArticles(r.Context(), args)
 	if serr != nil {
@@ -137,16 +132,10 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 	args, err := getArticleQueryParams(r.URL.Query())
 	if err != nil {
-		response.ClientError(w, err)
+		response.Err(w, err)
 		return
 	}
 	args.UserID = jwt.CurrentUser(r)
-
-	v := validator.New()
-	if err := v.Struct(args); err != nil {
-		response.EntityError(w, err)
-		return
-	}
 
 	articles, serr := c.articleService.GetArticlesFeed(r.Context(), args)
 	if serr != nil {
@@ -186,32 +175,33 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 	})
 }
 
-func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, error) {
-	var limit, offset int
+func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, *model.ConduitError) {
 	var err error
-	l, o := q.Get("limit"), q.Get("offset")
-
-	if l == "" {
-		limit = 5
-	} else {
-		limit, err = strconv.Atoi(l)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if o == "" {
-		offset = 0
-	} else {
-		offset, err = strconv.Atoi(o)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	limit, offset := q.Get("limit"), q.Get("offset")
 	args := &repository.FindArticlesArgs{
-		Limit:  limit,
-		Offset: offset,
+		Tag:    q.Get("tag"),
+		Author: q.Get("author"),
+	}
+
+	if limit == "" {
+		// Default if not specified
+		limit = "5"
+	}
+	if args.Limit, err = strconv.Atoi(limit); err != nil {
+		return nil, conduit.BuildError(400, err)
+	}
+
+	if offset == "" {
+		// Default if not specified
+		offset = "0"
+	}
+	if args.Offset, err = strconv.Atoi(offset); err != nil {
+		return nil, conduit.BuildError(400, err)
+	}
+
+	v := validator.New()
+	if err = v.Struct(args); err != nil {
+		return nil, conduit.BuildError(http.StatusUnprocessableEntity, err)
 	}
 
 	return args, nil
