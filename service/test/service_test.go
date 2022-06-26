@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ashalfarhan/realworld/cache/store"
+	storeMocks "github.com/ashalfarhan/realworld/cache/store/mocks"
 	"github.com/ashalfarhan/realworld/config"
 	"github.com/ashalfarhan/realworld/persistence/repository"
 	repoMocks "github.com/ashalfarhan/realworld/persistence/repository/mocks"
@@ -19,10 +21,15 @@ var (
 	followRepoMock      *repoMocks.FollowingRepoMock
 	articleTagsRepoMock *repoMocks.ArticleTagsRepoMock
 	repo                *repository.Repository
-	userService         *UserService
-	articleService      *ArticleService
-	tctx                = context.TODO()
-	mockCtx             = mock.Anything
+
+	articleStoreMock *storeMocks.ArticleStoreMock
+	cacheStore       *store.CacheStore
+
+	userService    *UserService
+	articleService *ArticleService
+
+	tctx    = context.TODO()
+	mockCtx = mock.Anything
 )
 
 func TestMain(m *testing.M) {
@@ -46,6 +53,11 @@ func setup() {
 		ArticleTagsRepo: articleTagsRepoMock,
 	}
 
+	articleStoreMock = new(storeMocks.ArticleStoreMock)
+	cacheStore = &store.CacheStore{
+		ArticleStore: articleStoreMock,
+	}
+
 	userService = NewUserService(repo)
-	articleService = NewArticleService(repo)
+	articleService = NewArticleService(repo, cacheStore)
 }

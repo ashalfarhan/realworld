@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/cache"
+	"github.com/ashalfarhan/realworld/cache/store"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/model"
 	"github.com/ashalfarhan/realworld/persistence/repository"
@@ -25,23 +25,21 @@ type ArticleService struct {
 	tagsRepo      repository.ArticleTagsRepository
 	favoritesRepo repository.ArticleFavoritesRepository
 	commentRepo   repository.CommentRepository
-	caching       *CacheService
+	articleCache  store.ArticleStore
 }
 
-func NewArticleService(repo *repository.Repository) *ArticleService {
+func NewArticleService(repo *repository.Repository, store *store.CacheStore) *ArticleService {
 	return &ArticleService{
 		repo.ArticleRepo,
 		repo.UserRepo,
 		repo.ArticleTagsRepo,
 		repo.ArticleFavoritesRepo,
 		repo.CommentRepo,
-		NewCacheService(cache.Ca),
+		store.ArticleStore,
 	}
 }
 
-func (s *ArticleService) CreateArticle(
-	ctx context.Context, d *model.CreateArticleFields, authorID string,
-) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, authorID string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("POST CreateArticle %#v, author_id: %s", d, authorID)
 
@@ -76,100 +74,36 @@ func (s *ArticleService) CreateArticle(
 
 func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	a := &model.Article{
-		Slug:   slug,
-		Author: new(model.User),
+
+	if cached := s.articleCache.FindOneBySlug(ctx, slug, userID); cached != nil {
+		return cached, nil
 	}
 
-	cacheKey := fmt.Sprintf("article|slug:%s|user_id:%s", slug, userID)
-	if ok := s.caching.Get(ctx, cacheKey, a); ok {
-		log.Infof("Response with cache %s", cacheKey)
-		return a, nil
-	}
-
-	ar, err := s.articleRepo.FindOneBySlug(ctx, a.Slug)
+	ar, err := s.articleRepo.FindOneBySlug(ctx, slug)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoArticleFound)
 		}
-
-		log.Printf("Cannot FindOneBySlug Article Repo for %+v, Reason: %v", a, err)
+		log.Printf("Failed to get article by slug: %v", err)
 		return nil, conduit.GeneralError
 	}
 
-	a = ar
-	s.PopulateArticleField(ctx, a, userID)
-	s.caching.Set(ctx, cacheKey, a)
-	return a, nil
-}
-
-func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *model.ConduitError {
-	log := logger.GetCtx(ctx)
-	log.Infof("DeleteArticle slug: %s user_id: %s", slug, userID)
-	a, err := s.GetArticleBySlug(ctx, userID, slug)
-	if err != nil {
-		return err
-	}
-
-	if a.AuthorID != userID {
-		log.Warnf("Forbidden delete article author_id: %s, user_id: %s", a.AuthorID, userID)
-		return conduit.BuildError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
-	}
-
-	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
-		log.Errorf("Cannot DeleteArticleBySlug Article Repo for %s, Reason: %v", slug, err)
-		return conduit.GeneralError
-	}
-
-	return nil
-}
-
-func (s *ArticleService) CreateSlug(title string) string {
-	id, _ := gonanoid.New(defaultSlugId)
-	slug := slug.Make(title)
-	return fmt.Sprintf("%s-%s", slug, id)
-}
-
-func (s *ArticleService) UpdateArticleBySlug(
-	ctx context.Context, userID, slug string, d *model.UpdateArticleFields,
-) (*model.Article, *model.ConduitError) {
-	log := logger.GetCtx(ctx)
-	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
-
-	ar, err := s.GetArticleBySlug(ctx, userID, slug)
-	if err != nil {
+	if err := s.PopulateArticleField(ctx, ar, userID); err != nil {
 		return nil, err
 	}
 
-	if ar.AuthorID != userID {
-		return nil, conduit.BuildError(http.StatusForbidden, ErrNotAllowedUpdateArticle)
-	}
-
-	if v := d.Title; v != nil {
-		newSlug := s.CreateSlug(*v)
-		d.Slug = &newSlug
-	}
-
-	if err := s.articleRepo.UpdateOneBySlug(ctx, d, ar); err != nil {
-		log.Errorf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
-		return nil, conduit.GeneralError
-	}
-
+	s.articleCache.SaveBySlug(ctx, slug, userID, ar)
 	return ar, nil
 }
 
-func (s *ArticleService) GetArticles(
-	ctx context.Context, args *repository.FindArticlesArgs,
-) (model.Articles, *model.ConduitError) {
+func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	var articles model.Articles
 	var err error
 
-	cacheKey := fmt.Sprintf("articles-list|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
-	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
-		log.Infof("Response with cache %s", cacheKey)
-		return articles, nil
-	}
+	// if cached := s.articleCache.Find(ctx, args); cached != nil {
+	// 	return cached, nil
+	// }
 
 	articles, err = s.articleRepo.Find(ctx, args)
 	if err != nil {
@@ -183,25 +117,20 @@ func (s *ArticleService) GetArticles(
 		}
 	}
 
-	s.caching.Set(ctx, cacheKey, articles)
+	// s.caching.Set(ctx, cacheKey, articles)
 	return articles, nil
 }
 
-func (s *ArticleService) GetArticlesFeed(
-	ctx context.Context, args *repository.FindArticlesArgs,
-) (model.Articles, *model.ConduitError) {
+func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 
-	var articles model.Articles
-	var err error
+	// cacheKey := fmt.Sprintf("articles-feed|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
+	// if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
+	// 	log.Infof("Response with cache %s", cacheKey)
+	// 	return articles, nil
+	// }
 
-	cacheKey := fmt.Sprintf("articles-feed|user_id:%s|limit:%d|offset:%d", args.UserID, args.Limit, args.Offset)
-	if ok := s.caching.Get(ctx, cacheKey, &articles); ok {
-		log.Infof("Response with cache %s", cacheKey)
-		return articles, nil
-	}
-
-	articles, err = s.articleRepo.FindByFollowed(ctx, args)
+	articles, err := s.articleRepo.FindByFollowed(ctx, args)
 	if err != nil {
 		log.Errorf("Cannot FindByFollowed::ArticleRepo args: %+v, Reason: %v", args, err)
 		return nil, conduit.GeneralError
@@ -213,13 +142,56 @@ func (s *ArticleService) GetArticlesFeed(
 		}
 	}
 
-	s.caching.Set(ctx, cacheKey, articles)
+	// s.caching.Set(ctx, cacheKey, articles)
 	return articles, nil
 }
 
-func (s *ArticleService) PopulateArticleField(
-	ctx context.Context, a *model.Article, userID string,
-) *model.ConduitError {
+func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *model.ConduitError {
+	log := logger.GetCtx(ctx)
+
+	a, err := s.GetArticleBySlug(ctx, userID, slug)
+	if err != nil {
+		return err
+	}
+	if a.AuthorID != userID {
+		log.Warnf("Forbidden delete article author_id:%q, user_id: %q", a.AuthorID, userID)
+		return conduit.BuildError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
+	}
+	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
+		log.Printf("Failed to delete article by slug:%q, Reason: %v", slug, err)
+		return conduit.GeneralError
+	}
+	return nil
+}
+
+func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug string, d *model.UpdateArticleFields) (*model.Article, *model.ConduitError) {
+	log := logger.GetCtx(ctx)
+	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
+
+	ar, err := s.GetArticleBySlug(ctx, userID, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	if ar.AuthorID != userID {
+		return nil, conduit.BuildError(http.StatusForbidden, ErrNotAllowedUpdateArticle)
+	}
+
+	// Updating title will update the slug
+	if v := d.Title; v != nil {
+		newSlug := s.CreateSlug(*v)
+		d.Slug = &newSlug
+	}
+
+	if err := s.articleRepo.UpdateOneBySlug(ctx, d, ar); err != nil {
+		log.Errorf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
+		return nil, conduit.GeneralError
+	}
+
+	return ar, nil
+}
+
+func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, userID string) *model.ConduitError {
 	log := logger.GetCtx(ctx)
 	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
@@ -244,4 +216,11 @@ func (s *ArticleService) PopulateArticleField(
 	}
 
 	return nil
+}
+
+// TODO: Can be moved to utils
+func (s *ArticleService) CreateSlug(title string) string {
+	id, _ := gonanoid.New(defaultSlugId)
+	slug := slug.Make(title)
+	return fmt.Sprintf("%s-%s", slug, id)
 }
