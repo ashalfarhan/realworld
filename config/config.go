@@ -30,11 +30,6 @@ func Load() {
 	}
 
 	Co.Addr = fmt.Sprintf("%s:%s", os.Getenv("HOST"), Co.Port)
-	Co.PgSource = fmt.
-		Sprintf("user=%s password=%s dbname=%s sslmode=%s",
-			os.Getenv("POSTGRES_USER"),
-			os.Getenv("POSTGRES_PASSWORD"),
-			os.Getenv("POSTGRES_DB"),
-			os.Getenv("POSTGRES_SSLMODE"))
+	Co.PgSource = os.Getenv("POSTGRES_URL")
 	Co.RedisPass = os.Getenv("REDIS_PASSWORD")
 }
