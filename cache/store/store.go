@@ -1,13 +1,15 @@
 package store
 
-import "github.com/ashalfarhan/realworld/cache"
+import "github.com/go-redis/redis/v8"
 
 type CacheStore struct {
 	ArticleStore ArticleStore
 }
 
-func NewCacheStore() *CacheStore {
+func NewCacheStore(c *redis.Client) *CacheStore {
 	return &CacheStore{
-		&ArticleStoreImpl{cache.Ca},
+		ArticleStore: &ArticleStoreImpl{
+			client: c,
+		},
 	}
 }
