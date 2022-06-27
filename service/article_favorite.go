@@ -9,24 +9,24 @@ import (
 	"github.com/ashalfarhan/realworld/utils/logger"
 )
 
-func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, username, slug string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST FavoriteArticle user_id: %s, slug: %s", userID, slug)
+	log.Infof("POST FavoriteArticle user_id: %s, slug: %s", username, slug)
 
-	a, sErr := s.GetArticleBySlug(ctx, userID, slug)
+	a, sErr := s.GetArticleBySlug(ctx, username, slug)
 	if sErr != nil {
 		return nil, sErr
 	}
 
-	if err := s.favoritesRepo.InsertOne(ctx, userID, a.ID); err != nil {
-		log.Errorf("Cannot FavoriteArticle, Reason: %v", err)
+	if err := s.favoritesRepo.InsertOne(ctx, username, a.ID); err != nil {
+		log.Warnf("Cannot FavoriteArticle, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
 
 	a.Favorited = true
 	count, err := s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {
-		log.Errorf("Cannot CountFavorites, Reason: %v", err)
+		log.Warnf("Cannot CountFavorites, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
 
@@ -35,16 +35,16 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, userID, slug
 	return a, nil
 }
 
-func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, username, slug string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("DELETE UnfavoriteArticle user_id: %s, slug: %s", userID, slug)
+	log.Infof("DELETE UnfavoriteArticle user_id: %s, slug: %s", username, slug)
 
-	a, err := s.GetArticleBySlug(ctx, userID, slug)
+	a, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.favoritesRepo.Delete(ctx, userID, a.ID); err != nil {
-		log.Errorf("Cannot UnfavoriteArticle, Reason: %v", err)
+	if err := s.favoritesRepo.Delete(ctx, username, a.ID); err != nil {
+		log.Warnf("Cannot UnfavoriteArticle, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
 
@@ -52,15 +52,15 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, userID, sl
 	return a, nil
 }
 
-func (s *ArticleService) IsArticleFavorited(ctx context.Context, userID, articleID string) bool {
+func (s *ArticleService) IsArticleFavorited(ctx context.Context, username, articleID string) bool {
 	log := logger.GetCtx(ctx)
-	if userID == "" {
+	if username == "" {
 		return false
 	}
 
-	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, userID, articleID)
+	ptr, err := s.favoritesRepo.FindOneByIDs(ctx, username, articleID)
 	if err != nil && err != sql.ErrNoRows {
-		log.Errorf("Error get favorites repo %v", err)
+		log.Warnf("Error get favorites repo %v", err)
 	}
 	return ptr != nil && err == nil
 }

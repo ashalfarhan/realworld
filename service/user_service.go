@@ -24,14 +24,14 @@ func NewUserService(repo *repository.Repository) *UserService {
 	}
 }
 
-func (s *UserService) GetOneById(ctx context.Context, id string) (*model.User, *model.ConduitError) {
+func (s *UserService) GetOneByUsername(ctx context.Context, username string) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	u, err := s.userRepo.FindOneByID(ctx, id)
+	u, err := s.userRepo.FindOneByUsername(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoUserFound)
 		}
-		log.Errorf("Cannot FindOneById for %s, Reason: %v", id, err)
+		log.Errorf("Cannot FindOneById for %s, Reason: %v", username, err)
 		return nil, conduit.GeneralError
 	}
 
@@ -74,7 +74,7 @@ func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (
 func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, uid string) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("PUT Update User %#v userID: %s", d, uid)
-	u, err := s.GetOneById(ctx, uid)
+	u, err := s.GetOneByUsername(ctx, uid)
 	if err != nil {
 		return nil, err
 	}

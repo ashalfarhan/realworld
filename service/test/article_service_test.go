@@ -9,11 +9,11 @@ import (
 )
 
 func TestCreateArticle(t *testing.T) {
-	authorID := ""
+	username := ""
 	u := &model.User{
-		ID: authorID,
+		Username: username,
 	}
-	userRepoMock.On("FindOneByID", mockCtx, authorID).Return(u, nil).Once()
+	userRepoMock.On("FindOneByUsername", mockCtx, username).Return(u, nil).Once()
 	as := assert.New(t)
 
 	d := &model.CreateArticleFields{
@@ -22,8 +22,8 @@ func TestCreateArticle(t *testing.T) {
 	}
 
 	articleTagsRepoMock.On("InsertBulk", mockCtx, mock.Anything).Return(nil).Once()
-	articleRepoMock.On("InsertOne", mockCtx, d, authorID).Return(&model.Article{}, nil).Once()
-	a, err := articleService.CreateArticle(tctx, d, authorID)
+	articleRepoMock.On("InsertOne", mockCtx, d, username).Return(&model.Article{}, nil).Once()
+	a, err := articleService.CreateArticle(tctx, d, username)
 	articleRepoMock.AssertExpectations(t)
 	userRepoMock.AssertExpectations(t)
 	articleTagsRepoMock.AssertExpectations(t)

@@ -16,7 +16,7 @@ func (c *ArticleController) CreateComment(w http.ResponseWriter, r *http.Request
 		response.Err(w, err)
 		return
 	}
-	req.AuthorID = jwt.CurrentUser(r)
+	req.AuthorUsername = jwt.CurrentUser(r)
 	req.ArticleSlug = mux.Vars(r)["slug"]
 
 	comm, err := c.articleService.CreateComment(r.Context(), req)
@@ -41,7 +41,7 @@ func (c *ArticleController) DeleteComment(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetArticleComments(w http.ResponseWriter, r *http.Request) {
-	userID, err := jwt.GetUserIDFromReq(r)
+	userID, err := jwt.GetUsernameFromReq(r)
 	if err != nil {
 		response.Err(w, err)
 		return

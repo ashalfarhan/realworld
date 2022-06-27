@@ -13,7 +13,7 @@ type UserRepoImpl struct {
 
 type UserRepository interface {
 	InsertOne(context.Context, *model.RegisterUserFields) (*model.User, error)
-	FindOneByID(context.Context, string) (*model.User, error)
+	FindOneByUsername(context.Context, string) (*model.User, error)
 	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
 	UpdateOne(context.Context, *model.UpdateUserFields, *model.User) error
 }
@@ -49,19 +49,16 @@ func (r *UserRepoImpl) InsertOne(ctx context.Context, d *model.RegisterUserField
 	return u, tx.Commit()
 }
 
-func (r *UserRepoImpl) FindOneByID(ctx context.Context, id string) (*model.User, error) {
-	u := &model.User{
-		ID: id,
-	}
+func (r *UserRepoImpl) FindOneByUsername(ctx context.Context, username string) (*model.User, error) {
+	u := new(model.User)
 
 	query := `
 	SELECT id, email, username, bio, image, created_at, updated_at
-	FROM users WHERE users.id = $1`
-	if err := r.db.GetContext(ctx, u, query, id); err != nil {
+	FROM users WHERE users.username = $1`
+	if err := r.db.GetContext(ctx, u, query, username); err != nil {
 		return nil, err
 	}
 	return u, nil
-
 }
 
 type FindOneUserFilter struct {

@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	PgSource  string
-	RedisPass string
-	Addr      string
-	Port      string
-	Env       string
-	CacheTTL  time.Duration
+	PgSource      string
+	RedisPass     string
+	Addr          string
+	Port          string
+	Env           string
+	MigrationPath string
+	CacheTTL      time.Duration
 )
 
 func Load() {
@@ -28,7 +29,8 @@ func Load() {
 		Env = "dev"
 	}
 
-	CacheTTL = time.Millisecond * 2 // Change to microsecond if testing with postman spec
+	MigrationPath = os.Getenv("MIGRATION_PATH")
+	CacheTTL = time.Microsecond * 1 // Change to microsecond if testing with postman spec
 	Addr = fmt.Sprintf("%s:%s", os.Getenv("HOST"), Port)
 	PgSource = os.Getenv("POSTGRES_URL")
 	RedisPass = os.Getenv("REDIS_PASSWORD")

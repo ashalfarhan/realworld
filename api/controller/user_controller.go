@@ -22,7 +22,7 @@ func NewUserController(s *service.Service) *UserController {
 func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	iu := jwt.CurrentUser(r)
 
-	u, err := c.userService.GetOneById(r.Context(), iu)
+	u, err := c.userService.GetOneByUsername(r.Context(), iu)
 	if err != nil {
 		response.Err(w, err)
 		return

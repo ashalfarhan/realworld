@@ -2,24 +2,38 @@ package persistence
 
 import (
 	"github.com/ashalfarhan/realworld/config"
-	"github.com/ashalfarhan/realworld/utils/logger"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 func Connect() *sqlx.DB {
 	conn, err := sqlx.Open("postgres", config.PgSource)
 	if err != nil {
-		logger.Log.Panicf("Failed to opening database connection: %v\n", err)
-		return nil
+		logrus.Panicln("Failed to opening database connection:", err)
 	}
 
 	if err = conn.Ping(); err != nil {
 		defer conn.Close()
-		logger.Log.Panicf("Failed to connect to database %v\n", err)
-		return nil
+		logrus.Panicln("Failed to connect to database:", err)
 	}
 
-	logger.Log.Println("Successfully connected to database")
+	logrus.Println("Successfully connected to database")
+	driver, err := postgres.WithInstance(conn.DB, &postgres.Config{})
+	if err != nil {
+		logrus.Panicln("Failed to initialize postgres migration:", err)
+	}
+
+	m, err := migrate.NewWithDatabaseInstance("file://"+config.MigrationPath, "postgres", driver)
+	if err != nil {
+		logrus.Panicln("Failed to initialize migration instance:", err)
+	}
+
+	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
+		logrus.Panicln("Failed to run migration", err)
+	}
 	return conn
 }

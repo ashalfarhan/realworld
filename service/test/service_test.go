@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	config.Env = "test"
-	logger.Init()
+	logger.Configure()
 
 	userRepoMock = new(repoMocks.UserRepoMock)
 	articleRepoMock = new(repoMocks.ArticleRepoMock)

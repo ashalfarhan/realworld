@@ -14,46 +14,47 @@ import (
 	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	config.Load()
-	logger.Init()
+	logger.Configure()
 }
 
 func main() {
 	db := persistence.Connect()
-	cacheStore := cache.Init()
+	store := cache.Init()
 
-	services := service.InitService(db, cacheStore)
+	services := service.InitService(db, store)
 	server := api.InitServer(services)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
-	logger.Log.Println("Booting up the server...")
+	logrus.Println("Booting up the server...")
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			logger.Log.Errorf("Failed to start the server: %v", err)
-			if err = cleanup(cacheStore, db); err != nil {
-				logger.Log.Errorf("Failed to cleanup: %v", err)
+			logrus.Errorf("Failed to start the server: %v", err)
+			if err = cleanup(store, db); err != nil {
+				logrus.Errorf("Failed to cleanup: %v", err)
 			}
 		}
 	}()
 
-	logger.Log.Printf("Listening on %s in %q mode", config.Addr, config.Env)
+	logrus.Printf("Listening on %s in %q mode", config.Addr, config.Env)
 
 	<-shutdown
-	logger.Log.Println("Gracefully shutdown...")
+	logrus.Println("Gracefully shutdown...")
 
 	defer func() {
-		if err := cleanup(cacheStore, db); err != nil {
-			logger.Log.Errorf("Failed to cleanup: %v", err)
+		if err := cleanup(store, db); err != nil {
+			logrus.Errorf("Failed to cleanup: %v", err)
 		}
 	}()
 
 	if err := server.Close(); err != nil {
-		logger.Log.Errorf("Failed to close the server: %v", err)
+		logrus.Errorf("Failed to close the server: %v", err)
 	}
 }
 
