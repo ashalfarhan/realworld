@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/model"
-	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -20,23 +19,23 @@ type ArticleRepository interface {
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
 }
 
-func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleFields, authorID string) (*model.Article, error) {
+func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 	a := &model.Article{
-		Title:       d.Title,
-		Description: d.Description,
-		Body:        d.Body,
-		AuthorID:    authorID,
-		Slug:        d.Slug,
+		Title:          d.Title,
+		Description:    d.Description,
+		Body:           d.Body,
+		AuthorUsername: username,
+		Slug:           d.Slug,
 	}
 
 	query := `
-	INSERT INTO articles (slug, title, description, body, author_id) 
-	VALUES (:slug, :title, :description, :body, :author_id) 
+	INSERT INTO articles (slug, title, description, body, author_username) 
+	VALUES (:slug, :title, :description, :body, :author_username) 
 	RETURNING id, created_at, updated_at`
 	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
@@ -113,7 +112,7 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 
 func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
 	query := `
-	SELECT id, title, description, body, author_id, created_at, updated_at, slug
+	SELECT id, title, description, body, author_username, created_at, updated_at, slug
 	FROM articles as a
 	WHERE a.slug = $1`
 	a := new(model.Article)
@@ -127,9 +126,9 @@ func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*mode
 
 type FindArticlesArgs struct {
 	Tag       string `db:"tag"`
-	Author    string `validate:"omitempty,uuid" db:"author_id"` // TODO: Change to username
-	UserID    string `db:"user_id"`
-	Favorited string `db:"favorited_by"` // TODO: Change to username
+	Author    string `db:"author_username"`
+	Username  string `db:"username"`
+	Favorited string `db:"favorited_by"`
 	Limit     int    `validate:"min=1,max=25" db:"limit"`
 	Offset    int    `validate:"min=0" db:"offset"`
 }
@@ -140,13 +139,13 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 	SELECT 
 		a.id, a.title, 
 		a.description, a.body, 
-		a.author_id, a.created_at, 
+		a.author_username, a.created_at, 
 		a.updated_at, a.slug 
 	FROM articles as a WHERE 1 = 1`
 
 	if p.Author != "" {
 		query += `
-		AND a.author_id = :author_id`
+		AND a.author_username = :author_username`
 	}
 
 	if p.Tag != "" {
@@ -163,21 +162,21 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 		AND a.id IN (
 			SELECT af.article_id
 			FROM article_favorites as af
-			WHERE af.user_id = :favorited_by
+			WHERE af.username = :favorited_by
 		)`
 	}
 
-	if p.UserID != "" {
+	if p.Username != "" {
 		query += `
-		AND a.author_id IN (
-			SELECT f.following_id 
+		AND a.author_username IN (
+			SELECT f.following_username 
 			FROM followings as f
-			WHERE f.follower_id = :user_id
+			WHERE f.follower_username = :username
 		)`
 	}
 
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-	logger.Log.Printf("Find sql:%s", query)
+
 	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err

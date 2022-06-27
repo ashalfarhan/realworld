@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS followings (
-    following_id    UUID NOT NULL,
-    follower_id     UUID NOT NULL,
-    PRIMARY KEY(following_id, follower_id),
+    following_username    VARCHAR(255) NOT NULL,
+    follower_username     VARCHAR(255) NOT NULL,
+    PRIMARY KEY(following_username, follower_username),
     CONSTRAINT fk_followings_following
-        FOREIGN KEY (following_id)
-        REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (following_username)
+        REFERENCES users(username) ON DELETE CASCADE,
     CONSTRAINT fk_followings_follower
-        FOREIGN KEY (follower_id)
-        REFERENCES users(id) ON DELETE CASCADE
+        FOREIGN KEY (follower_username)
+        REFERENCES users(username) ON DELETE CASCADE
 );

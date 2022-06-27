@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ashalfarhan/realworld/utils/logger"
+	"github.com/sirupsen/logrus"
 )
 
 type M map[string]interface{}
@@ -15,7 +15,7 @@ func JSON(w http.ResponseWriter, statusCode int, resp interface{}) {
 	w.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		logger.Log.Printf("Failed to encode json response of %v, Error: %v\n", resp, err)
+		logrus.Printf("Failed to encode json response of %v, Error: %v\n", resp, err)
 		fmt.Fprint(w, err.Error())
 	}
 }

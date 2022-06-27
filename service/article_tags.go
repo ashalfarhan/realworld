@@ -13,7 +13,7 @@ func (s *ArticleService) GetAllTags(ctx context.Context) ([]string, *model.Condu
 	log := logger.GetCtx(ctx)
 	tags, err := s.tagsRepo.FindAllTags(ctx)
 	if err != nil {
-		log.Printf("Cannot FindAllTags, Reason: %v", err)
+		log.Warnf("Cannot FindAllTags, Reason: %v", err)
 		return nil, conduit.BuildError(http.StatusInternalServerError, nil)
 	}
 	return tags, nil

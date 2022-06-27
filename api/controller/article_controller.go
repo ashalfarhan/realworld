@@ -45,7 +45,7 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Request) {
-	uid, err := jwt.GetUserIDFromReq(r)
+	uid, err := jwt.GetUsernameFromReq(r)
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -110,16 +110,9 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id, serr := jwt.GetUserIDFromReq(r)
+	articles, err := c.articleService.GetArticles(r.Context(), args)
 	if err != nil {
-		response.Err(w, serr)
-		return
-	}
-	args.UserID = id
-
-	articles, serr := c.articleService.GetArticles(r.Context(), args)
-	if serr != nil {
-		response.Err(w, serr)
+		response.Err(w, err)
 		return
 	}
 
@@ -135,11 +128,11 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-	args.UserID = jwt.CurrentUser(r)
 
-	articles, serr := c.articleService.GetArticlesFeed(r.Context(), args)
-	if serr != nil {
-		response.Err(w, serr)
+	args.Username = jwt.CurrentUser(r)
+	articles, err := c.articleService.GetArticlesFeed(r.Context(), args)
+	if err != nil {
+		response.Err(w, err)
 		return
 	}
 

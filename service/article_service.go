@@ -39,14 +39,14 @@ func NewArticleService(repo *repository.Repository, store *store.CacheStore) *Ar
 	}
 }
 
-func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, authorID string) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST CreateArticle %#v, author_id: %s", d, authorID)
+	log.Infof("POST CreateArticle %#v, author_id: %s", d, username)
 
 	d.Slug = s.CreateSlug(d.Title)
-	a, err := s.articleRepo.InsertOne(ctx, d, authorID)
+	a, err := s.articleRepo.InsertOne(ctx, d, username)
 	if err != nil {
-		log.Printf("Cannot InsertOne to ArticleRepo for %+v, Reason: %v", a, err)
+		log.Warnf("Cannot InsertOne to ArticleRepo for %+v, Reason: %v", a, err)
 		return nil, conduit.GeneralError
 	}
 
@@ -56,26 +56,27 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 			tags[i] = repository.InsertArticleTagsArgs{ArticleID: a.ID, TagName: tag}
 			a.TagList = append(a.TagList, tag)
 		}
-		if err := s.tagsRepo.InsertBulk(ctx, tags); err != nil {
-			log.Errorf("Cannot InsertBulk::ArticleTags Repo for %v, Reason: %v", tags, err)
+		if err = s.tagsRepo.InsertBulk(ctx, tags); err != nil {
+			log.Warnf("Cannot InsertBulk::ArticleTags Repo for %v, Reason: %v", tags, err)
 			return nil, conduit.GeneralError
 		}
 	}
 
-	u, err := s.userRepo.FindOneByID(ctx, a.AuthorID)
+	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
-		log.Errorf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorID, err)
+		log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
 
 	a.Author = u
+	log.Errorf("Done creating article")
 	return a, nil
 }
 
-func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug string) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 
-	if cached := s.articleCache.FindOneBySlug(ctx, slug, userID); cached != nil {
+	if cached := s.articleCache.FindOneBySlug(ctx, slug, username); cached != nil {
 		return cached, nil
 	}
 
@@ -84,15 +85,15 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, userID, slug stri
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoArticleFound)
 		}
-		log.Printf("Failed to get article by slug: %v", err)
+		log.Warnf("Failed to get article by slug: %v", err)
 		return nil, conduit.GeneralError
 	}
 
-	if err := s.PopulateArticleField(ctx, ar, userID); err != nil {
+	if err := s.PopulateArticleField(ctx, ar, username); err != nil {
 		return nil, err
 	}
 
-	s.articleCache.SaveBySlug(ctx, slug, userID, ar)
+	s.articleCache.SaveBySlug(ctx, slug, username, ar)
 	return ar, nil
 }
 
@@ -101,12 +102,12 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Errorf("Cannot find articles args: %+v, Reason: %v", args, err)
+		log.Warnf("Cannot find articles Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
 
 	for _, a := range articles {
-		if err := s.PopulateArticleField(ctx, a, args.UserID); err != nil {
+		if err := s.PopulateArticleField(ctx, a, args.Username); err != nil {
 			return nil, err
 		}
 	}
@@ -120,12 +121,12 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Errorf("Cannot find articles args: %+v, Reason: %v", args, err)
+		log.Warnf("Cannot find articles args: %+v, Reason: %v", args, err)
 		return nil, conduit.GeneralError
 	}
 
 	for _, a := range articles {
-		if err := s.PopulateArticleField(ctx, a, args.UserID); err != nil {
+		if err := s.PopulateArticleField(ctx, a, args.Username); err != nil {
 			return nil, err
 		}
 	}
@@ -134,34 +135,34 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 	return articles, nil
 }
 
-func (s *ArticleService) DeleteArticle(ctx context.Context, slug, userID string) *model.ConduitError {
+func (s *ArticleService) DeleteArticle(ctx context.Context, slug, username string) *model.ConduitError {
 	log := logger.GetCtx(ctx)
 
-	a, err := s.GetArticleBySlug(ctx, userID, slug)
+	a, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return err
 	}
-	if a.AuthorID != userID {
-		log.Warnf("Forbidden delete article author_id:%q, user_id: %q", a.AuthorID, userID)
+	if a.AuthorUsername != username {
+		log.Warnf("Forbidden delete article author_id:%q, user_id: %q", a.AuthorUsername, username)
 		return conduit.BuildError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
 	}
 	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
-		log.Printf("Failed to delete article by slug:%q, Reason: %v", slug, err)
+		log.Warnf("Failed to delete article by slug:%q, Reason: %v", slug, err)
 		return conduit.GeneralError
 	}
 	return nil
 }
 
-func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug string, d *model.UpdateArticleFields) (*model.Article, *model.ConduitError) {
+func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, username, slug string, d *model.UpdateArticleFields) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", userID, slug, d)
+	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", username, slug, d)
 
-	ar, err := s.GetArticleBySlug(ctx, userID, slug)
+	ar, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return nil, err
 	}
 
-	if ar.AuthorID != userID {
+	if ar.AuthorUsername != username {
 		return nil, conduit.BuildError(http.StatusForbidden, ErrNotAllowedUpdateArticle)
 	}
 
@@ -172,14 +173,14 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, userID, slug s
 	}
 
 	if err := s.articleRepo.UpdateOneBySlug(ctx, d, ar); err != nil {
-		log.Errorf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
+		log.Warnf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
 		return nil, conduit.GeneralError
 	}
 
 	return ar, nil
 }
 
-func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, userID string) *model.ConduitError {
+func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Article, username string) *model.ConduitError {
 	tags, err := s.tagsRepo.FindArticleTagsByID(ctx, a.ID)
 	if err != nil {
 		return conduit.GeneralError
@@ -187,12 +188,12 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 
 	a.TagList = tags
 
-	a.Author, err = s.userRepo.FindOneByID(ctx, a.AuthorID)
+	a.Author, err = s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
 		return conduit.GeneralError
 	}
 
-	a.Favorited = s.IsArticleFavorited(ctx, userID, a.ID)
+	a.Favorited = s.IsArticleFavorited(ctx, username, a.ID)
 
 	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {

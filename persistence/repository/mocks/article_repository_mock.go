@@ -3,8 +3,8 @@ package repository_mocks
 import (
 	"context"
 
-	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/ashalfarhan/realworld/model"
+	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -33,11 +33,6 @@ func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 }
 
 func (m *ArticleRepoMock) Find(ctx context.Context, a *repository.FindArticlesArgs) (model.Articles, error) {
-	args := m.Called(ctx, a)
-	return args.Get(0).(model.Articles), args.Error(1)
-}
-
-func (m *ArticleRepoMock) FindByFollowed(ctx context.Context, a *repository.FindArticlesArgs) (model.Articles, error) {
 	args := m.Called(ctx, a)
 	return args.Get(0).(model.Articles), args.Error(1)
 }

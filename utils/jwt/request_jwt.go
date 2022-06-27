@@ -26,7 +26,7 @@ func CurrentUser(r *http.Request) string {
 // Get User ID from request.
 // Used for non-auth endpoint to retrieve user id (empty string if no token).
 // Error returned will be if invalid jwt
-func GetUserIDFromReq(r *http.Request) (string, *model.ConduitError) {
+func GetUsernameFromReq(r *http.Request) (string, *model.ConduitError) {
 	token := GetToken(r)
 	if token == "" {
 		return token, nil

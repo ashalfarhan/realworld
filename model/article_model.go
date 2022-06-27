@@ -14,7 +14,7 @@ type Article struct {
 	CreatedAt      time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt      time.Time `json:"updatedAt" db:"updated_at"`
 	TagList        []string  `json:"tagList"`
-	AuthorID       string    `json:"-" db:"author_id"`
+	AuthorUsername string    `json:"-" db:"author_username"`
 	Favorited      bool      `json:"favorited"`
 	FavoritesCount int       `json:"favoritesCount"`
 	Author         *User     `json:"author" db:"author"`

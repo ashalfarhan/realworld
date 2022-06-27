@@ -25,7 +25,7 @@ var tests = TestMap{
 			On("InsertOne", mock.Anything, mock.Anything, mock.Anything).
 			Return(errors.New(repository.ErrDuplicateFollowing)).
 			Once()
-		u, err := userService.FollowUser(tctx, "uid", "username")
+		u, err := userService.FollowUser(tctx, "username", "username2")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
 
@@ -35,13 +35,13 @@ var tests = TestMap{
 		as.Equal(err.Err, ErrAlreadyFollow)
 	},
 	"Follow user should fail if self follow": func(t *testing.T) {
-		uid := "uid"
+		username := "username"
 		as := assert.New(t)
 		userRepoMock.
 			On("FindOne", mock.Anything, mock.Anything).
-			Return(&model.User{ID: uid}, nil).
+			Return(&model.User{Username: username}, nil).
 			Once()
-		u, err := userService.FollowUser(tctx, uid, "username")
+		u, err := userService.FollowUser(tctx, username, "username2")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
@@ -58,7 +58,7 @@ var tests = TestMap{
 			On("FindOne", mock.Anything, mock.Anything).
 			Return(&model.User{}, sql.ErrNoRows).
 			Once()
-		u, err := userService.FollowUser(tctx, "id", "username")
+		u, err := userService.FollowUser(tctx, "username", "username2")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
 		followRepoMock.AssertExpectations(t)
@@ -70,22 +70,21 @@ var tests = TestMap{
 	},
 	"Follow user should success": func(t *testing.T) {
 		as := assert.New(t)
-		followerID := "followerID"
+		username := "username"
 
 		following := &model.User{
-			Username: "username",
-			ID:       "followingID",
+			Username: "username1",
 		}
 		userRepoMock.
 			On("FindOne", mock.Anything, mock.Anything).
 			Return(following, nil).
 			Once()
 		followRepoMock.
-			On("InsertOne", mock.Anything, followerID, following.ID).
+			On("InsertOne", mock.Anything, username, following.Username).
 			Return(nil).
 			Once()
 
-		u, err := userService.FollowUser(tctx, followerID, following.Username)
+		u, err := userService.FollowUser(tctx, username, following.Username)
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
 

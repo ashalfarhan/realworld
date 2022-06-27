@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/ashalfarhan/realworld/config"
-	"github.com/ashalfarhan/realworld/utils/logger"
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 func Init() *redis.Client {
@@ -21,10 +21,10 @@ func Init() *redis.Client {
 
 	if _, err := Ca.Ping(ctx).Result(); err != nil {
 		defer Ca.Close()
-		logger.Log.Panicf("Cannot Ping Redis, Reason: %v", err)
+		logrus.Panicf("Cannot Ping Redis, Reason: %v", err)
 		return nil
 	}
 
-	logger.Log.Println("Successfully initialize redis cache")
+	logrus.Println("Successfully initialize redis cache")
 	return Ca
 }

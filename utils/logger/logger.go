@@ -9,21 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var Log *logrus.Logger
-
-func Init() {
-	logger := logrus.New()
-	Log = logger
+func Configure() {
 	if config.Env == "test" {
-		logger.SetOutput(io.Discard)
+		logrus.SetOutput(io.Discard)
 	}
 }
 
-func New(key, value string) *logrus.Entry {
-	return Log.WithField(key, value)
-}
-
 func GetCtx(ctx context.Context) *logrus.Entry {
-	req := utils.GetReqID(ctx)
-	return New("request_id", req)
+	return logrus.WithField("request_id", utils.GetReqID(ctx))
 }

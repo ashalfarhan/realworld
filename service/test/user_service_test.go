@@ -97,10 +97,10 @@ func TestGetOneById(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
 			userRepoMock.
-				On("FindOneByID", mock.Anything, mock.Anything).
+				On("FindOneByUsername", mock.Anything, mock.Anything).
 				Return(&model.User{}, tC.mockReturn).
 				Once()
-			_, err := userService.GetOneById(tctx, "id")
+			_, err := userService.GetOneByUsername(tctx, "id")
 			userRepoMock.AssertExpectations(t)
 
 			as.NotNil(err)
@@ -113,10 +113,10 @@ func TestGetOneById(t *testing.T) {
 		as := assert.New(t)
 
 		userRepoMock.
-			On("FindOneByID", mock.Anything, mock.Anything).
+			On("FindOneByUsername", mock.Anything, mock.Anything).
 			Return(&model.User{}, nil).
 			Once()
-		u, err := userService.GetOneById(tctx, "id")
+		u, err := userService.GetOneByUsername(tctx, "id")
 		userRepoMock.AssertExpectations(t)
 
 		as.Nil(err)
@@ -126,7 +126,7 @@ func TestGetOneById(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	userRepoMock.
-		On("FindOneByID", mock.Anything, mock.Anything).
+		On("FindOneByUsername", mock.Anything, mock.Anything).
 		Return(&model.User{}, nil)
 	password := "asd"
 	email := "asd@mail.com"

@@ -23,8 +23,8 @@ func GenerateJWT(u *model.User) (string, error) {
 	now := time.Now()
 	c := &jwt.StandardClaims{
 		ExpiresAt: now.Add(jwtExp).Unix(),
-		Audience:  "client.com", // TODO: Change this
-		Subject:   u.ID,
+		// Audience:  "client.com",
+		Subject:   u.Username,
 		IssuedAt:  now.Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
