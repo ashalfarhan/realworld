@@ -35,5 +35,6 @@ func Connect() *sqlx.DB {
 	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
 		logrus.Panicln("Failed to run migration", err)
 	}
+	logrus.Println("Successfully run all migrations")
 	return conn
 }
