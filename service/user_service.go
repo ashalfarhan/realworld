@@ -99,17 +99,12 @@ func (s *UserService) HashPassword(p string) string {
 	return string(hashed)
 }
 
-func (s *UserService) GetProfile(ctx context.Context, username, userID string) (*model.ProfileResponse, *model.ConduitError) {
-	u, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
+func (s *UserService) GetProfile(ctx context.Context, username, userID string) (*model.ProfileRs, *model.ConduitError) {
+	u, err := s.GetOneByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
 	following := s.IsFollowing(ctx, userID, u.ID)
-	res := &model.ProfileResponse{
-		Username:  u.Username,
-		Bio:       u.Bio,
-		Image:     u.Image,
-		Following: following,
-	}
+	res := u.Profile(following)
 	return res, nil
 }

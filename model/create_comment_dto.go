@@ -5,7 +5,5 @@ type CreateCommentFields struct {
 }
 
 type CreateCommentDto struct {
-	AuthorUsername,
-	ArticleSlug string
 	Comment *CreateCommentFields `json:"comment" validate:"required"`
 }

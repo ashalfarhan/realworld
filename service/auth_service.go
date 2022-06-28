@@ -20,7 +20,7 @@ func NewAuthService(us *UserService) *AuthService {
 	}
 }
 
-func (s AuthService) Login(ctx context.Context, d *model.LoginUserFields) (*model.UserResponse, *model.ConduitError) {
+func (s AuthService) Login(ctx context.Context, d *model.LoginUserFields) (*model.UserRs, *model.ConduitError) {
 	u, sErr := s.userService.GetOne(ctx, &repository.FindOneUserFilter{
 		Email:    d.Email,
 		Username: d.Username,
@@ -35,17 +35,11 @@ func (s AuthService) Login(ctx context.Context, d *model.LoginUserFields) (*mode
 	if err != nil {
 		return nil, conduit.GeneralError
 	}
-	res := &model.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Token:    token,
-		Bio:      u.Bio,
-		Image:    u.Image,
-	}
+	res := u.Serialize(token)
 	return res, nil
 }
 
-func (s AuthService) Register(ctx context.Context, d *model.RegisterUserFields) (*model.UserResponse, *model.ConduitError) {
+func (s AuthService) Register(ctx context.Context, d *model.RegisterUserFields) (*model.UserRs, *model.ConduitError) {
 	u, sErr := s.userService.Insert(ctx, d)
 	if sErr != nil {
 		return nil, sErr
@@ -54,12 +48,6 @@ func (s AuthService) Register(ctx context.Context, d *model.RegisterUserFields) 
 	if err != nil {
 		return nil, conduit.GeneralError
 	}
-	res := &model.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Token:    token,
-		Bio:      u.Bio,
-		Image:    u.Image,
-	}
+	res := u.Serialize(token)
 	return res, nil
 }

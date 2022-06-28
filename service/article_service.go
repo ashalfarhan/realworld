@@ -41,14 +41,13 @@ func NewArticleService(repo *repository.Repository, store *store.CacheStore) *Ar
 
 func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST CreateArticle dto:%+v, author_id:%q", d, username)
+	log.Infof("POST CreateArticle dto:%+v, user:%q", d, username)
 	d.Slug = s.CreateSlug(d.Title)
 	a, err := s.articleRepo.InsertOne(ctx, d, username)
 	if err != nil {
 		log.Warnf("Cannot insert article args:%+v reason:%v", a, err)
 		return nil, conduit.GeneralError
 	}
-
 	if tgs := len(d.TagList); tgs > 0 {
 		tags := make([]repository.InsertArticleTagsArgs, tgs)
 		for i, tag := range d.TagList {
@@ -60,16 +59,12 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 			return nil, conduit.GeneralError
 		}
 	}
-
 	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
 		log.Warnf("Cannot find user:%q, reason:%v", a.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
-	a.Author = new(model.ProfileResponse)
-	a.Author.Bio = u.Bio
-	a.Author.Image = u.Image
-	a.Author.Username = u.Username
+	a.Author = u.Profile(false) // TODO: Change following dynamically 
 	return a, nil
 }
 

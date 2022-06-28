@@ -20,3 +20,37 @@ type User struct {
 func (u *User) ValidatePassword(incPass string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(incPass)) == nil
 }
+
+type UserRs struct {
+	Username string     `json:"username"`
+	Bio      NullString `json:"bio"`
+	Image    NullString `json:"image"`
+	Email    string     `json:"email"`
+	Token    string     `json:"token,omitempty"`
+}
+
+type ProfileRs struct {
+	Username  string     `json:"username"`
+	Bio       NullString `json:"bio"`
+	Image     NullString `json:"image"`
+	Following bool       `json:"following"`
+}
+
+func (u *User) Serialize(token string) *UserRs {
+	return &UserRs{
+		Email:    u.Email,
+		Username: u.Username,
+		Bio:      u.Bio,
+		Image:    u.Image,
+		Token:    token,
+	}
+}
+
+func (u *User) Profile(following bool) *ProfileRs {
+	return &ProfileRs{
+		Username:  u.Username,
+		Bio:       u.Bio,
+		Image:     u.Image,
+		Following: following,
+	}
+}

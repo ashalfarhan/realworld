@@ -26,14 +26,7 @@ func (c *UserController) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 		response.Err(w, err)
 		return
 	}
-
-	res := &model.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Bio:      u.Bio,
-		Image:    u.Image,
-		Token:    jwt.GetToken(r),
-	}
+	res := u.Serialize(jwt.GetToken(r))
 	response.Ok(w, response.M{
 		"user": res,
 	})
@@ -45,21 +38,13 @@ func (c *UserController) UpdateCurrentUser(w http.ResponseWriter, r *http.Reques
 		response.Err(w, err)
 		return
 	}
-
 	iu := jwt.CurrentUser(r)
 	u, err := c.userService.Update(r.Context(), req.User, iu)
 	if err != nil {
 		response.Err(w, err)
 		return
 	}
-
-	res := &model.UserResponse{
-		Email:    u.Email,
-		Username: u.Username,
-		Bio:      u.Bio,
-		Image:    u.Image,
-		Token:    jwt.GetToken(r),
-	}
+	res := u.Serialize(jwt.GetToken(r))
 	response.Accepted(w, response.M{
 		"user": res,
 	})

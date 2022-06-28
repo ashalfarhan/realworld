@@ -25,7 +25,6 @@ func (c *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	res, err := c.service.Register(r.Context(), req.User)
 	if err != nil {
 		response.Err(w, err)
@@ -42,7 +41,6 @@ func (c *AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	res, err := c.service.Login(r.Context(), req.User)
 	if err != nil {
 		response.Err(w, err)

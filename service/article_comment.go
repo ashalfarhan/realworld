@@ -10,17 +10,17 @@ import (
 	"github.com/ashalfarhan/realworld/utils/logger"
 )
 
-func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateCommentDto) (*model.Comment, *model.ConduitError) {
+func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateCommentFields, username, slug string) (*model.Comment, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infoln("POST CreateComment", d)
 
-	ar, sErr := s.GetArticleBySlug(ctx, d.AuthorUsername, d.ArticleSlug)
+	ar, sErr := s.GetArticleBySlug(ctx, username, slug)
 	if sErr != nil {
 		return nil, sErr
 	}
 	c := &model.Comment{
-		Body:           d.Comment.Body,
-		AuthorUsername: d.AuthorUsername,
+		Body:           d.Body,
+		AuthorUsername: username,
 		ArticleID:      ar.ID,
 	}
 
@@ -34,10 +34,7 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateComme
 		log.Warnf("Cannot find username for %s, Reason: %v", c.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
-	c.Author = new(model.ProfileResponse)
-	c.Author.Bio = u.Bio
-	c.Author.Image = u.Image
-	c.Author.Username = u.Username
+	c.Author = u.Profile(false) // TODO: Change following dynamically
 	return c, nil
 }
 

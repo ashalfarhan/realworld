@@ -6,13 +6,13 @@ import (
 )
 
 type Comment struct {
-	ID             string           `json:"id" db:"id"`
-	Body           string           `json:"body" db:"body"`
-	ArticleID      string           `json:"-" db:"article_id"`
-	AuthorUsername string           `json:"-" db:"author_username"`
-	Author         *ProfileResponse `json:"author" db:"author"`
-	CreatedAt      time.Time        `json:"createdAt" db:"created_at"`
-	UpdatedAt      time.Time        `json:"updatedAt" db:"updated_at"`
+	ID             string     `json:"id" db:"id"`
+	Body           string     `json:"body" db:"body"`
+	ArticleID      string     `json:"-" db:"article_id"`
+	AuthorUsername string     `json:"-" db:"author_username"`
+	Author         *ProfileRs `json:"author" db:"author"`
+	CreatedAt      time.Time  `json:"createdAt" db:"created_at"`
+	UpdatedAt      time.Time  `json:"updatedAt" db:"updated_at"`
 }
 
 type Comments []*Comment
