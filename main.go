@@ -25,14 +25,12 @@ func init() {
 func main() {
 	db := persistence.Connect()
 	store := cache.Init()
-
 	services := service.InitService(db, store)
 	server := api.InitServer(services)
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-
 	logrus.Println("Booting up the server...")
+
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			logrus.Errorf("Failed to start the server: %v", err)
@@ -43,7 +41,6 @@ func main() {
 	}()
 
 	logrus.Printf("Listening on %s in %q mode", config.Addr, config.Env)
-
 	<-shutdown
 	logrus.Println("Gracefully shutdown...")
 
