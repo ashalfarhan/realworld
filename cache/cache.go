@@ -18,13 +18,11 @@ func Init() *redis.Client {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	if _, err := Ca.Ping(ctx).Result(); err != nil {
 		defer Ca.Close()
 		logrus.Panicf("Cannot Ping Redis, Reason: %v", err)
 		return nil
 	}
-
 	logrus.Println("Successfully initialize redis cache")
 	return Ca
 }

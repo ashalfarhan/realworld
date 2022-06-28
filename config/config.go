@@ -20,15 +20,12 @@ var (
 
 func Load() {
 	var ok bool
-
 	if Port, ok = os.LookupEnv("PORT"); !ok {
 		Port = "4000"
 	}
-
 	if Env, ok = os.LookupEnv("APP_ENV"); !ok {
 		Env = "dev"
 	}
-
 	MigrationPath = os.Getenv("MIGRATION_PATH")
 	CacheTTL = time.Microsecond * 1 // Change to microsecond if testing with postman spec
 	Addr = fmt.Sprintf("%s:%s", os.Getenv("HOST"), Port)
