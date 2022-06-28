@@ -21,28 +21,23 @@ func InitRoutes(s *service.Service) *mux.Router {
 	apiRoute.HandleFunc("/users", auth.RegisterUser).Methods(http.MethodPost)
 	apiRoute.HandleFunc("/users/login", auth.LoginUser).Methods(http.MethodPost)
 
-	uc := controller.NewUserController(s)
 	// User
+	uc := controller.NewUserController(s)
 	apiRoute.HandleFunc("/user", middleware.WithUser(uc.GetCurrentUser)).Methods(http.MethodGet)
 	apiRoute.HandleFunc("/user", middleware.WithUser(uc.UpdateCurrentUser)).Methods(http.MethodPut)
 
 	// Profile
 	pc := controller.NewProfileController(s)
 	profileRoute := apiRoute.PathPrefix("/profiles").Subrouter()
-
 	profileRoute.HandleFunc("/{username}", middleware.WithUser(pc.GetProfile)).Methods(http.MethodGet)
 	profileRoute.HandleFunc("/{username}/follow", middleware.WithUser(pc.FollowUser)).Methods(http.MethodPost)
 	profileRoute.HandleFunc("/{username}/follow", middleware.WithUser(pc.UnfollowUser)).Methods(http.MethodDelete)
 
 	// Article
 	ac := controller.NewArticleController(s)
-
-	// Tags
 	apiRoute.HandleFunc("/tags", ac.GetAllTags).Methods(http.MethodGet)
-
 	apiRoute.HandleFunc("/articles", ac.GetFiltered).Methods(http.MethodGet)
 	apiRoute.HandleFunc("/articles", middleware.WithUser(ac.CreateArticle)).Methods(http.MethodPost)
-
 	articleRoute := apiRoute.PathPrefix("/articles").Subrouter()
 	articleRoute.HandleFunc("/feed", middleware.WithUser(ac.GetFeed)).Methods(http.MethodGet)
 	articleRoute.HandleFunc("/{slug}", ac.GetArticleBySlug).Methods(http.MethodGet)

@@ -79,7 +79,7 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug st
 		return cached, nil
 	}
 
-	ar, err := s.articleRepo.FindOneBySlug(ctx, slug)
+	ar, err := s.articleRepo.FindOneBySlug(ctx, username, slug)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoArticleFound)
@@ -177,21 +177,8 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 	if err != nil {
 		return conduit.GeneralError
 	}
-
 	a.TagList = tags
-	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
-	if err != nil {
-		return conduit.GeneralError
-	}
-	a.Author = new(model.ProfileResponse)
-	a.Author.Bio = u.Bio
-	a.Author.Image = u.Image
-	a.Author.Username = u.Username
-	a.Favorited = s.IsArticleFavorited(ctx, username, a.ID)
-	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
-	if err != nil {
-		return conduit.GeneralError
-	}
+	// a.Author.Following
 	return nil
 }
 

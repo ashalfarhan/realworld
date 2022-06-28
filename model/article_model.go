@@ -15,8 +15,8 @@ type Article struct {
 	UpdatedAt      time.Time        `json:"updatedAt" db:"updated_at"`
 	TagList        []string         `json:"tagList"`
 	AuthorUsername string           `json:"-" db:"author_username"`
-	Favorited      bool             `json:"favorited"`
-	FavoritesCount int              `json:"favoritesCount"`
+	Favorited      bool             `json:"favorited" db:"favorited"`
+	FavoritesCount int              `json:"favoritesCount" db:"favorites_count"`
 	Author         *ProfileResponse `json:"author" db:"author"`
 }
 

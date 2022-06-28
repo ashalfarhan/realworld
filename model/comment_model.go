@@ -10,7 +10,7 @@ type Comment struct {
 	Body           string           `json:"body" db:"body"`
 	ArticleID      string           `json:"-" db:"article_id"`
 	AuthorUsername string           `json:"-" db:"author_username"`
-	Author         *ProfileResponse `json:"author"`
+	Author         *ProfileResponse `json:"author" db:"author"`
 	CreatedAt      time.Time        `json:"createdAt" db:"created_at"`
 	UpdatedAt      time.Time        `json:"updatedAt" db:"updated_at"`
 }

@@ -13,7 +13,7 @@ type ArticleRepoImpl struct {
 
 type ArticleRepository interface {
 	InsertOne(context.Context, *model.CreateArticleFields, string) (*model.Article, error)
-	FindOneBySlug(context.Context, string) (*model.Article, error)
+	FindOneBySlug(context.Context, string, string) (*model.Article, error)
 	DeleteBySlug(context.Context, string) error
 	UpdateOneBySlug(context.Context, *model.UpdateArticleFields, *model.Article) error
 	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
@@ -105,16 +105,25 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 	return tx.Commit()
 }
 
-func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*model.Article, error) {
+func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, username, slug string) (*model.Article, error) {
 	query := `
-	SELECT id, title, description, body, author_username, created_at, updated_at, slug
-	FROM articles as a
-	WHERE a.slug = $1`
+	SELECT
+		ar.id, ar.author_username, ar.title, ar.description, ar.body, 
+		ar.created_at, ar.updated_at, ar.slug,
+		us.username as "author.username", us.bio as "author.bio",
+		us.image as "author.image", COUNT(af.username) as "favorites_count",
+		($1 IN (af.username) IS NOT NULL) as "favorited"
+	FROM articles as ar 
+	LEFT JOIN users as us
+		ON us.username = ar.author_username
+	LEFT JOIN article_favorites as af
+		ON af.article_id = ar.id
+	WHERE ar.slug = $2
+	GROUP BY (ar.id, us.username, us.bio, us.image, af.username)`
 	a := new(model.Article)
-	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
+	if err := r.db.GetContext(ctx, a, query, username, slug); err != nil {
 		return nil, err
 	}
-	a.Author = new(model.ProfileResponse)
 	return a, nil
 }
 
@@ -131,20 +140,27 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 	articles := model.Articles{}
 	query := `
 	SELECT 
-		a.id, a.title, 
-		a.description, a.body, 
-		a.author_username, a.created_at, 
-		a.updated_at, a.slug 
-	FROM articles as a WHERE 1 = 1`
+		ar.id, ar.author_username, ar.title, ar.description, ar.body, 
+		ar.created_at, ar.updated_at, ar.slug,
+		us.username as "author.username", us.bio as "author.bio",
+		us.image as "author.image", 
+		COUNT(af.username) as "favorites_count", 
+		(:username IN (af.username) IS NOT NULL) as "favorited"
+	FROM articles as ar
+	LEFT JOIN users as us
+		ON us.username = ar.author_username
+	LEFT JOIN article_favorites as af
+		ON af.article_id = ar.id
+	WHERE 1 = 1`
 
 	if p.Author != "" {
 		query += `
-		AND a.author_username = :author_username`
+		AND ar.author_username = :author_username`
 	}
 
 	if p.Tag != "" {
 		query += `
-		AND a.id IN (
+		AND ar.id IN (
 			SELECT at.article_id 
 			FROM article_tags as at
 			WHERE at.tag_name = :tag
@@ -153,7 +169,7 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 
 	if p.Favorited != "" {
 		query += `
-		AND a.id IN (
+		AND ar.id IN (
 			SELECT af.article_id
 			FROM article_favorites as af
 			WHERE af.username = :favorited_by
@@ -162,14 +178,14 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 
 	if p.Username != "" {
 		query += `
-		AND a.author_username IN (
+		AND ar.author_username IN (
 			SELECT f.following_username 
 			FROM followings as f
 			WHERE f.follower_username = :username
 		)`
 	}
 
-	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+	query += " GROUP BY (ar.id, us.username, us.bio, us.image, af.username) ORDER BY ar.created_at DESC LIMIT :limit OFFSET :offset"
 	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err

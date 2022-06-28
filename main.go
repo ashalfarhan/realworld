@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -50,13 +51,13 @@ func main() {
 		}
 	}()
 
-	if err := server.Close(); err != nil {
+	if err := server.Close(); err != nil && err != http.ErrServerClosed {
 		logrus.Errorf("Failed to close the server: %v", err)
 	}
 }
 
 func cleanup(store *redis.Client, db *sqlx.DB) error {
-	if err := store.Close(); err != nil {
+	if err := store.Close(); err != nil && err != redis.ErrClosed {
 		return fmt.Errorf("failed to close redis: %w", err)
 	}
 	if err := db.Close(); err != nil {

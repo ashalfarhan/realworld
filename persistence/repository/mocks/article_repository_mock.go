@@ -17,8 +17,8 @@ func (m *ArticleRepoMock) InsertOne(ctx context.Context, a *model.CreateArticleF
 	return args.Get(0).(*model.Article), args.Error(1)
 }
 
-func (m *ArticleRepoMock) FindOneBySlug(ctx context.Context, s string) (*model.Article, error) {
-	args := m.Called(ctx, s)
+func (m *ArticleRepoMock) FindOneBySlug(ctx context.Context, u, s string) (*model.Article, error) {
+	args := m.Called(ctx, u, s)
 	return args.Get(1).(*model.Article), args.Error(1)
 }
 

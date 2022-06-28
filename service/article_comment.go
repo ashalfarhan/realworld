@@ -12,7 +12,7 @@ import (
 
 func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateCommentDto) (*model.Comment, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST CreateComment %#v", d)
+	log.Infoln("POST CreateComment", d)
 
 	ar, sErr := s.GetArticleBySlug(ctx, d.AuthorUsername, d.ArticleSlug)
 	if sErr != nil {
@@ -25,13 +25,13 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateComme
 	}
 
 	if err := s.commentRepo.InsertOne(ctx, c); err != nil {
-		log.Warnf("Cannot InsertOne::CommentRepo Args: %+v, Reason: %v", c, err)
+		log.Warnf("Cannot insert comment args:%+v, Reason: %v", c, err)
 		return nil, conduit.GeneralError
 	}
 
 	u, err := s.userRepo.FindOneByUsername(ctx, c.AuthorUsername)
 	if err != nil {
-		log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorUsername, err)
+		log.Warnf("Cannot find username for %s, Reason: %v", c.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
 	c.Author = new(model.ProfileResponse)

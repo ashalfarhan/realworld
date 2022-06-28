@@ -28,7 +28,6 @@ func (r *ArticleFavoritesRepoImpl) InsertOne(ctx context.Context, username, arti
 	if _, err = tx.ExecContext(ctx, query, username, articleID); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -46,7 +45,6 @@ func (r *ArticleFavoritesRepoImpl) Delete(ctx context.Context, username, article
 	if _, err = tx.ExecContext(ctx, query, username, articleID); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
