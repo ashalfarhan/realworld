@@ -9,6 +9,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+type UserCtxKey string
+
+var userCtx UserCtxKey = "incoming-user"
+
 func CreateUserCtx(ctx context.Context, claim *jwt.StandardClaims) context.Context {
 	return context.WithValue(ctx, userCtx, claim)
 }

@@ -10,10 +10,6 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-type UserCtxKey string
-
-var userCtx UserCtxKey = "incoming-user"
-
 const (
 	jwtSecret = "super-secret"
 	jwtExp    = 20 * time.Minute
@@ -24,8 +20,8 @@ func GenerateJWT(u *model.User) (string, error) {
 	c := &jwt.StandardClaims{
 		ExpiresAt: now.Add(jwtExp).Unix(),
 		// Audience:  "client.com",
-		Subject:   u.Username,
-		IssuedAt:  now.Unix(),
+		Subject:  u.Username,
+		IssuedAt: now.Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	str, err := token.SignedString([]byte(jwtSecret))
