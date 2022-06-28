@@ -41,11 +41,11 @@ func NewArticleService(repo *repository.Repository, store *store.CacheStore) *Ar
 
 func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST CreateArticle %#v, author_id: %s", d, username)
+	log.Infof("POST CreateArticle dto:%+v, author_id:%q", d, username)
 	d.Slug = s.CreateSlug(d.Title)
 	a, err := s.articleRepo.InsertOne(ctx, d, username)
 	if err != nil {
-		log.Warnf("Cannot InsertOne to ArticleRepo for %+v, Reason: %v", a, err)
+		log.Warnf("Cannot insert article args:%+v reason:%v", a, err)
 		return nil, conduit.GeneralError
 	}
 
@@ -56,14 +56,14 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 			a.TagList = append(a.TagList, tag)
 		}
 		if err = s.tagsRepo.InsertBulk(ctx, tags); err != nil {
-			log.Warnf("Cannot InsertBulk::ArticleTags Repo for %v, Reason: %v", tags, err)
+			log.Warnln("Cannot insert bulk tags:", err)
 			return nil, conduit.GeneralError
 		}
 	}
 
 	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
-		log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorUsername, err)
+		log.Warnf("Cannot find user:%q, reason:%v", a.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
 	a.Author = new(model.ProfileResponse)
@@ -84,7 +84,7 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug st
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoArticleFound)
 		}
-		log.Warnf("Failed to get article by slug: %v", err)
+		log.Warnln("Failed to get article by slug:", err)
 		return nil, conduit.GeneralError
 	}
 
@@ -99,7 +99,7 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 	log := logger.GetCtx(ctx)
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Warnf("Cannot find articles Reason: %v", err)
+		log.Warnln("Cannot find articles:", err)
 		return nil, conduit.GeneralError
 	}
 
@@ -116,7 +116,7 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 	log := logger.GetCtx(ctx)
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
-		log.Warnf("Cannot find articles args: %+v, Reason: %v", args, err)
+		log.Warnln("Cannot find feed articles:", err)
 		return nil, conduit.GeneralError
 	}
 
@@ -131,17 +131,16 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 
 func (s *ArticleService) DeleteArticle(ctx context.Context, slug, username string) *model.ConduitError {
 	log := logger.GetCtx(ctx)
-
 	a, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return err
 	}
 	if a.AuthorUsername != username {
-		log.Warnf("Forbidden delete article author_id:%q, user_id: %q", a.AuthorUsername, username)
+		log.Warnf("Forbidden delete article author_username:%q, user:%q", a.AuthorUsername, username)
 		return conduit.BuildError(http.StatusForbidden, ErrNotAllowedDeleteArticle)
 	}
 	if err := s.articleRepo.DeleteBySlug(ctx, slug); err != nil {
-		log.Warnf("Failed to delete article by slug:%q, Reason: %v", slug, err)
+		log.Warnf("Failed to delete article by slug:%q, reason: %v", slug, err)
 		return conduit.GeneralError
 	}
 	return nil
@@ -149,7 +148,7 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, username strin
 
 func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, username, slug string, d *model.UpdateArticleFields) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", username, slug, d)
+	log.Infof("UpdateArticleBySlug user:%q, slug:%q, dto:%+v", username, slug, d)
 	ar, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return nil, err
@@ -166,7 +165,7 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, username, slug
 	}
 
 	if err := s.articleRepo.UpdateOneBySlug(ctx, d, ar); err != nil {
-		log.Warnf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
+		log.Warnf("Cannot UpdateOneBySlug slug:%s, payload:%+v, reason: %v", slug, d, err)
 		return nil, conduit.GeneralError
 	}
 	return ar, nil

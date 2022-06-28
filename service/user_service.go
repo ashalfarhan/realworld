@@ -31,7 +31,7 @@ func (s *UserService) GetOneByUsername(ctx context.Context, username string) (*m
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoUserFound)
 		}
-		log.Errorf("Cannot FindOneById for %s, Reason: %v", username, err)
+		log.Errorf("Cannot FindOneById for %s, reason: %v", username, err)
 		return nil, conduit.GeneralError
 	}
 	return u, nil
@@ -44,7 +44,7 @@ func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilte
 		if err == sql.ErrNoRows {
 			return nil, conduit.BuildError(http.StatusNotFound, ErrNoUserFound)
 		}
-		log.Errorf("Cannot FindOne for %+v, Reason: %v", d, err)
+		log.Errorf("Cannot find one in user repo for filter:%+v reason: %v", d, err)
 		return nil, conduit.GeneralError
 	}
 	return u, nil
@@ -61,7 +61,7 @@ func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (
 		case repository.ErrDuplicateUsername:
 			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			log.Errorf("Cannot InsertOne for %+v, Reason: %v", *d, err)
+			log.Errorf("Cannot insert to user repo reason: %v", err)
 			return nil, conduit.GeneralError
 		}
 	}
@@ -70,7 +70,6 @@ func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (
 
 func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, username string) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("PUT Update User %#v userID: %s", d, username)
 	u, err := s.GetOneByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -88,7 +87,7 @@ func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, use
 		case repository.ErrDuplicateUsername:
 			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			log.Errorf("Cannot InsertOne for %#v, Reason: %v", d, err)
+			log.Errorf("Cannot InsertOne for %+v, Reason: %v", d, err)
 			return nil, conduit.GeneralError
 		}
 	}

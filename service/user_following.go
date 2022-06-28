@@ -12,8 +12,7 @@ import (
 
 func (s *UserService) FollowUser(ctx context.Context, followUsername, username string) (*model.ProfileResponse, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST FollowUser folowerID: %s, username: %s", followUsername, username)
-
+	log.Infof("POST FollowUser followUsername:%q, user:%q", followUsername, username)
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -28,7 +27,7 @@ func (s *UserService) FollowUser(ctx context.Context, followUsername, username s
 		case repository.ErrDuplicateFollowing:
 			return nil, conduit.BuildError(http.StatusBadRequest, ErrAlreadyFollow)
 		default:
-			log.Warnf("Cannot FollowUser followerID:%s following.ID:%s, Reason: %v", followUsername, following.ID, err)
+			log.Warnln("Cannot insert to follow repo reason:", err)
 			return nil, conduit.GeneralError
 		}
 	}
@@ -44,8 +43,7 @@ func (s *UserService) FollowUser(ctx context.Context, followUsername, username s
 
 func (s *UserService) UnfollowUser(ctx context.Context, followUsername, username string) (*model.ProfileResponse, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("POST UnfollowUser folowerID: %s, username: %s", followUsername, username)
-
+	log.Infof("POST UnfollowUser followUsername:%q, user:%q", followUsername, username)
 	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
 	if err != nil {
 		return nil, err
@@ -56,7 +54,7 @@ func (s *UserService) UnfollowUser(ctx context.Context, followUsername, username
 	}
 
 	if err := s.followRepo.DeleteOneIDs(ctx, followUsername, following.Username); err != nil {
-		log.Warnf("Cannot UnfollowUser followerID:%s following.ID:%s, Reason: %v", followUsername, following.ID, err)
+		log.Warnln("Cannot delete to follow repo reason:", followUsername, following.ID, err)
 		return nil, conduit.GeneralError
 	}
 
