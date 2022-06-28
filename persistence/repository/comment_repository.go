@@ -45,8 +45,13 @@ func (r *CommentRepoImpl) InsertOne(ctx context.Context, c *model.Comment) error
 func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, articleID string) ([]*model.Comment, error) {
 	var comments []*model.Comment
 	query := `
-	SELECT id, body, author_username, created_at, updated_at
-	FROM article_comments WHERE article_id = $1
+	SELECT 
+		ac.id, ac.body, ac.created_at, ac.updated_at,
+		us.username as "author.username", us.bio AS "author.bio", us.image AS "author.image"
+	FROM article_comments AS ac 
+	LEFT JOIN users AS us 
+		ON us.username = ac.author_username
+	WHERE ac.article_id = $1
 	ORDER BY created_at DESC`
 
 	if err := r.db.SelectContext(ctx, &comments, query, articleID); err != nil {

@@ -120,7 +120,7 @@ func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*mode
 		return nil, err
 	}
 
-	a.Author = new(model.User)
+	a.Author = new(model.ProfileResponse)
 	return a, nil
 }
 

@@ -68,7 +68,10 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 		return nil, conduit.GeneralError
 	}
 
-	a.Author = u
+	a.Author = new(model.ProfileResponse)
+	a.Author.Bio = u.Bio
+	a.Author.Image = u.Image
+	a.Author.Username = u.Username
 	return a, nil
 }
 
@@ -187,10 +190,14 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 
 	a.TagList = tags
 
-	a.Author, err = s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
+	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
 		return conduit.GeneralError
 	}
+	a.Author = new(model.ProfileResponse)
+	a.Author.Bio = u.Bio
+	a.Author.Image = u.Image
+	a.Author.Username = u.Username
 
 	a.Favorited = s.IsArticleFavorited(ctx, username, a.ID)
 

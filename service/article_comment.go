@@ -35,11 +35,14 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateComme
 		return nil, conduit.GeneralError
 	}
 
-	c.Author = u
+	c.Author = new(model.ProfileResponse)
+	c.Author.Bio = u.Bio
+	c.Author.Image = u.Image
+	c.Author.Username = u.Username
 	return c, nil
 }
 
-func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) ([]*model.Comment, *model.ConduitError) {
+func (s *ArticleService) GetComments(ctx context.Context, slug, username string) ([]*model.Comment, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	ar, sErr := s.GetArticleBySlug(ctx, "", slug)
 	if sErr != nil {
@@ -50,15 +53,6 @@ func (s *ArticleService) GetComments(ctx context.Context, slug, userID string) (
 	if err != nil {
 		log.Warnf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
 		return nil, conduit.GeneralError
-	}
-
-	for _, c := range comments {
-		u, err := s.userRepo.FindOneByUsername(ctx, c.AuthorUsername)
-		if err != nil {
-			log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorUsername, err)
-			return nil, conduit.GeneralError
-		}
-		c.Author = u
 	}
 
 	return comments, nil

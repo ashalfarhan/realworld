@@ -41,13 +41,13 @@ func (c *ArticleController) DeleteComment(w http.ResponseWriter, r *http.Request
 }
 
 func (c *ArticleController) GetArticleComments(w http.ResponseWriter, r *http.Request) {
-	userID, err := jwt.GetUsernameFromReq(r)
+	username, err := jwt.GetUsernameFromReq(r)
 	if err != nil {
 		response.Err(w, err)
 		return
 	}
 
-	comms, err := c.articleService.GetComments(r.Context(), mux.Vars(r)["slug"], userID)
+	comms, err := c.articleService.GetComments(r.Context(), mux.Vars(r)["slug"], username)
 	if err != nil {
 		response.Err(w, err)
 		return
