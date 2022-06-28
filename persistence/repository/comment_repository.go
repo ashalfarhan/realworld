@@ -38,7 +38,6 @@ func (r *CommentRepoImpl) InsertOne(ctx context.Context, c *model.Comment) error
 	if err = stmt.GetContext(ctx, c, *c); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -53,11 +52,9 @@ func (r *CommentRepoImpl) FindByArticleID(ctx context.Context, articleID string)
 		ON us.username = ac.author_username
 	WHERE ac.article_id = $1
 	ORDER BY created_at DESC`
-
 	if err := r.db.SelectContext(ctx, &comments, query, articleID); err != nil {
 		return nil, err
 	}
-
 	return comments, nil
 }
 
@@ -71,7 +68,6 @@ func (r *CommentRepoImpl) DeleteByID(ctx context.Context, id string) error {
 	if _, err = tx.ExecContext(ctx, query, id); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -83,6 +79,5 @@ func (r *CommentRepoImpl) FindOneByID(ctx context.Context, id string) (*model.Co
 	if err := r.db.GetContext(ctx, comm, query, id); err != nil {
 		return nil, err
 	}
-
 	return comm, nil
 }

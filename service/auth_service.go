@@ -48,7 +48,6 @@ func (s AuthService) Login(ctx context.Context, d *model.LoginUserFields) (*mode
 		Bio:      u.Bio,
 		Image:    u.Image,
 	}
-
 	return res, nil
 }
 
@@ -72,6 +71,5 @@ func (s AuthService) Register(ctx context.Context, d *model.RegisterUserFields) 
 		Bio:      u.Bio,
 		Image:    u.Image,
 	}
-
 	return res, nil
 }

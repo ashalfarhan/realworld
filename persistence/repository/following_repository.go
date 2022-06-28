@@ -21,14 +21,12 @@ func (r *FollowingRepoImpl) InsertOne(ctx context.Context, follower, following s
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := "INSERT INTO followings (follower_username, following_username) VALUES ($1, $2)"
 	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -37,14 +35,12 @@ func (r *FollowingRepoImpl) DeleteOneIDs(ctx context.Context, follower, followin
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	query := "DELETE FROM followings as f WHERE f.follower_username = $1 AND f.following_username = $2"
 	if _, err = tx.ExecContext(ctx, query, follower, following); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 

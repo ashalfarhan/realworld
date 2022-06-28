@@ -42,7 +42,6 @@ func NewArticleService(repo *repository.Repository, store *store.CacheStore) *Ar
 func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("POST CreateArticle %#v, author_id: %s", d, username)
-
 	d.Slug = s.CreateSlug(d.Title)
 	a, err := s.articleRepo.InsertOne(ctx, d, username)
 	if err != nil {
@@ -67,7 +66,6 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 		log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", a.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
-
 	a.Author = new(model.ProfileResponse)
 	a.Author.Bio = u.Bio
 	a.Author.Image = u.Image
@@ -77,7 +75,6 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 
 func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug string) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-
 	if cached := s.articleCache.FindOneBySlug(ctx, slug, username); cached != nil {
 		return cached, nil
 	}
@@ -94,14 +91,12 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug st
 	if err := s.PopulateArticleField(ctx, ar, username); err != nil {
 		return nil, err
 	}
-
 	s.articleCache.SaveBySlug(ctx, slug, username, ar)
 	return ar, nil
 }
 
 func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
 		log.Warnf("Cannot find articles Reason: %v", err)
@@ -113,14 +108,12 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 			return nil, err
 		}
 	}
-
 	// TODO: Caching
 	return articles, nil
 }
 
 func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
 		log.Warnf("Cannot find articles args: %+v, Reason: %v", args, err)
@@ -132,7 +125,6 @@ func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.F
 			return nil, err
 		}
 	}
-
 	// TODO: Caching
 	return articles, nil
 }
@@ -158,7 +150,6 @@ func (s *ArticleService) DeleteArticle(ctx context.Context, slug, username strin
 func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, username, slug string, d *model.UpdateArticleFields) (*model.Article, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("UpdateArticleBySlug user_id: %s, slug: %s, %#v", username, slug, d)
-
 	ar, err := s.GetArticleBySlug(ctx, username, slug)
 	if err != nil {
 		return nil, err
@@ -178,7 +169,6 @@ func (s *ArticleService) UpdateArticleBySlug(ctx context.Context, username, slug
 		log.Warnf("Cannot UpdateOneBySlug, slug: %s, payload: %+v, Reason: %v", slug, d, err)
 		return nil, conduit.GeneralError
 	}
-
 	return ar, nil
 }
 
@@ -189,7 +179,6 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 	}
 
 	a.TagList = tags
-
 	u, err := s.userRepo.FindOneByUsername(ctx, a.AuthorUsername)
 	if err != nil {
 		return conduit.GeneralError
@@ -198,14 +187,11 @@ func (s *ArticleService) PopulateArticleField(ctx context.Context, a *model.Arti
 	a.Author.Bio = u.Bio
 	a.Author.Image = u.Image
 	a.Author.Username = u.Username
-
 	a.Favorited = s.IsArticleFavorited(ctx, username, a.ID)
-
 	a.FavoritesCount, err = s.favoritesRepo.CountFavorites(ctx, a.ID)
 	if err != nil {
 		return conduit.GeneralError
 	}
-
 	return nil
 }
 

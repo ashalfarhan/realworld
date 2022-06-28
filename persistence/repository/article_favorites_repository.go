@@ -70,6 +70,5 @@ func (r *ArticleFavoritesRepoImpl) CountFavorites(ctx context.Context, articleID
 	if err := r.db.QueryRowContext(ctx, query, articleID).Scan(&count); err != nil {
 		return 0, err
 	}
-
 	return count, nil
 }

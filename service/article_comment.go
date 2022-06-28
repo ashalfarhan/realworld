@@ -34,7 +34,6 @@ func (s *ArticleService) CreateComment(ctx context.Context, d *model.CreateComme
 		log.Warnf("Cannot FindOneByID User Repo for %s, Reason: %v", c.AuthorUsername, err)
 		return nil, conduit.GeneralError
 	}
-
 	c.Author = new(model.ProfileResponse)
 	c.Author.Bio = u.Bio
 	c.Author.Image = u.Image
@@ -54,7 +53,6 @@ func (s *ArticleService) GetComments(ctx context.Context, slug, username string)
 		log.Warnf("Cannot FindByArticleID::CommentRepo, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
-
 	return comments, nil
 }
 
@@ -68,7 +66,6 @@ func (s *ArticleService) GetOneComment(ctx context.Context, commentID string) (*
 		log.Warnf("Cannot FindOneByID::CommentRepo for %v, Reason: %v", commentID, err)
 		return nil, conduit.GeneralError
 	}
-
 	return comm, nil
 }
 

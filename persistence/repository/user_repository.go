@@ -51,7 +51,6 @@ func (r *UserRepoImpl) InsertOne(ctx context.Context, d *model.RegisterUserField
 
 func (r *UserRepoImpl) FindOneByUsername(ctx context.Context, username string) (*model.User, error) {
 	u := new(model.User)
-
 	query := `
 	SELECT id, email, username, bio, image, created_at, updated_at
 	FROM users WHERE users.username = $1`
@@ -68,7 +67,6 @@ type FindOneUserFilter struct {
 
 func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*model.User, error) {
 	u := new(model.User)
-
 	query := `
 	SELECT id, email, username, password, bio, image FROM users 
 	WHERE users.email = $1 OR users.username = $2`
@@ -88,7 +86,6 @@ func (r *UserRepoImpl) UpdateOne(ctx context.Context, d *model.UpdateUserFields,
 	if v := d.Password; v != nil {
 		u.Password = *v
 	}
-
 	if v := d.Bio; v.Set {
 		u.Bio = v
 	}
@@ -107,19 +104,16 @@ func (r *UserRepoImpl) UpdateOne(ctx context.Context, d *model.UpdateUserFields,
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
 	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return err
 	}
-
 	defer stmt.Close()
 
 	if _, err = stmt.ExecContext(ctx, u); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }

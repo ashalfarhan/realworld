@@ -49,7 +49,6 @@ func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleF
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
 	return a, nil
 }
 
@@ -61,11 +60,9 @@ func (r *ArticleRepoImpl) DeleteBySlug(ctx context.Context, slug string) error {
 	defer tx.Rollback()
 
 	query := "DELETE FROM articles as a WHERE a.slug = $1"
-
 	if _, err = tx.ExecContext(ctx, query, slug); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -90,7 +87,6 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 		body = :body, description = :description,
 		updated_at = NOW()
 	WHERE a.id = :id`
-
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -106,7 +102,6 @@ func (r *ArticleRepoImpl) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 	if _, err := stmt.ExecContext(ctx, a); err != nil {
 		return err
 	}
-
 	return tx.Commit()
 }
 
@@ -119,7 +114,6 @@ func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, slug string) (*mode
 	if err := r.db.GetContext(ctx, a, query, slug); err != nil {
 		return nil, err
 	}
-
 	a.Author = new(model.ProfileResponse)
 	return a, nil
 }
@@ -176,7 +170,6 @@ func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.
 	}
 
 	query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-
 	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return nil, err

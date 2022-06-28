@@ -34,7 +34,6 @@ func (s *UserService) GetOneByUsername(ctx context.Context, username string) (*m
 		log.Errorf("Cannot FindOneById for %s, Reason: %v", username, err)
 		return nil, conduit.GeneralError
 	}
-
 	return u, nil
 }
 
@@ -48,7 +47,6 @@ func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilte
 		log.Errorf("Cannot FindOne for %+v, Reason: %v", d, err)
 		return nil, conduit.GeneralError
 	}
-
 	return u, nil
 }
 
@@ -67,14 +65,13 @@ func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (
 			return nil, conduit.GeneralError
 		}
 	}
-
 	return u, nil
 }
 
-func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, uid string) (*model.User, *model.ConduitError) {
+func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, username string) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	log.Infof("PUT Update User %#v userID: %s", d, uid)
-	u, err := s.GetOneByUsername(ctx, uid)
+	log.Infof("PUT Update User %#v userID: %s", d, username)
+	u, err := s.GetOneByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +92,6 @@ func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, uid
 			return nil, conduit.GeneralError
 		}
 	}
-
 	return u, nil
 }
 
@@ -109,15 +105,12 @@ func (s *UserService) GetProfile(ctx context.Context, username, userID string) (
 	if err != nil {
 		return nil, err
 	}
-
 	following := s.IsFollowing(ctx, userID, u.ID)
-
 	res := &model.ProfileResponse{
 		Username:  u.Username,
 		Bio:       u.Bio,
 		Image:     u.Image,
 		Following: following,
 	}
-
 	return res, nil
 }

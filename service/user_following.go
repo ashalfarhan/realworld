@@ -39,7 +39,6 @@ func (s *UserService) FollowUser(ctx context.Context, followUsername, username s
 		Image:     following.Image,
 		Following: true,
 	}
-
 	return res, nil
 }
 
@@ -67,7 +66,6 @@ func (s *UserService) UnfollowUser(ctx context.Context, followUsername, username
 		Image:     following.Image,
 		Following: false,
 	}
-
 	return res, nil
 }
 

@@ -29,9 +29,7 @@ func (s *ArticleService) FavoriteArticleBySlug(ctx context.Context, username, sl
 		log.Warnf("Cannot CountFavorites, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
-
 	a.FavoritesCount = count
-
 	return a, nil
 }
 
@@ -47,7 +45,6 @@ func (s *ArticleService) UnfavoriteArticleBySlug(ctx context.Context, username, 
 		log.Warnf("Cannot UnfavoriteArticle, Reason: %v", err)
 		return nil, conduit.GeneralError
 	}
-
 	a.Favorited = false
 	return a, nil
 }
