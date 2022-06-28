@@ -69,7 +69,6 @@ func (s *ArticleService) CreateArticle(ctx context.Context, d *model.CreateArtic
 	}
 
 	a.Author = u
-	log.Errorf("Done creating article")
 	return a, nil
 }
 
