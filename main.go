@@ -34,9 +34,9 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			logrus.Errorf("Failed to start the server: %v", err)
+			logrus.Errorln("Failed to start the server:", err)
 			if err = cleanup(store, db); err != nil {
-				logrus.Errorf("Failed to cleanup: %v", err)
+				logrus.Errorln("Failed to cleanup:", err)
 			}
 		}
 	}()
@@ -47,12 +47,12 @@ func main() {
 
 	defer func() {
 		if err := cleanup(store, db); err != nil {
-			logrus.Errorf("Failed to cleanup: %v", err)
+			logrus.Errorln("Failed to cleanup:", err)
 		}
 	}()
 
 	if err := server.Close(); err != nil && err != http.ErrServerClosed {
-		logrus.Errorf("Failed to close the server: %v", err)
+		logrus.Errorln("Failed to close the server:", err)
 	}
 }
 
