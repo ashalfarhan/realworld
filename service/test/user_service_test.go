@@ -1,12 +1,10 @@
 package service_test
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/model"
 	"github.com/ashalfarhan/realworld/persistence/repository"
 	. "github.com/ashalfarhan/realworld/service"
@@ -14,15 +12,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type TestCase struct {
-	desc       string
-	mockReturn error
-	errCode    int
-	errError   error
-}
-
-func TestRegister(t *testing.T) {
-	testCases := []TestCase{
+func TestRegisterFail(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		mockReturn error
+		errCode    int
+		errError   error
+	}{
 		{
 			desc:       "Register should fail if username exist",
 			mockReturn: errors.New(repository.ErrDuplicateUsername),
@@ -35,107 +31,45 @@ func TestRegister(t *testing.T) {
 			errCode:    http.StatusBadRequest,
 			errError:   ErrEmailExist,
 		},
-		{
-			desc:       "Register should fail if db error",
-			mockReturn: sql.ErrTxDone,
-			errCode:    http.StatusInternalServerError,
-			errError:   conduit.ErrInternal,
-		},
 	}
-
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
-			userRepoMock.
-				On("InsertOne", mock.Anything, mock.Anything).
-				Return(&model.User{}, tC.mockReturn).
-				Once()
-			_, err := userService.Insert(tctx, &model.RegisterUserFields{})
+
+			userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(&model.User{}, tC.mockReturn).Once()
+			d, err := userService.Insert(tctx, &model.RegisterUserFields{})
 			userRepoMock.AssertExpectations(t)
 
-			as.NotNil(err)
-			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Err, tC.errError)
+			as.Nil(d)
+			if as.NotNil(err) {
+				as.Equal(err.Code, tC.errCode)
+				as.Equal(err.Err, tC.errError)
+			}
 		})
 	}
+}
 
-	t.Run("Register should success", func(t *testing.T) {
-		pw := "password"
-		as := assert.New(t)
-		userRepoMock.
-			On("InsertOne", mock.Anything, mock.Anything).
-			Return(&model.User{}, nil).
-			Once()
-		reg, err := userService.Insert(tctx, &model.RegisterUserFields{
-			Password: pw,
-		})
-		userRepoMock.AssertExpectations(t)
+func TestRegisterSuccess(t *testing.T) {
+	pw := "password"
+	as := assert.New(t)
 
-		as.Nil(err)
-		as.NotNil(reg)
+	userRepoMock.On("InsertOne", mock.Anything, mock.Anything).Return(&model.User{}, nil).Once()
+	reg, err := userService.Insert(tctx, &model.RegisterUserFields{Password: pw})
+	userRepoMock.AssertExpectations(t)
+
+	as.Nil(err)
+	if as.NotNil(reg) {
 		as.NotEqual(pw, reg.Password, "Registered user password should be hashed")
-	})
+	}
 }
 
-func TestGetOneById(t *testing.T) {
-	testCases := []TestCase{
-		{
-			desc:       "Get one by id should fail if no rows",
-			mockReturn: sql.ErrNoRows,
-			errCode:    http.StatusNotFound,
-			errError:   ErrNoUserFound,
-		},
-		{
-			desc:       "Get one by id should fail if db error",
-			mockReturn: sql.ErrTxDone,
-			errCode:    http.StatusInternalServerError,
-			errError:   conduit.ErrInternal,
-		},
-	}
-
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			as := assert.New(t)
-			userRepoMock.
-				On("FindOneByUsername", mock.Anything, mock.Anything).
-				Return(&model.User{}, tC.mockReturn).
-				Once()
-			_, err := userService.GetOneByUsername(tctx, "id")
-			userRepoMock.AssertExpectations(t)
-
-			as.NotNil(err)
-			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Err, tC.errError)
-		})
-	}
-
-	t.Run("Get one by id should success", func(t *testing.T) {
-		as := assert.New(t)
-
-		userRepoMock.
-			On("FindOneByUsername", mock.Anything, mock.Anything).
-			Return(&model.User{}, nil).
-			Once()
-		u, err := userService.GetOneByUsername(tctx, "id")
-		userRepoMock.AssertExpectations(t)
-
-		as.Nil(err)
-		as.NotNil(u)
-	})
-}
-
-func TestUpdate(t *testing.T) {
-	userRepoMock.
-		On("FindOneByUsername", mock.Anything, mock.Anything).
-		Return(&model.User{}, nil)
-	password := "asd"
-	email := "asd@mail.com"
-	data := &model.UpdateUserFields{
-		Password: &password,
-		Email:    &email,
-	}
-
-	testCases := []TestCase{
+func TestUpdateFail(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		mockReturn error
+		errCode    int
+		errError   error
+	}{
 		{
 			desc:       "Update should fail if username exist",
 			mockReturn: errors.New(repository.ErrDuplicateUsername),
@@ -148,41 +82,21 @@ func TestUpdate(t *testing.T) {
 			errCode:    http.StatusBadRequest,
 			errError:   ErrEmailExist,
 		},
-		{
-			desc:       "Update should fail if db error",
-			mockReturn: sql.ErrTxDone,
-			errCode:    http.StatusInternalServerError,
-			errError:   conduit.ErrInternal,
-		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			as := assert.New(t)
 
-			userRepoMock.
-				On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
-				Return(tC.mockReturn).
-				Once()
-			_, err := userService.Update(tctx, data, "")
+			userRepoMock.On("FindOneByUsername", mock.Anything, mock.Anything).Return(&model.User{}, nil)
+			userRepoMock.On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).Return(tC.mockReturn).Once()
+			d, err := userService.Update(tctx, &model.UpdateUserFields{}, "")
 			userRepoMock.AssertExpectations(t)
 
-			as.NotNil(err)
-			as.Equal(err.Code, tC.errCode)
-			as.Equal(err.Err, tC.errError)
+			as.Nil(d)
+			if as.NotNil(err) {
+				as.Equal(err.Code, tC.errCode)
+				as.Equal(err.Err, tC.errError)
+			}
 		})
 	}
-
-	t.Run("Update user should success", func(t *testing.T) {
-		as := assert.New(t)
-
-		userRepoMock.
-			On("UpdateOne", mock.Anything, mock.Anything, mock.Anything).
-			Return(nil).
-			Once()
-		u, err := userService.Update(tctx, data, "")
-		userRepoMock.AssertExpectations(t)
-
-		as.Nil(err)
-		as.NotEqual(u.Password, password, "Should hash new password")
-	})
 }

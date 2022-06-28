@@ -13,7 +13,7 @@ func TestCreateArticle(t *testing.T) {
 	u := &model.User{
 		Username: username,
 	}
-	userRepoMock.On("FindOneByUsername", mockCtx, username).Return(u, nil).Once()
+	userRepoMock.On("FindOneByUsername", mockCtx, username).Return(u, nil)
 	as := assert.New(t)
 
 	d := &model.CreateArticleFields{
@@ -21,8 +21,8 @@ func TestCreateArticle(t *testing.T) {
 		TagList: []string{"typescript", "react", "javascript", "golang"},
 	}
 
-	articleTagsRepoMock.On("InsertBulk", mockCtx, mock.Anything).Return(nil).Once()
-	articleRepoMock.On("InsertOne", mockCtx, d, username).Return(&model.Article{}, nil).Once()
+	articleTagsRepoMock.On("InsertBulk", mockCtx, mock.Anything).Return(nil)
+	articleRepoMock.On("InsertOne", mockCtx, d, username).Return(&model.Article{}, nil)
 	a, err := articleService.CreateArticle(tctx, d, username)
 	articleRepoMock.AssertExpectations(t)
 	userRepoMock.AssertExpectations(t)

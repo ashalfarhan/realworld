@@ -18,13 +18,9 @@ type TestMap map[string]func(*testing.T)
 var tests = TestMap{
 	"Follow user should fail if already follow": func(t *testing.T) {
 		as := assert.New(t)
-		userRepoMock.On("FindOne", mock.Anything, mock.Anything).
-			Return(&model.User{}, nil).
-			Once()
-		followRepoMock.
-			On("InsertOne", mock.Anything, mock.Anything, mock.Anything).
-			Return(errors.New(repository.ErrDuplicateFollowing)).
-			Once()
+
+		userRepoMock.On("FindOne", mock.Anything, mock.Anything).Return(&model.User{}, nil).Once()
+		followRepoMock.On("InsertOne", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(repository.ErrDuplicateFollowing)).Once()
 		u, err := userService.FollowUser(tctx, "username", "username2")
 		userRepoMock.AssertExpectations(t)
 		followRepoMock.AssertExpectations(t)
@@ -35,15 +31,13 @@ var tests = TestMap{
 		as.Equal(err.Err, ErrAlreadyFollow)
 	},
 	"Follow user should fail if self follow": func(t *testing.T) {
-		username := "username"
 		as := assert.New(t)
-		userRepoMock.
-			On("FindOne", mock.Anything, mock.Anything).
-			Return(&model.User{Username: username}, nil).
-			Once()
+		username := "username"
+
+		userRepoMock.On("FindOne", mock.Anything, mock.Anything).Return(&model.User{Username: username}, nil).Once()
 		u, err := userService.FollowUser(tctx, username, "username2")
 		userRepoMock.AssertExpectations(t)
-		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
+		followRepoMock.AssertNotCalled(t, "InsertOne", mock.Anything)
 		followRepoMock.AssertExpectations(t)
 
 		as.Nil(u)
@@ -54,43 +48,16 @@ var tests = TestMap{
 	"Follow user should fail if not found": func(t *testing.T) {
 		as := assert.New(t)
 
-		userRepoMock.
-			On("FindOne", mock.Anything, mock.Anything).
-			Return(&model.User{}, sql.ErrNoRows).
-			Once()
+		userRepoMock.On("FindOne", mock.Anything, mock.Anything).Return(&model.User{}, sql.ErrNoRows).Once()
 		u, err := userService.FollowUser(tctx, "username", "username2")
 		userRepoMock.AssertExpectations(t)
-		followRepoMock.AssertNumberOfCalls(t, "InsertOne", 0)
+		followRepoMock.AssertNotCalled(t, "InsertOne", mock.Anything)
 		followRepoMock.AssertExpectations(t)
 
 		as.Nil(u)
 		as.NotNil(err)
 		as.Equal(err.Code, http.StatusNotFound)
 		as.Equal(err.Err, ErrNoUserFound)
-	},
-	"Follow user should success": func(t *testing.T) {
-		as := assert.New(t)
-		username := "username"
-
-		following := &model.User{
-			Username: "username1",
-		}
-		userRepoMock.
-			On("FindOne", mock.Anything, mock.Anything).
-			Return(following, nil).
-			Once()
-		followRepoMock.
-			On("InsertOne", mock.Anything, username, following.Username).
-			Return(nil).
-			Once()
-
-		u, err := userService.FollowUser(tctx, username, following.Username)
-		userRepoMock.AssertExpectations(t)
-		followRepoMock.AssertExpectations(t)
-
-		as.Nil(err)
-		as.NotNil(u)
-		as.True(u.Following)
 	},
 }
 
