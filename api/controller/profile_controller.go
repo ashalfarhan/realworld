@@ -25,7 +25,6 @@ func (c *ProfileController) FollowUser(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"profile": profile,
 	})
@@ -38,7 +37,6 @@ func (c *ProfileController) UnfollowUser(w http.ResponseWriter, r *http.Request)
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"profile": profile,
 	})

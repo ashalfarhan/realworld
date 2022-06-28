@@ -31,7 +31,6 @@ func (c *AuthController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	response.Created(w, response.M{
 		"user": res,
 	})
@@ -49,7 +48,6 @@ func (c *AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"user": res,
 	})

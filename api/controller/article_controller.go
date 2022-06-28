@@ -38,7 +38,6 @@ func (c *ArticleController) CreateArticle(w http.ResponseWriter, r *http.Request
 		response.Err(w, err)
 		return
 	}
-
 	response.Created(w, response.M{
 		"article": a.Serialize(),
 	})
@@ -56,7 +55,6 @@ func (c *ArticleController) GetArticleBySlug(w http.ResponseWriter, r *http.Requ
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"article": a.Serialize(),
 	})
@@ -68,7 +66,6 @@ func (c *ArticleController) DeleteArticle(w http.ResponseWriter, r *http.Request
 		response.Err(w, err)
 		return
 	}
-
 	response.Accepted(w, nil)
 }
 
@@ -78,7 +75,6 @@ func (c *ArticleController) GetAllTags(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"tags": tags,
 	})
@@ -97,7 +93,6 @@ func (c *ArticleController) UpdateArticle(w http.ResponseWriter, r *http.Request
 		response.Err(w, err)
 		return
 	}
-
 	response.Accepted(w, response.M{
 		"article": ar.Serialize(),
 	})
@@ -115,7 +110,6 @@ func (c *ArticleController) GetFiltered(w http.ResponseWriter, r *http.Request) 
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"articles":      articles.Serialize(),
 		"articlesCount": len(articles),
@@ -135,7 +129,6 @@ func (c *ArticleController) GetFeed(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-
 	response.Ok(w, response.M{
 		"articles":      articles.Serialize(),
 		"articlesCount": len(articles),
@@ -149,7 +142,6 @@ func (c *ArticleController) FavoriteArticle(w http.ResponseWriter, r *http.Reque
 		response.Err(w, err)
 		return
 	}
-
 	response.Accepted(w, response.M{
 		"article": a.Serialize(),
 	})
@@ -162,7 +154,6 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 		response.Err(w, err)
 		return
 	}
-
 	response.Accepted(w, response.M{
 		"article": a.Serialize(),
 	})
@@ -197,6 +188,5 @@ func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, *model.C
 	if err = v.Struct(args); err != nil {
 		return nil, conduit.BuildError(http.StatusUnprocessableEntity, err)
 	}
-
 	return args, nil
 }

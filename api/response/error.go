@@ -48,7 +48,6 @@ func EntityError(w http.ResponseWriter, err error) {
 		key := strings.ToLower(field.Field())
 		errors[key] = append(errors[key], fmt.Sprintf("%s %s", field.Tag(), field.Param()))
 	}
-
 	JSON(w, http.StatusUnprocessableEntity, M{
 		"errors": errors,
 	})
