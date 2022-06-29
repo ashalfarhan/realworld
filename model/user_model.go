@@ -29,13 +29,6 @@ type UserRs struct {
 	Token    string     `json:"token,omitempty"`
 }
 
-type ProfileRs struct {
-	Username  string     `json:"username"`
-	Bio       NullString `json:"bio"`
-	Image     NullString `json:"image"`
-	Following bool       `json:"following"`
-}
-
 func (u *User) Serialize(token string) *UserRs {
 	return &UserRs{
 		Email:    u.Email,
@@ -46,6 +39,13 @@ func (u *User) Serialize(token string) *UserRs {
 	}
 }
 
+type ProfileRs struct {
+	Username  string     `json:"username"`
+	Bio       NullString `json:"bio"`
+	Image     NullString `json:"image"`
+	Following bool       `json:"following"`
+}
+
 func (u *User) Profile(following bool) *ProfileRs {
 	return &ProfileRs{
 		Username:  u.Username,
@@ -53,4 +53,9 @@ func (u *User) Profile(following bool) *ProfileRs {
 		Image:     u.Image,
 		Following: following,
 	}
+}
+
+type FindUserArg struct {
+	Email    string
+	Username string
 }

@@ -73,3 +73,12 @@ func (a Articles) MarshalBinary() ([]byte, error) {
 func (a *Articles) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, a)
 }
+
+type FindArticlesArgs struct {
+	Tag       string `db:"tag"`
+	Author    string `db:"author_username"`
+	Username  string `db:"username"`
+	Favorited string `db:"favorited_by"`
+	Limit     int    `validate:"min=1,max=25" db:"limit"`
+	Offset    int    `validate:"min=0" db:"offset"`
+}

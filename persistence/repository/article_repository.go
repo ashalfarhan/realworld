@@ -16,7 +16,7 @@ type ArticleRepository interface {
 	FindOneBySlug(context.Context, string, string) (*model.Article, error)
 	DeleteBySlug(context.Context, string) error
 	UpdateOneBySlug(context.Context, *model.UpdateArticleFields, *model.Article) error
-	Find(context.Context, *FindArticlesArgs) (model.Articles, error)
+	Find(context.Context, *model.FindArticlesArgs) (model.Articles, error)
 }
 
 func (r *ArticleRepoImpl) InsertOne(ctx context.Context, d *model.CreateArticleFields, username string) (*model.Article, error) {
@@ -127,16 +127,7 @@ func (r *ArticleRepoImpl) FindOneBySlug(ctx context.Context, username, slug stri
 	return a, nil
 }
 
-type FindArticlesArgs struct {
-	Tag       string `db:"tag"`
-	Author    string `db:"author_username"`
-	Username  string `db:"username"`
-	Favorited string `db:"favorited_by"`
-	Limit     int    `validate:"min=1,max=25" db:"limit"`
-	Offset    int    `validate:"min=0" db:"offset"`
-}
-
-func (r *ArticleRepoImpl) Find(ctx context.Context, p *FindArticlesArgs) (model.Articles, error) {
+func (r *ArticleRepoImpl) Find(ctx context.Context, p *model.FindArticlesArgs) (model.Articles, error) {
 	articles := model.Articles{}
 	query := `
 	SELECT 

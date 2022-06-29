@@ -6,7 +6,6 @@ import (
 
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/model"
-	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/ashalfarhan/realworld/utils/jwt"
 )
 
@@ -21,7 +20,7 @@ func NewAuthService(us *UserService) *AuthService {
 }
 
 func (s AuthService) Login(ctx context.Context, d *model.LoginUserFields) (*model.UserRs, *model.ConduitError) {
-	u, sErr := s.userService.GetOne(ctx, &repository.FindOneUserFilter{
+	u, sErr := s.userService.GetOne(ctx, &model.FindUserArg{
 		Email:    d.Email,
 		Username: d.Username,
 	})

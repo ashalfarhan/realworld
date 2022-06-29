@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/model"
-	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -32,7 +31,7 @@ func (m *ArticleRepoMock) UpdateOneBySlug(ctx context.Context, d *model.UpdateAr
 	return args.Error(0)
 }
 
-func (m *ArticleRepoMock) Find(ctx context.Context, a *repository.FindArticlesArgs) (model.Articles, error) {
+func (m *ArticleRepoMock) Find(ctx context.Context, a *model.FindArticlesArgs) (model.Articles, error) {
 	args := m.Called(ctx, a)
 	return args.Get(0).(model.Articles), args.Error(1)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ashalfarhan/realworld/model"
-	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -22,7 +21,7 @@ func (m *UserRepoMock) FindOneByUsername(ctx context.Context, s string) (*model.
 	return arg.Get(0).(*model.User), arg.Error(1)
 }
 
-func (m *UserRepoMock) FindOne(ctx context.Context, u *repository.FindOneUserFilter) (*model.User, error) {
+func (m *UserRepoMock) FindOne(ctx context.Context, u *model.FindUserArg) (*model.User, error) {
 	arg := m.Called(ctx, u)
 	return arg.Get(0).(*model.User), arg.Error(1)
 }

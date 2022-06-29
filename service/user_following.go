@@ -13,7 +13,7 @@ import (
 func (s *UserService) FollowUser(ctx context.Context, followUsername, username string) (*model.ProfileRs, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("POST FollowUser followUsername:%q, user:%q", followUsername, username)
-	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
+	following, err := s.GetOne(ctx, &model.FindUserArg{Username: username})
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (s *UserService) FollowUser(ctx context.Context, followUsername, username s
 func (s *UserService) UnfollowUser(ctx context.Context, followUsername, username string) (*model.ProfileRs, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	log.Infof("POST UnfollowUser followUsername:%q, user:%q", followUsername, username)
-	following, err := s.GetOne(ctx, &repository.FindOneUserFilter{Username: username})
+	following, err := s.GetOne(ctx, &model.FindUserArg{Username: username})
 	if err != nil {
 		return nil, err
 	}

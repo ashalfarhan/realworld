@@ -37,7 +37,7 @@ func (s *UserService) GetOneByUsername(ctx context.Context, username string) (*m
 	return u, nil
 }
 
-func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilter) (*model.User, *model.ConduitError) {
+func (s *UserService) GetOne(ctx context.Context, d *model.FindUserArg) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	u, err := s.userRepo.FindOne(ctx, d)
 	if err != nil {
@@ -52,18 +52,15 @@ func (s *UserService) GetOne(ctx context.Context, d *repository.FindOneUserFilte
 
 func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
+	exUser, _ := s.GetOne(ctx, &model.FindUserArg{Email: d.Email, Username: d.Username})
+	if exUser != nil {
+		return nil, conduit.BuildError(http.StatusBadRequest, ErrIdentityExist)
+	}
 	d.Password = s.HashPassword(d.Password)
 	u, err := s.userRepo.InsertOne(ctx, d)
 	if err != nil {
-		switch err.Error() {
-		case repository.ErrDuplicateEmail:
-			return nil, conduit.BuildError(http.StatusBadRequest, ErrEmailExist)
-		case repository.ErrDuplicateUsername:
-			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
-		default:
-			log.Errorf("Cannot insert to user repo reason: %v", err)
-			return nil, conduit.GeneralError
-		}
+		log.Warnln("Cannot insert to user repo reason:", err)
+		return nil, conduit.GeneralError
 	}
 	return u, nil
 }
@@ -74,12 +71,10 @@ func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, use
 	if err != nil {
 		return nil, err
 	}
-
 	if v := d.Password; v != nil {
 		hashed := s.HashPassword(*v)
 		d.Password = &hashed
 	}
-
 	if err := s.userRepo.UpdateOne(ctx, d, u); err != nil {
 		switch err.Error() {
 		case repository.ErrDuplicateEmail:
@@ -87,7 +82,7 @@ func (s *UserService) Update(ctx context.Context, d *model.UpdateUserFields, use
 		case repository.ErrDuplicateUsername:
 			return nil, conduit.BuildError(http.StatusBadRequest, ErrUsernameExist)
 		default:
-			log.Errorf("Cannot InsertOne for %+v, Reason: %v", d, err)
+			log.Warnln("Cannot update user reason:", err)
 			return nil, conduit.GeneralError
 		}
 	}

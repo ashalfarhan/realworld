@@ -9,6 +9,7 @@ var (
 	ErrNoUserFound   = errors.New("no user found")
 	ErrEmailExist    = errors.New("email already exist")
 	ErrUsernameExist = errors.New("username already exist")
+	ErrIdentityExist = errors.New("username or email is in use")
 	ErrSelfFollow    = errors.New("you cannot follow your self")
 	ErrSelfUnfollow  = errors.New("you cannot unfollow your self")
 	ErrAlreadyFollow = errors.New("you are already follow this user")

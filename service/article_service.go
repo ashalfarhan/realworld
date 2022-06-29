@@ -90,7 +90,7 @@ func (s *ArticleService) GetArticleBySlug(ctx context.Context, username, slug st
 	return ar, nil
 }
 
-func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
+func (s *ArticleService) GetArticles(ctx context.Context, args *model.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {
@@ -107,7 +107,7 @@ func (s *ArticleService) GetArticles(ctx context.Context, args *repository.FindA
 	return articles, nil
 }
 
-func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *repository.FindArticlesArgs) (model.Articles, *model.ConduitError) {
+func (s *ArticleService) GetArticlesFeed(ctx context.Context, args *model.FindArticlesArgs) (model.Articles, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
 	articles, err := s.articleRepo.Find(ctx, args)
 	if err != nil {

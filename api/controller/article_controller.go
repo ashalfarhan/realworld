@@ -8,7 +8,6 @@ import (
 	"github.com/ashalfarhan/realworld/api/response"
 	"github.com/ashalfarhan/realworld/conduit"
 	"github.com/ashalfarhan/realworld/model"
-	"github.com/ashalfarhan/realworld/persistence/repository"
 	"github.com/ashalfarhan/realworld/service"
 	"github.com/ashalfarhan/realworld/utils"
 	"github.com/ashalfarhan/realworld/utils/jwt"
@@ -159,10 +158,10 @@ func (c *ArticleController) UnFavoriteArticle(w http.ResponseWriter, r *http.Req
 	})
 }
 
-func getArticleQueryParams(q url.Values) (*repository.FindArticlesArgs, *model.ConduitError) {
+func getArticleQueryParams(q url.Values) (*model.FindArticlesArgs, *model.ConduitError) {
 	var err error
 	limit, offset := q.Get("limit"), q.Get("offset")
-	args := &repository.FindArticlesArgs{
+	args := &model.FindArticlesArgs{
 		Tag:       q.Get("tag"),
 		Author:    q.Get("author"),
 		Favorited: q.Get("favorited"),

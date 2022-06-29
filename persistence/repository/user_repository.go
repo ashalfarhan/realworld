@@ -14,7 +14,7 @@ type UserRepoImpl struct {
 type UserRepository interface {
 	InsertOne(context.Context, *model.RegisterUserFields) (*model.User, error)
 	FindOneByUsername(context.Context, string) (*model.User, error)
-	FindOne(context.Context, *FindOneUserFilter) (*model.User, error)
+	FindOne(context.Context, *model.FindUserArg) (*model.User, error)
 	UpdateOne(context.Context, *model.UpdateUserFields, *model.User) error
 }
 
@@ -60,12 +60,7 @@ func (r *UserRepoImpl) FindOneByUsername(ctx context.Context, username string) (
 	return u, nil
 }
 
-type FindOneUserFilter struct {
-	Email    string
-	Username string
-}
-
-func (r *UserRepoImpl) FindOne(ctx context.Context, d *FindOneUserFilter) (*model.User, error) {
+func (r *UserRepoImpl) FindOne(ctx context.Context, d *model.FindUserArg) (*model.User, error) {
 	u := new(model.User)
 	query := `
 	SELECT id, email, username, password, bio, image FROM users 
