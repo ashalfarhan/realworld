@@ -52,8 +52,8 @@ func (s *UserService) GetOne(ctx context.Context, d *model.FindUserArg) (*model.
 
 func (s *UserService) Insert(ctx context.Context, d *model.RegisterUserFields) (*model.User, *model.ConduitError) {
 	log := logger.GetCtx(ctx)
-	exUser, _ := s.GetOne(ctx, &model.FindUserArg{Email: d.Email, Username: d.Username})
-	if exUser != nil {
+	_, sErr := s.GetOne(ctx, &model.FindUserArg{Email: d.Email, Username: d.Username})
+	if sErr == nil {
 		return nil, conduit.BuildError(http.StatusBadRequest, ErrIdentityExist)
 	}
 	d.Password = s.HashPassword(d.Password)
