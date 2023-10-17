@@ -12,9 +12,10 @@ For more information on how to this works with other frontends/backends, head ov
 
 # How it works
 
-> This is an implementation of Conduit (Medium Clone) built with Go Programming Language.
+> This is a backend implementation of Conduit (Medium Clone) built with Go Programming Language.
 
 ## Prerequisite
+
 - Git [Download](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - Go [Download](https://go.dev/dl/)
 - Docker [Download](https://docs.docker.com/get-docker/)
@@ -45,6 +46,7 @@ For more information on how to this works with other frontends/backends, head ov
 
 
 ## Testing
+
 - Unit Testing
   ```bash
   make test
